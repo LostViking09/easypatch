@@ -2,6 +2,8 @@
 
 EasyPatch is a professional tool designed for sound engineers and stage technicians to create and manage stage box patch lists. It replaces handwritten notes with a clean, organized, and printable digital interface.
 
+[lostviking09.github.io/easypatch](http://lostviking09.github.io/easypatch)
+
 ## Purpose
 
 The primary goal of EasyPatch is to streamline the setup process for live events. It allows you to document every connection on your stage box or digital snake, ensuring that the entire technical team has a clear and consistent reference.
