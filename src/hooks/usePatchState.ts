@@ -308,8 +308,11 @@ export function usePatchState() {
     setOutputs(newOutputs);
   };
 
-  const handleNewProject = (inputGrid: { rows: number, cols: number }, outputGrid: { rows: number, cols: number }) => {
-    const newInputs: Channel[] = Array.from({ length: inputGrid.rows * inputGrid.cols }, (_, i) => ({
+  const handleCreateNewProject = () => {
+    const defaultInputGrid = { rows: 3, cols: 8 };
+    const defaultOutputGrid = { rows: 3, cols: 4 };
+
+    const newInputs: Channel[] = Array.from({ length: 24 }, (_, i) => ({
       id: `in-${i + 1}`,
       type: 'in',
       number: i + 1,
@@ -319,7 +322,7 @@ export function usePatchState() {
       group: '',
     }));
 
-    const newOutputs: Channel[] = Array.from({ length: outputGrid.rows * outputGrid.cols }, (_, i) => ({
+    const newOutputs: Channel[] = Array.from({ length: 12 }, (_, i) => ({
       id: `out-${i + 1}`,
       type: 'out',
       number: i + 1,
@@ -334,12 +337,65 @@ export function usePatchState() {
     setSettings(prev => ({
       ...prev,
       grid: {
-        input: inputGrid,
-        output: outputGrid
+        input: defaultInputGrid,
+        output: defaultOutputGrid
       }
     }));
     setTitle('New Patch List');
     setNotes('');
+  };
+
+  const handleResizeGrid = (inputGrid: { rows: number, cols: number }, outputGrid: { rows: number, cols: number }) => {
+    const newInputsCount = inputGrid.rows * inputGrid.cols;
+    const newOutputsCount = outputGrid.rows * outputGrid.cols;
+
+    // Map inputs
+    const newInputs: Channel[] = Array.from({ length: newInputsCount }, (_, i) => {
+      const existing = inputs[i];
+      if (existing) {
+        return { ...existing, number: i + 1 };
+      }
+      return {
+        id: `in-${i + 1}`,
+        type: 'in',
+        number: i + 1,
+        name: '',
+        tech: '',
+        color: '#ffffff',
+        group: '',
+      };
+    });
+
+    // Map outputs
+    const newOutputs: Channel[] = Array.from({ length: newOutputsCount }, (_, i) => {
+      const existing = outputs[i];
+      if (existing) {
+        return { ...existing, number: i + 1 };
+      }
+      return {
+        id: `out-${i + 1}`,
+        type: 'out',
+        number: i + 1,
+        name: '',
+        tech: '',
+        color: '#ffffff',
+        group: '',
+      };
+    });
+
+    // Sanitize stereo links
+    const sanitizedInputs = sanitizeStereoLinks(newInputs);
+    const sanitizedOutputs = sanitizeStereoLinks(newOutputs);
+
+    setInputs(sanitizedInputs);
+    setOutputs(sanitizedOutputs);
+    setSettings(prev => ({
+      ...prev,
+      grid: {
+        input: inputGrid,
+        output: outputGrid
+      }
+    }));
   };
 
   const handleExport = () => {
@@ -373,7 +429,8 @@ export function usePatchState() {
     handleDrop,
     saveEdit,
     saveFastInput,
-    handleNewProject,
+    handleCreateNewProject,
+    handleResizeGrid,
     handleExport,
     loadImportData
   };

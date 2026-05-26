@@ -63,39 +63,43 @@ export const FastInputModal: React.FC<FastInputModalProps> = ({ inputs, outputs,
         </div>
         
         <div className="p-4 sm:p-6 flex-1 overflow-y-auto flex flex-col md:flex-row gap-6">
-          <div className="flex-1 flex flex-col">
-            <label className="font-bold mb-2">INPUT ({inputs.length})</label>
-            <div className="flex flex-1 border rounded-md overflow-hidden font-mono text-sm">
-              <div className="bg-gray-100 text-gray-400 p-2 text-right select-none border-r">
-                {Array.from({length: inputs.length}, (_, i) => <div key={i}>{i+1}</div>)}
+          {inputs.length > 0 && (
+            <div className="flex-1 flex flex-col">
+              <label className="font-bold mb-2">INPUT ({inputs.length})</label>
+              <div className="flex flex-1 border rounded-md overflow-hidden font-mono text-sm">
+                <div className="bg-gray-100 text-gray-400 p-2 text-right select-none border-r">
+                  {Array.from({length: inputs.length}, (_, i) => <div key={i}>{i+1}</div>)}
+                </div>
+                <textarea 
+                  value={inText}
+                  onChange={e => setInText(e.target.value)}
+                  rows={inputs.length}
+                  className="flex-1 p-2 outline-none resize-none whitespace-pre leading-tight"
+                  placeholder="Kick&#10;Snare&#10;..."
+                  style={{ lineHeight: '1.25rem' }}
+                />
               </div>
-              <textarea 
-                value={inText}
-                onChange={e => setInText(e.target.value)}
-                rows={inputs.length}
-                className="flex-1 p-2 outline-none resize-none whitespace-pre leading-tight"
-                placeholder="Kick&#10;Snare&#10;..."
-                style={{ lineHeight: '1.25rem' }}
-              />
             </div>
-          </div>
+          )}
 
-          <div className="flex-1 flex flex-col">
-            <label className="font-bold mb-2">OUTPUT ({outputs.length})</label>
-            <div className="flex flex-1 border rounded-md overflow-hidden font-mono text-sm">
-              <div className="bg-gray-100 text-gray-400 p-2 text-right select-none border-r">
-                {Array.from({length: outputs.length}, (_, i) => <div key={i}>{i+1}</div>)}
+          {outputs.length > 0 && (
+            <div className="flex-1 flex flex-col">
+              <label className="font-bold mb-2">OUTPUT ({outputs.length})</label>
+              <div className="flex flex-1 border rounded-md overflow-hidden font-mono text-sm">
+                <div className="bg-gray-100 text-gray-400 p-2 text-right select-none border-r">
+                  {Array.from({length: outputs.length}, (_, i) => <div key={i}>{i+1}</div>)}
+                </div>
+                <textarea 
+                  value={outText}
+                  onChange={e => setOutText(e.target.value)}
+                  rows={outputs.length}
+                  className="flex-1 p-2 outline-none resize-none whitespace-pre leading-tight"
+                  placeholder="Main L&#10;Main R&#10;..."
+                  style={{ lineHeight: '1.25rem' }}
+                />
               </div>
-              <textarea 
-                value={outText}
-                onChange={e => setOutText(e.target.value)}
-                rows={outputs.length}
-                className="flex-1 p-2 outline-none resize-none whitespace-pre leading-tight"
-                placeholder="Main L&#10;Main R&#10;..."
-                style={{ lineHeight: '1.25rem' }}
-              />
             </div>
-          </div>
+          )}
         </div>
 
         <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Printer, Download, Upload, Settings, Save, Edit3, Palette, Trash2, ListOrdered, CheckSquare, AlertCircle, X } from 'lucide-react';
+import { Printer, Download, Upload, Settings, Save, Edit3, Palette, Trash2, ListOrdered, CheckSquare, AlertCircle, X, Grid, Plus } from 'lucide-react';
 import { Channel } from './types';
 import { usePatchState } from './hooks/usePatchState';
 import { ChannelCell } from './components/ChannelCell';
@@ -8,7 +8,8 @@ import { EditModal } from './components/EditModal';
 import { FastInputModal } from './components/FastInputModal';
 import { MultiEditModal } from './components/MultiEditModal';
 import { SettingsModal } from './components/SettingsModal';
-import { NewProjectModal } from './components/NewProjectModal';
+import { ResizeGridModal } from './components/ResizeGridModal';
+import { NewProjectConfirmModal } from './components/NewProjectConfirmModal';
 import { PALETTES } from './utils/constants';
 
 export default function App() {
@@ -21,7 +22,8 @@ export default function App() {
     handleDrop,
     saveEdit,
     saveFastInput,
-    handleNewProject,
+    handleCreateNewProject,
+    handleResizeGrid,
     handleExport,
     loadImportData
   } = usePatchState();
@@ -29,7 +31,8 @@ export default function App() {
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFastInputOpen, setIsFastInputOpen] = useState(false);
-  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
+  const [isResizeGridOpen, setIsResizeGridOpen] = useState(false);
+  const [isNewProjectConfirmOpen, setIsNewProjectConfirmOpen] = useState(false);
   const [isMultiEdit, setIsMultiEdit] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isMultiEditModalOpen, setIsMultiEditModalOpen] = useState(false);
@@ -202,11 +205,21 @@ export default function App() {
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setIsNewProjectOpen(true)}
+            onClick={() => setIsNewProjectConfirmOpen(true)}
             className="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 px-3 py-2 rounded text-sm font-medium transition-colors"
             title="Create New Project"
           >
-            <Trash2 className="w-4 h-4" /> New
+            <Plus className="w-4 h-4" /> New
+          </motion.button>
+
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setIsResizeGridOpen(true)}
+            className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-sm font-medium transition-colors"
+            title="Resize Grid"
+          >
+            <Grid className="w-4 h-4" /> Resize Grid
           </motion.button>
 
           <motion.button 
@@ -261,36 +274,40 @@ export default function App() {
           <div className="print-grid-container flex flex-col lg:flex-row gap-6 lg:gap-8 print:flex-row print:gap-4 flex-1">
             
             {/* INPUT Section */}
-            <div className="flex-[2] flex flex-col">
-              <div className={`bg-slate-800 text-white px-3 py-1.5 rounded-t-lg ${pClass('print:bg-gray-200 print:text-black print:border print:border-b-0 print:border-gray-400')}`}>
-                <h2 className="text-sm font-bold tracking-wider uppercase">INPUT</h2>
+            {inputs.length > 0 && (
+              <div className={`${outputs.length > 0 ? 'flex-[2]' : 'flex-grow flex-1'} flex flex-col`}>
+                <div className={`bg-slate-800 text-white px-3 py-1.5 rounded-t-lg ${pClass('print:bg-gray-200 print:text-black print:border print:border-b-0 print:border-gray-400')}`}>
+                  <h2 className="text-sm font-bold tracking-wider uppercase">INPUT</h2>
+                </div>
+                <div 
+                  className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border-t border-l border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border-t print:border-l')}`}
+                  style={{ 
+                    gridTemplateColumns: `repeat(${settings.grid.input.cols}, minmax(0, 1fr))`,
+                    gridAutoRows: '1fr'
+                  }}
+                >
+                  {renderGrid(inputs, settings.grid.input.cols)}
+                </div>
               </div>
-              <div 
-                className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border-t border-l border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border-t print:border-l')}`}
-                style={{ 
-                  gridTemplateColumns: `repeat(${settings.grid.input.cols}, minmax(0, 1fr))`,
-                  gridAutoRows: '1fr'
-                }}
-              >
-                {renderGrid(inputs, settings.grid.input.cols)}
-              </div>
-            </div>
+            )}
             
             {/* OUTPUT Section */}
-            <div className="flex-[1] flex flex-col">
-              <div className={`bg-slate-800 text-white px-3 py-1.5 rounded-t-lg ${pClass('print:bg-gray-200 print:text-black print:border print:border-b-0 print:border-gray-400')}`}>
-                <h2 className="text-sm font-bold tracking-wider uppercase">OUTPUT</h2>
+            {outputs.length > 0 && (
+              <div className={`${inputs.length > 0 ? 'flex-[1]' : 'flex-grow flex-1'} flex flex-col`}>
+                <div className={`bg-slate-800 text-white px-3 py-1.5 rounded-t-lg ${pClass('print:bg-gray-200 print:text-black print:border print:border-b-0 print:border-gray-400')}`}>
+                  <h2 className="text-sm font-bold tracking-wider uppercase">OUTPUT</h2>
+                </div>
+                <div 
+                  className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border-t border-l border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border-t print:border-l')}`}
+                  style={{ 
+                    gridTemplateColumns: `repeat(${settings.grid.output.cols}, minmax(0, 1fr))`,
+                    gridAutoRows: '1fr'
+                  }}
+                >
+                  {renderGrid(outputs, settings.grid.output.cols)}
+                </div>
               </div>
-              <div 
-                className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border-t border-l border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border-t print:border-l')}`}
-                style={{ 
-                  gridTemplateColumns: `repeat(${settings.grid.output.cols}, minmax(0, 1fr))`,
-                  gridAutoRows: '1fr'
-                }}
-              >
-                {renderGrid(outputs, settings.grid.output.cols)}
-              </div>
-            </div>
+            )}
 
           </div>
         </div>
@@ -386,12 +403,29 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* New Project Modal */}
+      {/* New Project Confirm Modal */}
       <AnimatePresence>
-        {isNewProjectOpen && (
-          <NewProjectModal 
-            onClose={() => setIsNewProjectOpen(false)}
-            onConfirm={handleNewProject}
+        {isNewProjectConfirmOpen && (
+          <NewProjectConfirmModal 
+            onClose={() => setIsNewProjectConfirmOpen(false)}
+            onConfirm={() => {
+              handleCreateNewProject();
+              setIsNewProjectConfirmOpen(false);
+              setIsResizeGridOpen(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Resize Grid Modal */}
+      <AnimatePresence>
+        {isResizeGridOpen && (
+          <ResizeGridModal 
+            onClose={() => setIsResizeGridOpen(false)}
+            onConfirm={handleResizeGrid}
+            currentGrid={settings.grid}
+            inputs={inputs}
+            outputs={outputs}
           />
         )}
       </AnimatePresence>
