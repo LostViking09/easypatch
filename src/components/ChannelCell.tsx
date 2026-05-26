@@ -174,25 +174,27 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
         style={{ fontSize: `${0.875 * settings.fontSizes.number}rem` }}
       >
         <span>{channel.number}</span>
-        {channel.stereoLink && (
-          <Link2 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-        )}
       </div>
 
-      {/* Stereo link bracket opening '[' */}
+      {/* Centered Bottom-Aligned Stereo Link Badge */}
       {channel.stereoLink === 'next' && (
-        <div 
-          className="absolute top-1.5 bottom-1.5 left-1.5 w-1.5 border-t-2 border-b-2 border-l-2 rounded-l pointer-events-none z-10 opacity-75"
-          style={{ borderColor: groupBorderColor }}
-        />
+        <div className="absolute bottom-1.5 right-0 translate-x-1/2 z-30 pointer-events-none">
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-[9px] font-bold font-mono select-none">
+            <span>L</span>
+            <Link2 className="w-3 h-3 text-blue-500 flex-shrink-0" />
+            <span>R</span>
+          </div>
+        </div>
       )}
 
-      {/* Stereo link bracket closing ']' */}
       {channel.stereoLink === 'prev' && (
-        <div 
-          className="absolute top-1.5 bottom-1.5 right-1.5 w-1.5 border-t-2 border-b-2 border-r-2 rounded-r pointer-events-none z-10 opacity-75"
-          style={{ borderColor: groupBorderColor }}
-        />
+        <div className="absolute bottom-1.5 left-0 -translate-x-1/2 z-30 pointer-events-none">
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-[9px] font-bold font-mono select-none">
+            <span>L</span>
+            <Link2 className="w-3 h-3 text-blue-500 flex-shrink-0" />
+            <span>R</span>
+          </div>
+        </div>
       )}
       
       <div className="mt-4 sm:mt-5 flex-1 flex flex-col justify-center items-center text-center w-full z-10">
