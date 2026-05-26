@@ -61,7 +61,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
 
   return (
     <motion.div 
-      layout
+      layout="position"
       transition={{ type: "spring", stiffness: 450, damping: 38 }}
       draggable
       onDragStart={(e) => {

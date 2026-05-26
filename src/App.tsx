@@ -99,7 +99,8 @@ export default function App() {
   };
 
   const renderGrid = (channels: Channel[], columns: number) => {
-    return channels.map((ch, index) => {
+    if (columns <= 0) return null;
+    const cells = channels.map((ch, index) => {
       const isInGroup = !!ch.group && ch.group.trim() !== '';
       const isFirstInGroup = isInGroup && (index === 0 || channels[index - 1].group !== ch.group);
       const isLastInGroup = isInGroup && (index === channels.length - 1 || channels[index + 1].group !== ch.group);
@@ -128,17 +129,119 @@ export default function App() {
         />
       );
     });
+
+    const rows: React.ReactNode[] = [];
+    for (let i = 0; i < cells.length; i += columns) {
+      const rowCells = cells.slice(i, i + columns);
+      rows.push(
+        <div key={i} className="grid-row-wrapper">
+          {rowCells}
+        </div>
+      );
+    }
+    return rows;
   };
 
   const pClass = (cls: string) => settings.useEditorLookInPrint ? '' : cls;
+  const shouldStackPrint = inputs.length > 24 || outputs.length > 16;
 
   return (
-    <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col ${pClass('print:bg-white print:h-screen print:overflow-hidden')}`}>
+    <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white print:min-h-0 print:h-auto print:overflow-visible ${pClass('print:bg-white')}`}>
       <style>{`
+        .grid-row-wrapper {
+          display: contents;
+        }
         @media print {
+          body, html, #root, .main-content, .min-h-screen {
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            background: white !important;
+          }
           .print-grid-container {
+            display: flex !important;
+            max-height: none !important;
+          }
+          .print-grid-container.print-stacked {
+            display: block !important;
+            height: auto !important;
+          }
+          .print-grid-container.print-stacked .print-section-wrapper {
+            display: block !important;
+            margin-bottom: 2.5rem !important;
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+          }
+          .print-grid-container.print-stacked .print-section-wrapper:nth-child(2) {
+            page-break-before: always !important;
+            break-before: page !important;
+          }
+          .print-grid-container.print-side-by-side {
+            flex-direction: row !important;
+            gap: 1.5rem !important;
             height: ${settings.printHeight}vh !important;
-            max-height: ${settings.printHeight}vh !important;
+          }
+          .print-grid-container.print-side-by-side .print-section-wrapper {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+          }
+          
+          /* Print project header page-break rules */
+          .print-header-wrapper {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+            break-after: avoid-page !important;
+          }
+          
+          /* Force header row to stay attached to grid */
+          .print-section-wrapper > div:first-child {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+            break-after: avoid-page !important;
+          }
+          
+          .print-section-wrapper .grid {
+            page-break-before: avoid !important;
+            break-before: avoid !important;
+            break-before: avoid-page !important;
+          }
+          
+          /* When side by side, keep CSS Grid to allow perfect stretching like on editor */
+          .print-side-by-side .grid {
+            display: grid !important;
+            height: 100% !important;
+            grid-auto-rows: 1fr !important;
+          }
+          
+          /* When stacked, use flex rows to allow perfect row stretching and no-split pagination */
+          .print-stacked .grid {
+            display: block !important;
+            height: auto !important;
+            page-break-inside: auto !important;
+            background-color: transparent !important;
+          }
+          .print-stacked .grid-row-wrapper {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            break-inside: avoid-page !important;
+          }
+          /* Each cell is styled as a flex child of the row container */
+          .print-stacked .grid-row-wrapper > div {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 !important;
+            width: calc(100% / var(--grid-cols, 8)) !important;
+            box-sizing: border-box !important;
+            height: auto !important; /* Grow naturally so text is never clipped! */
+            min-height: 5.5rem !important;
           }
         }
       `}</style>
@@ -244,7 +347,7 @@ export default function App() {
 
       {/* Main Content - Grid Layout */}
       <main className="flex-1 p-4 sm:p-6 lg:p-8 flex flex-col print:p-0 print:m-0">
-        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 flex-1 flex flex-col ${pClass('print:border-none print:shadow-none print:p-0')}`}>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 flex-1 flex flex-col print:border-none print:shadow-none print:p-0">
           
           {/* Editable Title & Notes (Screen) */}
           <div className="mb-6 print:hidden flex flex-col gap-2">
@@ -266,16 +369,16 @@ export default function App() {
           </div>
 
           {/* Print Header (Only visible when printing) */}
-          <div className="hidden print:flex flex-col items-center mb-4">
+          <div className="print-header-wrapper hidden print:flex flex-col items-center mb-4">
             <h1 className="text-3xl font-bold">{title}</h1>
             {notes && <p className="text-lg text-gray-700 mt-1">{notes}</p>}
           </div>
-
-          <div className="print-grid-container flex flex-col lg:flex-row gap-6 lg:gap-8 print:flex-row print:gap-4 flex-1">
+ 
+          <div className={`print-grid-container flex flex-col lg:flex-row gap-6 lg:gap-8 flex-1 ${shouldStackPrint ? 'print-stacked' : 'print-side-by-side'}`}>
             
             {/* INPUT Section */}
             {inputs.length > 0 && (
-              <div className={`${outputs.length > 0 ? 'flex-[2]' : 'flex-grow flex-1'} flex flex-col`}>
+              <div className={`print-section-wrapper ${outputs.length > 0 ? 'flex-[2]' : 'flex-grow flex-1'} flex flex-col`}>
                 <div className={`bg-slate-800 text-white px-3 py-1.5 rounded-t-lg ${pClass('print:bg-gray-200 print:text-black print:border print:border-b-0 print:border-gray-400')}`}>
                   <h2 className="text-sm font-bold tracking-wider uppercase">INPUT</h2>
                 </div>
@@ -283,7 +386,8 @@ export default function App() {
                   className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border-t border-l border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border-t print:border-l')}`}
                   style={{ 
                     gridTemplateColumns: `repeat(${settings.grid.input.cols}, minmax(0, 1fr))`,
-                    gridAutoRows: '1fr'
+                    gridAutoRows: '1fr',
+                    ['--grid-cols' as any]: settings.grid.input.cols
                   }}
                 >
                   {renderGrid(inputs, settings.grid.input.cols)}
@@ -293,7 +397,7 @@ export default function App() {
             
             {/* OUTPUT Section */}
             {outputs.length > 0 && (
-              <div className={`${inputs.length > 0 ? 'flex-[1]' : 'flex-grow flex-1'} flex flex-col`}>
+              <div className={`print-section-wrapper ${inputs.length > 0 ? 'flex-[1]' : 'flex-grow flex-1'} flex flex-col`}>
                 <div className={`bg-slate-800 text-white px-3 py-1.5 rounded-t-lg ${pClass('print:bg-gray-200 print:text-black print:border print:border-b-0 print:border-gray-400')}`}>
                   <h2 className="text-sm font-bold tracking-wider uppercase">OUTPUT</h2>
                 </div>
@@ -301,7 +405,8 @@ export default function App() {
                   className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border-t border-l border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border-t print:border-l')}`}
                   style={{ 
                     gridTemplateColumns: `repeat(${settings.grid.output.cols}, minmax(0, 1fr))`,
-                    gridAutoRows: '1fr'
+                    gridAutoRows: '1fr',
+                    ['--grid-cols' as any]: settings.grid.output.cols
                   }}
                 >
                   {renderGrid(outputs, settings.grid.output.cols)}
