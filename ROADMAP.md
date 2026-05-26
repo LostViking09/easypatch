@@ -4,14 +4,6 @@ This document serves as the central repository for planned features, refined ide
 
 ## 📦 Backlog
 
-### 3. Grid Limits & Safe Resizing
-- **Goal:** Allow grid sizes up to 128 inputs, support one-sided patches, and prevent data loss on resize.
-- **Tasks:**
-  - Increase input box limit to 128.
-  - Allow creating patches with *only* inputs or *only* outputs (e.g., 0 inputs).
-  - Refactor "New Project" into "Resize Grid".
-  - *Logic:* When resizing, map existing channel data to the new grid. If the new grid is smaller and data falls out of bounds, warn the user before proceeding.
-
 ### 4. SubSnake Support (Data Layer)
 - **Goal:** Allow users to map main snake inputs to physical subsnakes on stage.
 - **Tasks:**
@@ -36,9 +28,3 @@ This document serves as the central repository for planned features, refined ide
 
 ## 🚀 In Progress
 *(None currently active)*
-
-## ✅ Completed
-- Stereo Channel Support: Visually and functionally link stereo pairs with bidirectional property inheritance, pair swapping drag-and-drop, and premium odd-even pairing layout warning toasts.
-- UI/UX Polish: Added snappy layout animations for drag-and-drop cell swaps, smooth slide interactions for the floating action bar, snappy entry/exit transitions for all 5 modals via AnimatePresence, and premium button micro-interactions using Framer Motion.
-- Remove AI Integration (offline-first, removed `@google/genai` dependency and configuration).
-- Refactor `App.tsx` into modular hooks and components.

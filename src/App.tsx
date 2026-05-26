@@ -146,18 +146,67 @@ export default function App() {
   const shouldStackPrint = inputs.length > 24 || outputs.length > 16;
 
   return (
-    <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white print:min-h-0 print:h-auto print:overflow-visible ${pClass('print:bg-white')}`}>
+    <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')}`}>
       <style>{`
         .grid-row-wrapper {
           display: contents;
         }
         @media print {
-          body, html, #root, .main-content, .min-h-screen {
-            height: auto !important;
-            min-height: 0 !important;
-            overflow: visible !important;
+          body, html, #root {
             background: white !important;
+            ${shouldStackPrint 
+              ? `
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+              `
+              : `
+                height: 100% !important;
+                min-height: 100% !important;
+                overflow: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              `
+            }
           }
+          
+          /* Single-page side-by-side stretching rules */
+          ${!shouldStackPrint ? `
+            .min-h-screen {
+              height: 100% !important;
+              min-height: 100% !important;
+              overflow: hidden !important;
+            }
+            .main-content {
+              height: 100% !important;
+              display: flex !important;
+              flex-direction: column !important;
+              overflow: hidden !important;
+            }
+            .main-content > main {
+              flex: 1 1 0% !important;
+              display: flex !important;
+              flex-direction: column !important;
+              min-height: 0 !important;
+              height: auto !important;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+            .main-content > main > div {
+              flex: 1 1 0% !important;
+              display: flex !important;
+              flex-direction: column !important;
+              min-height: 0 !important;
+              padding: 0 !important;
+            }
+          ` : `
+            .min-h-screen, .main-content {
+              height: auto !important;
+              min-height: 0 !important;
+              overflow: visible !important;
+            }
+          `}
+          
           .print-grid-container {
             display: flex !important;
             max-height: none !important;
@@ -179,7 +228,9 @@ export default function App() {
           .print-grid-container.print-side-by-side {
             flex-direction: row !important;
             gap: 1.5rem !important;
-            height: ${settings.printHeight}vh !important;
+            height: ${settings.printHeight}% !important;
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
           }
           .print-grid-container.print-side-by-side .print-section-wrapper {
             display: flex !important;
