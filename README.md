@@ -19,3 +19,8 @@ The primary goal of EasyPatch is to streamline the setup process for live events
 - Print Optimization: Generate high-contrast, clean layouts specifically designed for physical use on stage or at the mixing console.
 
 EasyPatch helps ensure that your stage setup is accurate, professional, and easy to manage from soundcheck to the final performance.
+
+# Tech Stack
+- Vite
+- React 19
+- Tailwind v4
