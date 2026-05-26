@@ -64,7 +64,62 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       layout
       transition={{ type: "spring", stiffness: 450, damping: 38 }}
       draggable
-      onDragStart={(e) => e.dataTransfer.setData('text/plain', channel.id)}
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', channel.id);
+        
+        if (channel.stereoLink) {
+          const currentEl = e.currentTarget as HTMLElement;
+          const partnerEl = (channel.stereoLink === 'next'
+            ? currentEl.nextElementSibling
+            : currentEl.previousElementSibling) as HTMLElement;
+            
+          if (partnerEl) {
+            const currentRect = currentEl.getBoundingClientRect();
+            const partnerRect = partnerEl.getBoundingClientRect();
+            
+            // Clone both cells and set their widths/heights explicitly to preserve styling
+            const leftClone = (channel.stereoLink === 'next' ? currentEl : partnerEl).cloneNode(true) as HTMLElement;
+            const rightClone = (channel.stereoLink === 'next' ? partnerEl : currentEl).cloneNode(true) as HTMLElement;
+            
+            leftClone.style.width = `${channel.stereoLink === 'next' ? currentRect.width : partnerRect.width}px`;
+            leftClone.style.height = `${channel.stereoLink === 'next' ? currentRect.height : partnerRect.height}px`;
+            rightClone.style.width = `${channel.stereoLink === 'next' ? partnerRect.width : currentRect.width}px`;
+            rightClone.style.height = `${channel.stereoLink === 'next' ? partnerRect.height : currentRect.height}px`;
+            
+            // Wrap in an absolute container to serve as the drag image
+            const dragImage = document.createElement('div');
+            dragImage.style.display = 'flex';
+            dragImage.style.flexDirection = 'row';
+            dragImage.style.position = 'absolute';
+            dragImage.style.top = '-9999px';
+            dragImage.style.left = '-9999px';
+            dragImage.style.zIndex = '-1000';
+            dragImage.style.pointerEvents = 'none';
+            
+            dragImage.appendChild(leftClone);
+            dragImage.appendChild(rightClone);
+            document.body.appendChild(dragImage);
+            
+            // Calculate drag offsets relative to the combined drag image
+            const x = e.clientX - currentRect.left;
+            const y = e.clientY - currentRect.top;
+            
+            let dragX = x;
+            if (channel.stereoLink === 'prev') {
+              dragX += partnerRect.width;
+            }
+            
+            e.dataTransfer.setDragImage(dragImage, dragX, y);
+            
+            // Remove the off-screen clone container after drag starts
+            setTimeout(() => {
+              if (dragImage.parentNode) {
+                document.body.removeChild(dragImage);
+              }
+            }, 0);
+          }
+        }
+      }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         e.preventDefault();
@@ -72,7 +127,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       }}
       onClick={onClick}
       style={style}
-      className={`relative flex flex-col p-2 sm:p-3 cursor-pointer hover:shadow-md transition-all min-h-[5.5rem] ${pClass('print:min-h-0')} overflow-hidden group ${isSelected ? 'z-20' : ''}`}
+      className={`relative flex flex-col p-2 sm:p-3 cursor-pointer hover:shadow-md transition-shadow duration-150 min-h-[5.5rem] ${pClass('print:min-h-0')} overflow-hidden group ${isSelected ? 'z-20' : ''}`}
     >
       {/* Selection Overlay */}
       {isSelected && (
