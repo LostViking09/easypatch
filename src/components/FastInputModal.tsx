@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { Channel } from '../types';
 import { motion } from 'motion/react';
@@ -14,6 +14,16 @@ export const FastInputModal: React.FC<FastInputModalProps> = ({ inputs, outputs,
   const [inText, setInText] = useState(inputs.map(c => c.name).join('\n'));
   const [outText, setOutText] = useState(outputs.map(c => c.name).join('\n'));
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const handleSave = () => {
     const inLines = inText.split('\n');
     const outLines = outText.split('\n');
@@ -22,6 +32,7 @@ export const FastInputModal: React.FC<FastInputModalProps> = ({ inputs, outputs,
     const newOutputs = outputs.map((ch, i) => ({ ...ch, name: outLines[i] || '' }));
     
     onSave(newInputs, newOutputs);
+    onClose();
   };
 
   return (

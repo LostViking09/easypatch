@@ -29,6 +29,16 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
     inputRef.current?.focus();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const handleGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newGroup = e.target.value;
     setFormData(prev => {
@@ -44,6 +54,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
+    onClose();
   };
 
   return (

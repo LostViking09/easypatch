@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { hexToRgba } from '../utils/colors';
 import { motion } from 'motion/react';
@@ -13,6 +13,21 @@ interface MultiEditModalProps {
 export const MultiEditModal: React.FC<MultiEditModalProps> = ({ selectedCount, activePalette, onClose, onSave }) => {
   const [group, setGroup] = useState('');
   const [color, setColor] = useState('');
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const handleSave = () => {
+    onSave(group, color);
+    onClose();
+  };
 
   return (
     <motion.div 
@@ -77,7 +92,7 @@ export const MultiEditModal: React.FC<MultiEditModalProps> = ({ selectedCount, a
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => onSave(group, color)} 
+            onClick={handleSave} 
             type="button"
             className="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-md"
           >

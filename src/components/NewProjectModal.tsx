@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -19,12 +19,27 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ onClose, onCon
   const [inputGrid, setInputGrid] = useState({ rows: 3, cols: 8 });
   const [outputGrid, setOutputGrid] = useState({ rows: 3, cols: 4 });
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const preset = PRESETS.find(p => p.name === e.target.value);
     if (preset) {
       setInputGrid(preset.in);
       setOutputGrid(preset.out);
     }
+  };
+
+  const handleConfirm = () => {
+    onConfirm(inputGrid, outputGrid);
+    onClose();
   };
 
   return (
@@ -137,7 +152,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ onClose, onCon
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => onConfirm(inputGrid, outputGrid)}
+            onClick={handleConfirm}
             className="px-6 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-md shadow-sm transition-colors"
           >
             Create
