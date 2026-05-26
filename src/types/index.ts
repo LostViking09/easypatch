@@ -6,6 +6,7 @@ export type Channel = {
   tech: string;
   color: string;
   group?: string;
+  stereoLink?: 'next' | 'prev';
 };
 
 export type SettingsConfig = {

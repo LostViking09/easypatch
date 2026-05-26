@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckSquare } from 'lucide-react';
+import { CheckSquare, Link2 } from 'lucide-react';
 import { Channel, SettingsConfig } from '../types';
 import { hexToRgba } from '../utils/colors';
 import { motion } from 'motion/react';
@@ -115,11 +115,30 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       )}
 
       <div 
-        className={`absolute top-1 left-2 font-mono font-bold tracking-tighter text-gray-500 group-hover:text-gray-800 ${pClass('print:text-black')} z-10`}
+        className={`absolute top-1 left-2 flex items-center gap-1 font-mono font-bold tracking-tighter text-gray-500 group-hover:text-gray-800 ${pClass('print:text-black')} z-10`}
         style={{ fontSize: `${0.875 * settings.fontSizes.number}rem` }}
       >
-        {channel.number}
+        <span>{channel.number}</span>
+        {channel.stereoLink && (
+          <Link2 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+        )}
       </div>
+
+      {/* Stereo link bracket opening '[' */}
+      {channel.stereoLink === 'next' && (
+        <div 
+          className="absolute top-1.5 bottom-1.5 left-1.5 w-1.5 border-t-2 border-b-2 border-l-2 rounded-l pointer-events-none z-10 opacity-75"
+          style={{ borderColor: groupBorderColor }}
+        />
+      )}
+
+      {/* Stereo link bracket closing ']' */}
+      {channel.stereoLink === 'prev' && (
+        <div 
+          className="absolute top-1.5 bottom-1.5 right-1.5 w-1.5 border-t-2 border-b-2 border-r-2 rounded-r pointer-events-none z-10 opacity-75"
+          style={{ borderColor: groupBorderColor }}
+        />
+      )}
       
       <div className="mt-4 sm:mt-5 flex-1 flex flex-col justify-center items-center text-center w-full z-10">
         <div 

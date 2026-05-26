@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Pipette, ChevronDown } from 'lucide-react';
+import { X, Save, Pipette, ChevronDown, AlertCircle, Link2 } from 'lucide-react';
 import { Channel, SettingsConfig } from '../types';
 import { PALETTES } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
@@ -16,6 +16,14 @@ interface EditModalProps {
 export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, settings, onClose, onSave }) => {
   const [formData, setFormData] = useState<Channel>({ ...channel });
   const activePalette = PALETTES[settings.palette];
+
+  const sameTypeChannels = allChannels.filter(c => c.type === channel.type);
+  const hasPrev = channel.number > 1;
+  const hasNext = channel.number < sameTypeChannels.length;
+
+  const isEvenToOddPair = 
+    (formData.stereoLink === 'next' && formData.number % 2 === 0) ||
+    (formData.stereoLink === 'prev' && formData.number % 2 !== 0);
 
   // Combobox State
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -288,6 +296,67 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
               )}
             </AnimatePresence>
             <p className="text-xs text-gray-500 mt-1">Channels with the same group name are linked. Selecting an existing group applies its color.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
+              <Link2 className="w-4 h-4 text-gray-500" />
+              <span>Stereo Link</span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, stereoLink: undefined })}
+                className={`py-2 px-3 text-xs font-bold rounded-md border transition-all ${
+                  !formData.stereoLink
+                    ? 'bg-slate-800 text-white border-slate-800 shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                None
+              </button>
+              <button
+                type="button"
+                disabled={!hasNext}
+                onClick={() => setFormData({ ...formData, stereoLink: 'next' })}
+                className={`py-2 px-3 text-xs font-bold rounded-md border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                  formData.stereoLink === 'next'
+                    ? 'bg-slate-800 text-white border-slate-800 shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Link to Next (+1)
+              </button>
+              <button
+                type="button"
+                disabled={!hasPrev}
+                onClick={() => setFormData({ ...formData, stereoLink: 'prev' })}
+                className={`py-2 px-3 text-xs font-bold rounded-md border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                  formData.stereoLink === 'prev'
+                    ? 'bg-slate-800 text-white border-slate-800 shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Link to Prev (-1)
+              </button>
+            </div>
+            
+            <AnimatePresence>
+              {isEvenToOddPair && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -10 }}
+                  className="mt-2.5 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md flex gap-2 items-start text-xs leading-relaxed overflow-hidden"
+                >
+                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block mb-0.5">Non-standard console pairing warning!</span>
+                    Consoles usually require odd+even pairings (e.g., 1-2, 3-4). Linking Ch {formData.number} with Ch {formData.stereoLink === 'next' ? formData.number + 1 : formData.number - 1} forms a {formData.stereoLink === 'next' ? `${formData.number}-${formData.number + 1}` : `${formData.number - 1}-${formData.number}`} pair.
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div>

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Printer, Download, Upload, Settings, Save, Edit3, Palette, Trash2, ListOrdered, CheckSquare } from 'lucide-react';
+import { Printer, Download, Upload, Settings, Save, Edit3, Palette, Trash2, ListOrdered, CheckSquare, AlertCircle, X } from 'lucide-react';
 import { Channel } from './types';
 import { usePatchState } from './hooks/usePatchState';
 import { ChannelCell } from './components/ChannelCell';
@@ -34,6 +34,22 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isMultiEditModalOpen, setIsMultiEditModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [toast, setToast] = useState<{ message: string; type: 'warning' | 'info' } | null>(null);
+
+  React.useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const handleCellDrop = (sourceId: string, targetId: string) => {
+    const warning = handleDrop(sourceId, targetId);
+    if (warning) {
+      setToast({ message: warning, type: 'warning' });
+    }
+  };
 
   const handleMultiEditSave = (group: string, color: string) => {
     const updateList = (list: Channel[]) => list.map(ch => {
@@ -100,7 +116,7 @@ export default function App() {
             }
           }}
           isSelected={selectedIds.includes(ch.id)}
-          onDrop={handleDrop}
+          onDrop={handleCellDrop}
           isInGroup={isInGroup}
           isFirstInGroup={isFirstInGroup}
           isLastInGroup={isLastInGroup}
@@ -377,6 +393,28 @@ export default function App() {
             onClose={() => setIsNewProjectOpen(false)}
             onConfirm={handleNewProject}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: -50, x: "-50%" }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed top-6 left-1/2 z-50 bg-amber-500 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-semibold max-w-md border border-amber-400 print:hidden"
+          >
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <div className="flex-1">{toast.message}</div>
+            <button 
+              onClick={() => setToast(null)} 
+              className="ml-2 hover:bg-white/20 p-1 rounded-full transition-colors flex items-center justify-center"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

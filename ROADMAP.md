@@ -4,13 +4,6 @@ This document serves as the central repository for planned features, refined ide
 
 ## 📦 Backlog
 
-### 2. Smart Grouping Rework
-- **Goal:** Improve the UI for selecting existing groups and prioritize neighbor groups.
-- **Tasks:**
-  - Replace the native `<datalist>` in the Edit Modal with a custom Combobox/Dropdown.
-  - *Logic:* When opening the dropdown, check the channel immediately before and after the currently selected channel. If they have groups, push those group names to the top of the suggestion list.
-  - Ensure users can still easily type to create brand new groups.
-
 ### 3. Grid Limits & Safe Resizing
 - **Goal:** Allow grid sizes up to 128 inputs, support one-sided patches, and prevent data loss on resize.
 - **Tasks:**
@@ -39,20 +32,13 @@ This document serves as the central repository for planned features, refined ide
   - Columns should include: Main IO, SubSnake IO, Group, Channel, Mic/DI type, Stand type, Notes.
   - *Constraint:* This view will be **read-only** in the first iteration. 
 
-### 7. Stereo Channel Support
-- **Goal:** Visually and functionally link stereo pairs without hacking the "Group" system.
-- **Tasks:**
-  - Add `stereoLink` (next/prev) to the `Channel` type.
-  - Visually link the cells in the grid (e.g., a bracket `[`).
-  - Ensure stereo pairs inherit group appearances together.
-  - *Warning Logic:* If a user tries to link an even channel to the next odd channel (e.g., Ch 2 to Ch 3), show a non-blocking warning that consoles usually require odd+even pairings (e.g., 1-2, 3-4).
-
 ---
 
 ## 🚀 In Progress
 *(None currently active)*
 
 ## ✅ Completed
+- Stereo Channel Support: Visually and functionally link stereo pairs with bidirectional property inheritance, pair swapping drag-and-drop, and premium odd-even pairing layout warning toasts.
 - UI/UX Polish: Added snappy layout animations for drag-and-drop cell swaps, smooth slide interactions for the floating action bar, snappy entry/exit transitions for all 5 modals via AnimatePresence, and premium button micro-interactions using Framer Motion.
 - Remove AI Integration (offline-first, removed `@google/genai` dependency and configuration).
 - Refactor `App.tsx` into modular hooks and components.
