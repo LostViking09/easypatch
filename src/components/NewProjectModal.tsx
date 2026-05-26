@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Trash2, X } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface NewProjectModalProps {
   onClose: () => void;
@@ -27,15 +28,32 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ onClose, onCon
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
+    >
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 450, damping: 35 }}
+        className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden"
+      >
         <div className="bg-emerald-800 text-white px-4 py-3 flex justify-between items-center">
           <h3 className="font-bold flex items-center gap-2">
             <Trash2 className="w-5 h-5" /> Create New Project
           </h3>
-          <button onClick={onClose} className="text-emerald-200 hover:text-white transition-colors">
+          <motion.button 
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onClose} 
+            className="text-emerald-200 hover:text-white transition-colors"
+          >
             <X className="w-5 h-5" />
-          </button>
+          </motion.button>
         </div>
 
         <div className="p-6 space-y-6">
@@ -108,20 +126,24 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ onClose, onCon
         </div>
 
         <div className="p-4 bg-gray-50 border-t flex justify-end gap-3">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
           >
             Cancel
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => onConfirm(inputGrid, outputGrid)}
             className="px-6 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-md shadow-sm transition-colors"
           >
             Create
-          </button>
+          </motion.button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

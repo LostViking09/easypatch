@@ -3,6 +3,7 @@ import { X, Save, Pipette } from 'lucide-react';
 import { Channel, SettingsConfig } from '../types';
 import { PALETTES } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
+import { motion } from 'motion/react';
 
 interface EditModalProps {
   channel: Channel;
@@ -46,16 +47,34 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
+    >
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 450, damping: 35 }}
+        className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden"
+      >
         
         <div className="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
           <h3 className="font-bold">
             Edit {channel.type === 'in' ? 'Input' : 'Output'} {channel.number}
           </h3>
-          <button onClick={onClose} className="text-slate-300 hover:text-white transition-colors">
+          <motion.button 
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onClose} 
+            type="button"
+            className="text-slate-300 hover:text-white transition-colors"
+          >
             <X className="w-5 h-5" />
-          </button>
+          </motion.button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
@@ -102,9 +121,11 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
             <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
             <div className="flex flex-wrap gap-2 items-center">
               {activePalette.map(color => (
-                <button
+                <motion.button
                   key={color.value}
                   type="button"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setFormData({ ...formData, color: color.value })}
                   style={{ 
                     backgroundColor: hexToRgba(color.value, 0.4),
@@ -121,7 +142,12 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
               
               <div className="w-px h-8 bg-gray-300 mx-1"></div>
               
-              <div className="relative w-10 h-10 rounded-md border-2 border-gray-300 overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center bg-gray-50" title="Custom color">
+              <motion.div 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="relative w-10 h-10 rounded-md border-2 border-gray-300 overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center bg-gray-50" 
+                title="Custom color"
+              >
                 <Pipette className="w-5 h-5 text-gray-500" />
                 <input 
                   type="color" 
@@ -129,27 +155,31 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
                   onChange={e => setFormData({ ...formData, color: e.target.value })}
                   className="absolute inset-[-10px] w-16 h-16 cursor-pointer opacity-0"
                 />
-              </div>
+              </motion.div>
             </div>
           </div>
 
           <div className="pt-4 flex justify-end gap-3">
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="submit"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-sm"
             >
               <Save className="w-4 h-4" /> Save
-            </button>
+            </motion.button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

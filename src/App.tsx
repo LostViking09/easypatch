@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Printer, Download, Upload, Settings, Save, Edit3, Palette, Trash2, ListOrdered, CheckSquare } from 'lucide-react';
 import { Channel } from './types';
 import { usePatchState } from './hooks/usePatchState';
@@ -132,14 +133,18 @@ export default function App() {
         </div>
         
         <div className="flex flex-wrap justify-center gap-2">
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setIsFastInputOpen(true)}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-3 py-2 rounded text-sm font-medium transition-colors"
           >
             <ListOrdered className="w-4 h-4" /> Fast Input
-          </button>
+          </motion.button>
 
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               setIsMultiEdit(!isMultiEdit);
               if (isMultiEdit) setSelectedIds([]);
@@ -147,16 +152,18 @@ export default function App() {
             className={`flex items-center gap-2 px-4 py-2 rounded text-sm transition-all duration-200 ${isMultiEdit ? 'bg-blue-600 ring-4 ring-blue-400/50 text-white font-bold shadow-lg scale-105' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium'}`}
           >
             <CheckSquare className="w-4 h-4" /> Multi-Select
-          </button>
+          </motion.button>
 
           <div className="w-px h-8 bg-slate-700 mx-1 hidden sm:block"></div>
 
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-sm font-medium transition-colors"
           >
             <Upload className="w-4 h-4" /> Import
-          </button>
+          </motion.button>
           <input 
             type="file" 
             accept=".easypatch,.json" 
@@ -165,36 +172,44 @@ export default function App() {
             onChange={handleImport} 
           />
           
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleExport}
             className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-sm font-medium transition-colors"
           >
             <Download className="w-4 h-4" /> Export
-          </button>
+          </motion.button>
 
           <div className="w-px h-8 bg-slate-700 mx-1 hidden sm:block"></div>
 
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setIsNewProjectOpen(true)}
             className="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 px-3 py-2 rounded text-sm font-medium transition-colors"
             title="Create New Project"
           >
             <Trash2 className="w-4 h-4" /> New
-          </button>
+          </motion.button>
 
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-sm font-medium transition-colors"
           >
             <Palette className="w-4 h-4" /> Settings
-          </button>
+          </motion.button>
 
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => window.print()}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-bold transition-colors ml-2"
           >
             <Printer className="w-4 h-4" /> Print
-          </button>
+          </motion.button>
         </div>
       </header>
 
@@ -267,70 +282,103 @@ export default function App() {
       </div> {/* End main-content */}
 
       {/* Floating Action Bar for Multi-edit */}
-      {isMultiEdit && selectedIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-6 z-40 animate-in slide-in-from-bottom-10">
-          <div className="font-bold">{selectedIds.length} channels selected</div>
-          <div className="flex gap-2">
-            <button onClick={() => setIsMultiEditModalOpen(true)} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full text-sm font-bold transition-colors">
-              Edit
-            </button>
-            <button onClick={handleMultiEditClear} className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-full text-sm font-bold transition-colors">
-              Clear Cells
-            </button>
-            <button onClick={() => setSelectedIds([])} className="bg-slate-600 hover:bg-slate-500 px-4 py-2 rounded-full text-sm font-bold transition-colors">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {isMultiEdit && selectedIds.length > 0 && (
+          <motion.div 
+            initial={{ y: 80, x: "-50%", opacity: 0 }}
+            animate={{ y: 0, x: "-50%", opacity: 1 }}
+            exit={{ y: 80, x: "-50%", opacity: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed bottom-6 left-1/2 bg-slate-800 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-6 z-40"
+          >
+            <div className="font-bold">{selectedIds.length} channels selected</div>
+            <div className="flex gap-2">
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsMultiEditModalOpen(true)} 
+                className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full text-sm font-bold transition-colors"
+              >
+                Edit
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleMultiEditClear} 
+                className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-full text-sm font-bold transition-colors"
+              >
+                Clear Cells
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedIds([])} 
+                className="bg-slate-600 hover:bg-slate-500 px-4 py-2 rounded-full text-sm font-bold transition-colors"
+              >
+                Cancel
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Edit Modal */}
-      {editingChannel && (
-        <EditModal 
-          channel={editingChannel} 
-          allChannels={[...inputs, ...outputs]}
-          settings={settings}
-          onClose={() => setEditingChannel(null)} 
-          onSave={saveEdit} 
-        />
-      )}
+      <AnimatePresence>
+        {editingChannel && (
+          <EditModal 
+            channel={editingChannel} 
+            allChannels={[...inputs, ...outputs]}
+            settings={settings}
+            onClose={() => setEditingChannel(null)} 
+            onSave={saveEdit} 
+          />
+        )}
+      </AnimatePresence>
 
       {/* Fast Input Modal */}
-      {isFastInputOpen && (
-        <FastInputModal 
-          inputs={inputs}
-          outputs={outputs}
-          onClose={() => setIsFastInputOpen(false)}
-          onSave={saveFastInput}
-        />
-      )}
+      <AnimatePresence>
+        {isFastInputOpen && (
+          <FastInputModal 
+            inputs={inputs}
+            outputs={outputs}
+            onClose={() => setIsFastInputOpen(false)}
+            onSave={saveFastInput}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Multi-Edit Modal */}
-      {isMultiEditModalOpen && (
-        <MultiEditModal 
-          selectedCount={selectedIds.length}
-          activePalette={PALETTES[settings.palette]}
-          onClose={() => setIsMultiEditModalOpen(false)}
-          onSave={handleMultiEditSave}
-        />
-      )}
+      <AnimatePresence>
+        {isMultiEditModalOpen && (
+          <MultiEditModal 
+            selectedCount={selectedIds.length}
+            activePalette={PALETTES[settings.palette]}
+            onClose={() => setIsMultiEditModalOpen(false)}
+            onSave={handleMultiEditSave}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Settings Modal */}
-      {isSettingsOpen && (
-        <SettingsModal 
-          settings={settings} 
-          setSettings={setSettings} 
-          onClose={() => setIsSettingsOpen(false)} 
-        />
-      )}
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <SettingsModal 
+            settings={settings} 
+            setSettings={setSettings} 
+            onClose={() => setIsSettingsOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
 
       {/* New Project Modal */}
-      {isNewProjectOpen && (
-        <NewProjectModal 
-          onClose={() => setIsNewProjectOpen(false)}
-          onConfirm={handleNewProject}
-        />
-      )}
+      <AnimatePresence>
+        {isNewProjectOpen && (
+          <NewProjectModal 
+            onClose={() => setIsNewProjectOpen(false)}
+            onConfirm={handleNewProject}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -4,13 +4,6 @@ This document serves as the central repository for planned features, refined ide
 
 ## 📦 Backlog
 
-### 1. UI/UX Polish (Framer Motion)
-- **Goal:** Add subtle, fast animations using Framer Motion to make the app feel premium without slowing down the user workflow.
-- **Tasks:**
-  - Implement `<motion.div layout>` for grid items so they rearrange smoothly during drag-and-drop.
-  - Add very fast (e.g., 50-100ms) micro-interactions for modals and buttons.
-  - *Constraint:* Never artificially increase wait times; workflow speed is the #1 priority.
-
 ### 2. Smart Grouping Rework
 - **Goal:** Improve the UI for selecting existing groups and prioritize neighbor groups.
 - **Tasks:**
@@ -60,5 +53,6 @@ This document serves as the central repository for planned features, refined ide
 *(None currently active)*
 
 ## ✅ Completed
+- UI/UX Polish: Added snappy layout animations for drag-and-drop cell swaps, smooth slide interactions for the floating action bar, snappy entry/exit transitions for all 5 modals via AnimatePresence, and premium button micro-interactions using Framer Motion.
 - Remove AI Integration (offline-first, removed `@google/genai` dependency and configuration).
 - Refactor `App.tsx` into modular hooks and components.

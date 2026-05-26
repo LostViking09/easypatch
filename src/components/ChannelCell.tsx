@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckSquare } from 'lucide-react';
 import { Channel, SettingsConfig } from '../types';
 import { hexToRgba } from '../utils/colors';
+import { motion } from 'motion/react';
 
 interface ChannelCellProps {
   channel: Channel;
@@ -59,7 +60,9 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
   const pClass = (cls: string) => settings.useEditorLookInPrint ? '' : cls;
 
   return (
-    <div 
+    <motion.div 
+      layout
+      transition={{ type: "spring", stiffness: 450, damping: 38 }}
       draggable
       onDragStart={(e) => e.dataTransfer.setData('text/plain', channel.id)}
       onDragOver={(e) => e.preventDefault()}
@@ -132,6 +135,6 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
           {channel.tech || <span className="text-transparent select-none print:hidden">_</span>}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

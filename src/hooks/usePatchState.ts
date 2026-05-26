@@ -58,9 +58,9 @@ export function usePatchState() {
     const sourceIdx = list.findIndex(c => c.id === sourceId);
     const targetIdx = list.findIndex(c => c.id === targetId);
 
-    const temp = { ...list[sourceIdx] };
-    list[sourceIdx] = { ...list[targetIdx], id: list[sourceIdx].id, number: list[sourceIdx].number, type: list[sourceIdx].type };
-    list[targetIdx] = { ...temp, id: list[targetIdx].id, number: list[targetIdx].number, type: list[targetIdx].type };
+    const temp = list[sourceIdx];
+    list[sourceIdx] = { ...list[targetIdx], number: sourceIdx + 1 };
+    list[targetIdx] = { ...temp, number: targetIdx + 1 };
 
     if (sourceIsInput) setInputs(list);
     else setOutputs(list);
