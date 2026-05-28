@@ -6,8 +6,6 @@ This document serves as the central repository for planned features, refined ide
 
 ### BUGS
 
-- EDIT dialog not scrollable
-
 ### 1. App.tsx refactor
 
 - It's obviously too large again
