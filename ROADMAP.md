@@ -4,6 +4,10 @@ This document serves as the central repository for planned features, refined ide
 
 ## 📦 Backlog
 
+### UI / UX
+
+- If multi select is enabled, the bottom bar should appear even when no inputs are selected. Buttons in this case should be disabled state.
+
 ### 5. SubSnake View Excerpt (Read-Only)
 
 - **Goal:** Provide a custom visual layout for specific subsnakes.
