@@ -6,10 +6,6 @@ This document serves as the central repository for planned features, refined ide
 
 ### BUGS
 
-### 1. App.tsx refactor
-
-- It's obviously too large again
-
 ### 5. SubSnake View Excerpt (Read-Only)
 
 - **Goal:** Provide a custom visual layout for specific subsnakes.
@@ -17,6 +13,7 @@ This document serves as the central repository for planned features, refined ide
   - Build a View Switcher (Main Grid vs SubSnakes).
   - Allow defining custom grid layouts (e.g., 3x4, 2x4) for a SubSnake.
   - _Constraint:_ This view will be **read-only** in the first iteration to simplify implementation. It will just display the data mapped in the main view.
+  - Also allow to toggle this view to be included in the printouts (separate page, similar page breaks as defined in the original printout rules.)
 
 ### 6. Table View (Read-Only)
 

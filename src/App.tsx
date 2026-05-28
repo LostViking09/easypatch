@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence, MotionGlobalConfig } from 'motion/react';
-import { AlertCircle, X } from 'lucide-react';
+import { AlertCircle, X, LayoutGrid, Network } from 'lucide-react';
 import { Channel } from './types';
 import { usePatchState } from './hooks/usePatchState';
 import { useMultiSelect } from './hooks/useMultiSelect';
@@ -11,6 +11,7 @@ import { ProjectHeader } from './features/ProjectHeader/ProjectHeader';
 import { PatchGridSection } from './features/PatchGrid/PatchGridSection';
 import { MultiEditBar } from './features/MultiEditBar/MultiEditBar';
 import { AppModals } from './features/Modals/AppModals';
+import { SubSnakeView } from './features/SubSnakeView/SubSnakeView';
 
 export default function App() {
   const {
@@ -42,6 +43,7 @@ export default function App() {
   const [isMultiColorOpen, setIsMultiColorOpen] = useState(false);
   const [isAssignSubSnakeOpen, setIsAssignSubSnakeOpen] = useState(false);
   const [isSubSnakesOpen, setIsSubSnakesOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<'main' | 'subsnake'>('main');
 
   const { toast, setToast } = useToast();
 
@@ -168,6 +170,8 @@ export default function App() {
 
   const pClass = (cls: string) => settings.useEditorLookInPrint ? '' : cls;
   const shouldStackPrint = inputs.length > 24 || outputs.length > 16;
+  const activeView = (currentView === 'main' || subSnakes.some(s => s.id === currentView)) ? currentView : 'main';
+  const isMultiPagePrint = shouldStackPrint || activeView !== 'main' || (settings.includeSubSnakesInPrint && subSnakes.length > 0);
 
   return (
     <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')}`}>
@@ -178,7 +182,7 @@ export default function App() {
         @media print {
           body, html, #root {
             background: white !important;
-            ${shouldStackPrint
+            ${isMultiPagePrint
           ? `
                 height: auto !important;
                 min-height: 0 !important;
@@ -195,7 +199,7 @@ export default function App() {
           }
           
           /* Single-page side-by-side stretching rules */
-          ${!shouldStackPrint ? `
+          ${!isMultiPagePrint ? `
             .min-h-screen {
               height: 100% !important;
               min-height: 100% !important;
@@ -318,6 +322,17 @@ export default function App() {
             height: auto !important; /* Grow naturally so text is never clipped! */
             min-height: 5.5rem !important;
           }
+          
+          .print-subsnake-page-break {
+            page-break-before: always !important;
+            break-before: page !important;
+          }
+          
+          .print-avoid-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            break-inside: avoid-page !important;
+          }
         }
       `}</style>
 
@@ -338,15 +353,62 @@ export default function App() {
         {/* Main Content - Grid Layout */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 flex flex-col print:p-0 print:m-0">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 flex-1 flex flex-col print:border-none print:shadow-none print:p-0">
-            
-            <ProjectHeader
-              title={title}
-              setTitle={setTitle}
-              notes={notes}
-              setNotes={setNotes}
-            />
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 print:mb-0 print:gap-0">
+              <ProjectHeader
+                title={title}
+                setTitle={setTitle}
+                notes={notes}
+                setNotes={setNotes}
+              />
 
-            <div className={`print-grid-container flex flex-col lg:flex-row gap-6 lg:gap-8 flex-1 ${shouldStackPrint ? 'print-stacked' : 'print-side-by-side'}`}>
+              {/* View Switcher Segmented Control */}
+              <div className="flex items-center gap-1 bg-slate-105 p-1 rounded-xl border border-slate-200 self-start md:self-auto shadow-3xs flex-wrap max-w-full print:hidden">
+                <button
+                  onClick={() => setCurrentView('main')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                    activeView === 'main'
+                      ? 'bg-white text-slate-800 shadow-sm border border-slate-250'
+                      : 'text-slate-555 hover:text-slate-850 hover:bg-slate-200'
+                  }`}
+                >
+                  <LayoutGrid className="w-4 h-4 text-slate-500" />
+                  <span>Main I/O</span>
+                </button>
+
+                {subSnakes.map(snake => {
+                  const portCount = inputs.filter(c => c.subSnakeId === snake.id).length + outputs.filter(c => c.subSnakeId === snake.id).length;
+                  return (
+                    <button
+                      key={snake.id}
+                      onClick={() => setCurrentView(snake.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                        activeView === snake.id
+                          ? 'bg-white text-slate-800 shadow-sm border border-slate-250'
+                          : 'text-slate-555 hover:text-slate-850 hover:bg-slate-200'
+                      }`}
+                    >
+                      <Network 
+                        className="w-4 h-4" 
+                        style={{ color: snake.color && snake.color !== '#ffffff' ? snake.color : '#64748b' }} 
+                      />
+                      <span>{snake.name}</span>
+                      {portCount > 0 && (
+                        <span className="text-[9px] bg-slate-200/80 text-slate-700 px-1.5 py-0.5 rounded-full font-extrabold ml-0.5">
+                          {portCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Main Patch Grid */}
+            <div 
+              className={`print-grid-container flex-col lg:flex-row gap-6 lg:gap-8 flex-1 ${
+                shouldStackPrint ? 'print-stacked' : 'print-side-by-side'
+              } ${activeView === 'main' ? 'flex print:flex' : 'hidden print:hidden'}`}
+            >
               <PatchGridSection
                 channels={inputs}
                 type="INPUT"
@@ -374,6 +436,26 @@ export default function App() {
                 onCellDrop={handleCellDrop}
                 onCellMouseDown={handleCellMouseDown}
                 onCellMouseEnter={handleCellMouseEnter}
+              />
+            </div>
+
+            {/* SubSnake Excerpts View */}
+            <div 
+              className={`${
+                activeView !== 'main' 
+                  ? 'block print:block' 
+                  : `hidden ${settings.includeSubSnakesInPrint ? 'print:block print-subsnake-page-break' : 'print:hidden'}`
+              }`}
+            >
+              <SubSnakeView
+                subSnakes={subSnakes}
+                inputs={inputs}
+                outputs={outputs}
+                settings={settings}
+                selectedSubSnakeId={activeView === 'main' ? 'all' : activeView}
+                isPrintMode={activeView === 'main'}
+                projectTitle={title}
+                projectNotes={notes}
               />
             </div>
           </div>

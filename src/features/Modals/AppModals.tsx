@@ -45,12 +45,12 @@ interface AppModalsProps {
   handleMassAssignGroup: (group: string, colorMode: 'none' | 'uncolored' | 'all') => void;
   handleMassAssignColor: (color: string) => void;
   handleMassAssignSubSnake: (subSnakeId: string, startPort: number) => void;
-  addSubSnake: (s: any) => void;
-  updateSubSnake: (s: any) => void;
+  addSubSnake: (name: string, color?: string, grid?: any) => any;
+  updateSubSnake: (id: string, name: string, color?: string, grid?: any) => void;
   deleteSubSnake: (id: string) => void;
   clearSubSnakeAssignments: (id: string) => void;
   handleCreateNewProject: () => void;
-  handleResizeGrid: (g: any) => void;
+  handleResizeGrid: (inputGrid: { rows: number; cols: number }, outputGrid: { rows: number; cols: number }) => void;
 }
 
 export function AppModals({

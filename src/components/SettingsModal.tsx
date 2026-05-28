@@ -154,6 +154,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
               <label className="flex items-center gap-3 cursor-pointer border-t pt-3 border-gray-200">
                 <input 
                   type="checkbox" 
+                  checked={settings.includeSubSnakesInPrint !== false}
+                  onChange={(e) => setSettings({ ...settings, includeSubSnakesInPrint: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <div>
+                  <div className="font-medium text-sm">Include SubSnake views in printouts</div>
+                  <div className="text-xs text-gray-500">Appends the SubSnake layout excerpt pages to the printed document.</div>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer border-t pt-3 border-gray-200">
+                <input 
+                  type="checkbox" 
                   checked={settings.confirmSubsnakeOverwrite !== false}
                   onChange={(e) => setSettings({ ...settings, confirmSubsnakeOverwrite: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded"
