@@ -6,6 +6,10 @@ This document serves as the central repository for planned features, refined ide
 
 ### BUGS
 
+### 1. Snippets
+
+- **Goal:** Quickly insert data, like 8 drum channels from a snippet list into the patch
+
 ### 5. SubSnake View Excerpt (Read-Only)
 
 - **Goal:** Provide a custom visual layout for specific subsnakes.

@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckSquare, Link2 } from 'lucide-react';
 import { Channel, SettingsConfig } from '../types';
-import { hexToRgba } from '../utils/colors';
+import { hexToRgba, getReadableTextColor } from '../utils/colors';
 import { motion } from 'motion/react';
 
 interface ChannelCellProps {
@@ -31,7 +31,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
   const bgColor = isUnused ? '#f1f5f9' : hexToRgba(channel.color, settings.colorOpacity);
   const baseBorderColor = isUnused ? '#cbd5e1' : (channel.color === '#ffffff' || channel.color === '#000000' ? '#cbd5e1' : channel.color);
   const groupBorderColor = hexToRgba(baseBorderColor, settings.groupBorderOpacity ?? 1);
-  const groupTextColor = isUnused ? '#9ca3af' : (channel.color !== '#ffffff' && channel.color !== '#000000' ? channel.color : '#9ca3af');
+  const groupTextColor = isUnused ? '#9ca3af' : (channel.color !== '#ffffff' && channel.color !== '#000000' ? getReadableTextColor(channel.color) : '#9ca3af');
   
   const badgeStyle: React.CSSProperties = {
     fontSize: `${0.65 * (settings.fontSizes.subSnakeBadge ?? 1)}rem`,
