@@ -52,7 +52,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
     '--group-border-color': groupBorderColor,
     '--group-text-color': groupTextColor,
     backgroundColor: 'var(--cell-bg)',
-    borderRight: isLastInRow ? 'none' : '1px solid var(--cell-border-color)',
+    borderRight: (isLastInRow || channel.stereoLink === 'next') ? 'none' : '1px solid var(--cell-border-color)',
     borderBottom: isBottomRow ? 'none' : '1px solid var(--cell-border-color)',
     boxShadow: 'none',
   } as React.CSSProperties;
@@ -69,13 +69,15 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       `inset 0 -${thickness} 0 0 ${shadowColor}`, // Bottom
     ];
     
-    if (isFirstInGroup || isSingleNamedCell) {
+    const needsLeftBorder = isFirstInGroup || (isSingleNamedCell && channel.stereoLink !== 'prev');
+    if (needsLeftBorder) {
       shadows.push(`inset ${thickness} 0 0 0 ${shadowColor}`); // Left
     }
     
-    if (isLastInGroup || isSingleNamedCell) {
+    const needsRightBorder = isLastInGroup || (isSingleNamedCell && channel.stereoLink !== 'next');
+    if (needsRightBorder) {
       shadows.push(`inset -${thickness} 0 0 0 ${shadowColor}`); // Right
-    } else {
+    } else if (channel.stereoLink !== 'next') {
       // Subtle separator between grouped items
       (style as any)['--group-separator-color'] = hexToRgba(groupBorderColor, 0.3);
       shadows.push(`inset -1px 0 0 0 var(--group-separator-color)`);
