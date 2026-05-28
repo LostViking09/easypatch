@@ -4,21 +4,6 @@ This document serves as the central repository for planned features, refined ide
 
 ## 📦 Backlog
 
-### 4. Multi select refinements and UI/UX
-
-- Multi-select is now broken, clicking something selects then instantly deselects it
-- implement drag to select (painting selection)
-- Implement mass assign to subsnake (incrementally from selection)
-  - Planned event flow:
-    - User selects channels 4-8 and 10
-    - User clicks "assign to subsnake" button
-    - User chooses subsnake
-    - User selects first channel in subsnake (e.g. #6)
-    - Channels mapped: main4->sub1, main5->sub2, main6->sub3, main7->sub4, main8->sub5, main10->sub6
-    - Warning, if mapping overwrites already mapped channels
-- Implement mass group and color assign
-- Left arrow / right arrow navigation of Edit Input modal with saving and focusing on ch name
-
 ### 5. SubSnake View Excerpt (Read-Only)
 
 - **Goal:** Provide a custom visual layout for specific subsnakes.

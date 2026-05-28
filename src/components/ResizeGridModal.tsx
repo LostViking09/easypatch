@@ -157,6 +157,11 @@ export const ResizeGridModal: React.FC<ResizeGridModalProps> = ({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}

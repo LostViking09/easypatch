@@ -188,7 +188,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       )}
 
       {/* Group Name Badge */}
-      {isInGroup && isFirstInGroup && (
+      {isInGroup && (isFirstInGroup || settings.showGroupNameOnEveryCell) && (
         <div 
           className={`absolute bottom-1 left-2 font-bold z-10 truncate max-w-[85%] ${pClass('print:text-gray-500')}`}
           style={{ 

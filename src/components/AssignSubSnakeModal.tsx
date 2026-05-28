@@ -273,6 +273,11 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
@@ -307,7 +312,7 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
               className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4"
             >
               <h4 className="font-bold text-sm text-slate-800 border-b pb-2 flex justify-between items-center">
-                <span>Create New SubSnake Inline</span>
+                <span>Create New SubSnake</span>
                 {subSnakes.length > 0 && (
                   <button
                     type="button"

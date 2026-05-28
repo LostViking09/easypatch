@@ -66,6 +66,44 @@ export default function App() {
     MotionGlobalConfig.skipAnimations = settings.animationsEnabled === false;
   }, [settings.animationsEnabled]);
 
+  // Global ESC keydown listener to clear multi-select when no modal is open
+  React.useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const isAnyModalOpen =
+          !!editingChannel ||
+          isSettingsOpen ||
+          isFastInputOpen ||
+          isResizeGridOpen ||
+          isNewProjectConfirmOpen ||
+          isSubSnakesOpen ||
+          isAssignSubSnakeOpen ||
+          isMultiGroupOpen ||
+          isMultiColorOpen;
+
+        if (isMultiEdit && !isAnyModalOpen) {
+          setIsMultiEdit(false);
+          setSelectedIds([]);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [
+    isMultiEdit,
+    editingChannel,
+    isSettingsOpen,
+    isFastInputOpen,
+    isResizeGridOpen,
+    isNewProjectConfirmOpen,
+    isSubSnakesOpen,
+    isAssignSubSnakeOpen,
+    isMultiGroupOpen,
+    isMultiColorOpen
+  ]);
+
   // Global mouseup listener to terminate drag range selection
   React.useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -92,36 +130,13 @@ export default function App() {
   };
 
   const handleCellClick = (ch: Channel, e: React.MouseEvent) => {
-    if (isMultiEdit) {
-      if (e.shiftKey && lastSelectedId.current) {
-        const allSeq = [...inputs, ...outputs];
-        const lastIdx = allSeq.findIndex(c => c.id === lastSelectedId.current);
-        const currentIdx = allSeq.findIndex(c => c.id === ch.id);
-        if (lastIdx !== -1 && currentIdx !== -1) {
-          const start = Math.min(lastIdx, currentIdx);
-          const end = Math.max(lastIdx, currentIdx);
-          const rangeIds = allSeq.slice(start, end + 1).map(c => c.id);
-          
-          setSelectedIds(prev => {
-            const newSelection = [...prev];
-            rangeIds.forEach(id => {
-              if (!newSelection.includes(id)) {
-                newSelection.push(id);
-              }
-            });
-            return newSelection;
-          });
-        }
-        lastSelectedId.current = ch.id;
-      }
-    } else {
+    if (!isMultiEdit) {
       setEditingChannel(ch);
     }
   };
 
   const handleCellMouseDown = (ch: Channel, e: React.MouseEvent) => {
     if (e.button !== 0) return; // Left click only
-    if (e.shiftKey) return; // Shift key reserved for block select
     
     isSelectingRange.current = true;
     const exists = selectedIds.includes(ch.id);
@@ -129,6 +144,18 @@ export default function App() {
     selectionMode.current = mode;
     handleCellToggle(ch.id, mode);
     lastSelectedId.current = ch.id;
+  };
+
+  const handleNavigateEdit = (updatedChannel: Channel, direction: 'prev' | 'next') => {
+    const { finalInputs, finalOutputs } = saveEdit(updatedChannel);
+    const sameTypeChannels = updatedChannel.type === 'in' ? finalInputs : finalOutputs;
+    const currentIdx = sameTypeChannels.findIndex(c => c.id === updatedChannel.id);
+    if (currentIdx !== -1) {
+      const nextIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
+      if (nextIdx >= 0 && nextIdx < sameTypeChannels.length) {
+        setEditingChannel(sameTypeChannels[nextIdx]);
+      }
+    }
   };
 
   const handleCellMouseEnter = (ch: Channel, e: React.MouseEvent) => {
@@ -678,12 +705,14 @@ export default function App() {
       <AnimatePresence>
         {editingChannel && (
           <EditModal
+            key={editingChannel.id}
             channel={editingChannel}
             allChannels={[...inputs, ...outputs]}
             subSnakes={subSnakes}
             settings={settings}
             onClose={() => setEditingChannel(null)}
             onSave={saveEdit}
+            onNavigate={handleNavigateEdit}
           />
         )}
       </AnimatePresence>

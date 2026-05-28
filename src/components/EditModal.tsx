@@ -12,16 +12,46 @@ interface EditModalProps {
   settings: SettingsConfig;
   onClose: () => void;
   onSave: (ch: Channel) => void;
+  onNavigate?: (ch: Channel, direction: 'prev' | 'next') => void;
 }
 
-export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subSnakes, settings, onClose, onSave }) => {
+export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subSnakes, settings, onClose, onSave, onNavigate }) => {
   const [formData, setFormData] = useState<Channel>({ ...channel });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<'prev' | 'next' | null>(null);
   const activePalette = PALETTES[settings.palette];
 
   const sameTypeChannels = allChannels.filter(c => c.type === channel.type);
   const hasPrev = channel.number > 1;
   const hasNext = channel.number < sameTypeChannels.length;
+
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    if (!onNavigate) return;
+    if (direction === 'next' && !hasNext) {
+      // Just save and close if no next channel
+      if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+        setShowConfirmModal(true);
+      } else {
+        onSave(formData);
+        onClose();
+      }
+    } else if (direction === 'prev' && !hasPrev) {
+      // Just save and close if no prev channel
+      if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+        setShowConfirmModal(true);
+      } else {
+        onSave(formData);
+        onClose();
+      }
+    } else {
+      if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+        setPendingNavigation(direction);
+        setShowConfirmModal(true);
+      } else {
+        onNavigate(formData, direction);
+      }
+    }
+  };
 
   const isEvenToOddPair = 
     (formData.stereoLink === 'next' && formData.number % 2 === 0) ||
@@ -100,10 +130,45 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
       if (e.key === 'Escape') {
         if (showConfirmModal) {
           setShowConfirmModal(false);
+          setPendingNavigation(null);
         } else {
           onClose();
         }
         return;
+      }
+
+      const isCtrl = e.ctrlKey || e.metaKey;
+      const isShift = e.shiftKey;
+
+      if (isCtrl) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (showConfirmModal) {
+            if (pendingNavigation) {
+              onNavigate?.(formData, pendingNavigation);
+              setPendingNavigation(null);
+            } else {
+              onSave(formData);
+              onClose();
+            }
+            setShowConfirmModal(false);
+            return;
+          }
+          handleNavigate(isShift ? 'prev' : 'next');
+          return;
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          if (showConfirmModal) return;
+          handleNavigate('next');
+          return;
+        }
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          if (showConfirmModal) return;
+          handleNavigate('prev');
+          return;
+        }
       }
       
       if (e.key === 'Enter') {
@@ -114,8 +179,14 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
 
         if (showConfirmModal) {
           e.preventDefault();
-          onSave(formData);
-          onClose();
+          if (pendingNavigation) {
+            onNavigate?.(formData, pendingNavigation);
+            setPendingNavigation(null);
+          } else {
+            onSave(formData);
+            onClose();
+          }
+          setShowConfirmModal(false);
           return;
         }
 
@@ -148,7 +219,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, showConfirmModal, formData, isDropdownOpen, isOverwriting, settings.confirmSubsnakeOverwrite, currentOccupant, onSave]);
+  }, [onClose, showConfirmModal, formData, isDropdownOpen, isOverwriting, settings.confirmSubsnakeOverwrite, currentOccupant, onSave, onNavigate, pendingNavigation]);
 
   const handleGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newGroup = e.target.value;
@@ -241,6 +312,16 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          if (showConfirmModal) {
+            setShowConfirmModal(false);
+            setPendingNavigation(null);
+          } else {
+            onClose();
+          }
+        }
+      }}
     >
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
@@ -252,7 +333,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
         
         <div className="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
           <h3 className="font-bold">
-            Edit {channel.type === 'in' ? 'Input' : 'Output'} {channel.number}
+            {channel.type === 'in' ? 'In' : 'Out'}  #{channel.number}
           </h3>
           <motion.button 
             whileHover={{ scale: 1.1 }}
@@ -671,6 +752,12 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-60 p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowConfirmModal(false);
+                setPendingNavigation(null);
+              }
+            }}
           >
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
@@ -686,7 +773,10 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                 </h3>
                 <button 
                   type="button"
-                  onClick={() => setShowConfirmModal(false)}
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setPendingNavigation(null);
+                  }}
                   aria-label="Close Confirm"
                   className="text-amber-200 hover:text-white transition-colors"
                 >
@@ -701,7 +791,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                 </div>
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                   <div className="font-bold text-sm text-amber-900 font-mono">
-                    {currentOccupant.type === 'in' ? 'IN' : 'OUT'} {currentOccupant.number}
+                    {currentOccupant.type === 'in' ? 'Input' : 'Output'}  #{currentOccupant.number}
                   </div>
                   <div className="text-xs text-amber-800 font-mono truncate mt-0.5">
                     {currentOccupant.name || 'Unused'} {currentOccupant.tech ? `(${currentOccupant.tech})` : ''}
@@ -716,7 +806,10 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
               <div className="p-3 bg-gray-50 border-t flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowConfirmModal(false)}
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setPendingNavigation(null);
+                  }}
                   className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-md transition-colors"
                 >
                   Cancel
@@ -725,8 +818,13 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                   type="button"
                   onClick={() => {
                     setShowConfirmModal(false);
-                    onSave(formData);
-                    onClose();
+                    if (pendingNavigation) {
+                      onNavigate?.(formData, pendingNavigation);
+                      setPendingNavigation(null);
+                    } else {
+                      onSave(formData);
+                      onClose();
+                    }
                   }}
                   className="px-4 py-1.5 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-md shadow-sm transition-colors"
                 >

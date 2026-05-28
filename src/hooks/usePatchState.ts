@@ -311,27 +311,37 @@ export function usePatchState() {
     const sId = updatedChannel.subSnakeId;
     const sChan = updatedChannel.subSnakeChannel;
 
+    let finalInputs = inputs;
+    let finalOutputs = outputs;
+
     if (sId && sChan) {
-      const cleanInputs = (isInput ? newList : inputs).map(ch => {
+      finalInputs = (isInput ? newList : inputs).map(ch => {
         if (ch.id !== updatedChannel.id && ch.subSnakeId === sId && ch.subSnakeChannel === sChan) {
           return { ...ch, subSnakeId: undefined, subSnakeChannel: undefined };
         }
         return ch;
       });
       
-      const cleanOutputs = (!isInput ? newList : outputs).map(ch => {
+      finalOutputs = (!isInput ? newList : outputs).map(ch => {
         if (ch.id !== updatedChannel.id && ch.subSnakeId === sId && ch.subSnakeChannel === sChan) {
           return { ...ch, subSnakeId: undefined, subSnakeChannel: undefined };
         }
         return ch;
       });
 
-      setInputs(cleanInputs);
-      setOutputs(cleanOutputs);
+      setInputs(finalInputs);
+      setOutputs(finalOutputs);
     } else {
-      if (isInput) setInputs(newList);
-      else setOutputs(newList);
+      if (isInput) {
+        finalInputs = newList;
+      } else {
+        finalOutputs = newList;
+      }
+      setInputs(finalInputs);
+      setOutputs(finalOutputs);
     }
+
+    return { finalInputs, finalOutputs };
   };
 
   const saveFastInput = (newInputs: Channel[], newOutputs: Channel[]) => {

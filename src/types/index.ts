@@ -36,6 +36,7 @@ export type SettingsConfig = {
   groupBorderOpacity: number;
   confirmSubsnakeOverwrite?: boolean;
   animationsEnabled?: boolean;
+  showGroupNameOnEveryCell?: boolean;
   grid: {
     input: { rows: number; cols: number };
     output: { rows: number; cols: number };

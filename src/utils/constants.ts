@@ -10,6 +10,7 @@ export const defaultSettings: SettingsConfig = {
   groupBorderOpacity: 1,
   confirmSubsnakeOverwrite: true,
   animationsEnabled: true,
+  showGroupNameOnEveryCell: false,
   grid: {
     input: { rows: 3, cols: 8 },
     output: { rows: 3, cols: 4 },

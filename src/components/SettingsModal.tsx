@@ -38,6 +38,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
@@ -169,6 +174,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
                 <div>
                   <div className="font-medium text-sm">Enable Animations</div>
                   <div className="text-xs text-gray-500">Toggle UI animations and transitions across the app.</div>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer border-t pt-3 border-gray-200">
+                <input 
+                  type="checkbox" 
+                  checked={settings.showGroupNameOnEveryCell === true}
+                  onChange={(e) => setSettings({ ...settings, showGroupNameOnEveryCell: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <div>
+                  <div className="font-medium text-sm">Show group names on every cell</div>
+                  <div className="text-xs text-gray-500">Always show the group name badge on all cells of a group, not just the first one.</div>
                 </div>
               </label>
 
