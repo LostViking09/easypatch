@@ -463,6 +463,11 @@ export function usePatchState() {
     setOutputs(prev => prev.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch));
   };
 
+  const clearSubSnakeAssignments = (id: string) => {
+    setInputs(prev => prev.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch));
+    setOutputs(prev => prev.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch));
+  };
+
   const handleExport = () => {
     const data = { title, notes, settings, inputs, outputs, subSnakes };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -506,6 +511,7 @@ export function usePatchState() {
     loadImportData,
     addSubSnake,
     updateSubSnake,
-    deleteSubSnake
+    deleteSubSnake,
+    clearSubSnakeAssignments
   };
 }

@@ -32,7 +32,8 @@ export default function App() {
     loadImportData,
     addSubSnake,
     updateSubSnake,
-    deleteSubSnake
+    deleteSubSnake,
+    clearSubSnakeAssignments
   } = usePatchState();
 
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
@@ -782,6 +783,7 @@ export default function App() {
             onAddSubSnake={addSubSnake}
             onUpdateSubSnake={updateSubSnake}
             onDeleteSubSnake={deleteSubSnake}
+            onClearSubSnakeAssignments={clearSubSnakeAssignments}
           />
         )}
       </AnimatePresence>
