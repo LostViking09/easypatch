@@ -31,29 +31,36 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
   const bgColor = isUnused ? '#f1f5f9' : hexToRgba(channel.color, settings.colorOpacity);
   const baseBorderColor = isUnused ? '#cbd5e1' : (channel.color === '#ffffff' || channel.color === '#000000' ? '#cbd5e1' : channel.color);
   const groupBorderColor = hexToRgba(baseBorderColor, settings.groupBorderOpacity ?? 1);
+  const groupTextColor = isUnused ? '#9ca3af' : (channel.color !== '#ffffff' && channel.color !== '#000000' ? channel.color : '#9ca3af');
   
   const badgeStyle: React.CSSProperties = {
     fontSize: `${0.65 * (settings.fontSizes.subSnakeBadge ?? 1)}rem`,
+    '--badge-bg': subSnakeColor && subSnakeColor !== '#ffffff' ? hexToRgba(subSnakeColor, 0.12) : '',
+    '--badge-border': subSnakeColor && subSnakeColor !== '#ffffff' ? hexToRgba(subSnakeColor, 0.4) : '',
     ...(subSnakeColor && subSnakeColor !== '#ffffff'
       ? {
-          backgroundColor: hexToRgba(subSnakeColor, 0.12),
-          borderColor: hexToRgba(subSnakeColor, 0.4),
+          backgroundColor: 'var(--badge-bg)',
+          borderColor: 'var(--badge-border)',
         }
       : {})
-  };
+  } as React.CSSProperties;
   
   // Base style with consistent 1px borders to keep the grid aligned
   const style: React.CSSProperties = {
-    backgroundColor: bgColor,
-    borderRight: isLastInRow ? 'none' : '1px solid #cbd5e1',
-    borderBottom: isBottomRow ? 'none' : '1px solid #cbd5e1',
+    '--cell-bg': bgColor,
+    '--cell-border-color': '#cbd5e1',
+    '--group-border-color': groupBorderColor,
+    '--group-text-color': groupTextColor,
+    backgroundColor: 'var(--cell-bg)',
+    borderRight: isLastInRow ? 'none' : '1px solid var(--cell-border-color)',
+    borderBottom: isBottomRow ? 'none' : '1px solid var(--cell-border-color)',
     boxShadow: 'none',
-  };
+  } as React.CSSProperties;
 
   // Use inset box-shadow for the thick group borders so they don't shrink the content area
   if (isInGroup) {
-    const shadowColor = groupBorderColor;
-    const thickness = '6px';
+    const shadowColor = 'var(--group-border-color)';
+    const thickness = '4px';
     
     const shadows = [
       `inset 0 ${thickness} 0 0 ${shadowColor}`, // Top
@@ -68,7 +75,8 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       shadows.push(`inset -${thickness} 0 0 0 ${shadowColor}`); // Right
     } else {
       // Subtle separator between grouped items
-      shadows.push(`inset -1px 0 0 0 ${hexToRgba(shadowColor, 0.3)}`);
+      (style as any)['--group-separator-color'] = hexToRgba(groupBorderColor, 0.3);
+      shadows.push(`inset -1px 0 0 0 var(--group-separator-color)`);
     }
     
     style.boxShadow = shadows.join(', ');
@@ -178,7 +186,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
             fill="currentColor" 
             viewBox="0 0 256 256" 
             xmlns="http://www.w3.org/2000/svg" 
-            className={`w-32 h-32 sm:w-48 sm:h-48 ${pClass('print:text-black')} text-black`}
+            className={`xlr-silhouette w-32 h-32 sm:w-48 sm:h-48 ${pClass('print:text-black')} text-black`}
             style={{ opacity: settings.xlrOpacity }}
           >
             <g fillRule="evenodd">
@@ -194,10 +202,10 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       {/* Group Name Badge */}
       {isInGroup && (isFirstInGroup || settings.showGroupNameOnEveryCell) && (
         <div 
-          className={`absolute bottom-1 left-2 font-bold z-10 truncate max-w-[85%] ${pClass('print:text-gray-500')}`}
+          className={`absolute bottom-1 left-2 font-bold z-10 truncate max-w-[85%]`}
           style={{ 
             fontSize: `${0.6 * settings.fontSizes.group}rem`,
-            color: isUnused ? '#9ca3af' : (channel.color !== '#ffffff' && channel.color !== '#000000' ? channel.color : '#9ca3af')
+            color: 'var(--group-text-color)'
           }}
         >
           {channel.group}
@@ -233,7 +241,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       {/* Centered Bottom-Aligned Stereo Link Badge */}
       {channel.stereoLink === 'next' && (
         <div className="absolute bottom-1.5 right-0 translate-x-1/2 z-30 pointer-events-none">
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-tiny font-bold font-mono select-none">
+          <div className="stereo-badge flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-tiny font-bold font-mono select-none">
             <span>L</span>
             <Link2 className="w-3 h-3 text-blue-500 flex-shrink-0" />
             <span>R</span>
@@ -243,7 +251,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
 
       {channel.stereoLink === 'prev' && (
         <div className="absolute bottom-1.5 left-0 -translate-x-1/2 z-30 pointer-events-none">
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-tiny font-bold font-mono select-none">
+          <div className="stereo-badge flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-tiny font-bold font-mono select-none">
             <span>L</span>
             <Link2 className="w-3 h-3 text-blue-500 flex-shrink-0" />
             <span>R</span>

@@ -39,6 +39,7 @@ export type SettingsConfig = {
   animationsEnabled?: boolean;
   showGroupNameOnEveryCell?: boolean;
   includeSubSnakesInPrint?: boolean;
+  printTheme?: 'color' | 'bw';
   grid: {
     input: { rows: number; cols: number };
     output: { rows: number; cols: number };

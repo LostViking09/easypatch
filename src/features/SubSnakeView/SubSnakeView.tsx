@@ -224,7 +224,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
               <div className="flex items-center justify-between border-b pb-2 border-slate-250">
                 <div className="flex items-center gap-2">
                   <span 
-                    className="w-3.5 h-3.5 rounded-full border border-black/10 flex-shrink-0"
+                    className="subsnake-dot w-3.5 h-3.5 rounded-full border border-black/10 flex-shrink-0"
                     style={{ backgroundColor: snake.color || '#cbd5e1' }}
                   />
                   <h4 className="font-extrabold text-lg text-slate-850 tracking-tight">{snake.name}</h4>

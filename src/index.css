@@ -21,4 +21,30 @@
     print-color-adjust: exact !important;
     background-color: white;
   }
+
+  .print-bw-mode,
+  .print-bw-mode * {
+    --cell-bg: #ffffff !important;
+    --cell-border-color: #000000 !important;
+    --group-border-color: #6b7280 !important;
+    --group-separator-color: #6b7280 !important;
+    --group-text-color: #000000 !important;
+    --badge-bg: #ffffff !important;
+    --badge-border: #000000 !important;
+  }
+
+  .print-bw-mode .xlr-silhouette,
+  .print-bw-mode .subsnake-dot {
+    display: none !important;
+  }
+  
+  .print-bw-mode .stereo-badge {
+    background-color: transparent !important;
+    border-color: #9ca3af !important;
+    color: #9ca3af !important;
+  }
+  
+  .print-bw-mode .stereo-badge * {
+    color: #9ca3af !important;
+  }
 }

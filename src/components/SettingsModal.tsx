@@ -139,6 +139,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">Appearance & Print</label>
             <div className="space-y-4 bg-gray-50 p-4 rounded-lg border">
+              
+              {/* Print Theme Setting */}
+              <div className="space-y-2 pb-3 border-b border-gray-200">
+                <label className="text-sm font-medium">Print Color Mode</label>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="printTheme" 
+                      value="color" 
+                      checked={settings.printTheme !== 'bw'} 
+                      onChange={() => setSettings({...settings, printTheme: 'color'})}
+                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    Full Color
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="printTheme" 
+                      value="bw" 
+                      checked={settings.printTheme === 'bw'} 
+                      onChange={() => setSettings({...settings, printTheme: 'bw'})} 
+                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    Black & White
+                  </label>
+                </div>
+                <div className="text-xs text-gray-500">Black & White mode strips backgrounds and uses dark borders.</div>
+              </div>
+
               <label className="flex items-center gap-3 cursor-pointer">
                 <input 
                   type="checkbox" 

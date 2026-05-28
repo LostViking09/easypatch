@@ -118,7 +118,7 @@ export default function App() {
   const isMultiPagePrint = shouldStackPrint || activeView !== 'main' || (settings.includeSubSnakesInPrint && subSnakes.length > 0);
 
   return (
-    <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')}`}>
+    <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')} ${settings.printTheme === 'bw' ? 'print-bw-mode' : ''}`}>
       <PrintStyles isMultiPagePrint={isMultiPagePrint} settings={settings} />
 
       <div className="main-content flex flex-col flex-1 h-full">
