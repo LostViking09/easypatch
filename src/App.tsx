@@ -187,10 +187,21 @@ export default function App() {
     }
   };
 
-  const handleMassAssignGroup = (group: string) => {
+  const handleMassAssignGroup = (group: string, colorMode: 'none' | 'uncolored' | 'all') => {
+    const allChs = [...inputs, ...outputs];
+    const groupColor = allChs.find(
+      ch => ch.group?.trim().toLowerCase() === group.trim().toLowerCase() && ch.color && ch.color !== '#ffffff'
+    )?.color;
+
     const updateList = (list: Channel[]) => list.map(ch => {
       if (selectedIds.includes(ch.id)) {
-        return { ...ch, group };
+        let updatedColor = ch.color;
+        if (groupColor && colorMode !== 'none') {
+          if (colorMode === 'all' || !ch.color || ch.color === '#ffffff') {
+            updatedColor = groupColor;
+          }
+        }
+        return { ...ch, group, color: updatedColor };
       }
       return ch;
     });

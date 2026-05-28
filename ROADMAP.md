@@ -4,6 +4,10 @@ This document serves as the central repository for planned features, refined ide
 
 ## 📦 Backlog
 
+### BUGS
+
+- Multi-Edit Group assign does not assign colors. -> Assign colors, if none is selected
+
 ### 1. App.tsx refactor
 
 - It's obviously too large again

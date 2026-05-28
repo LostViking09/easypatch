@@ -7,7 +7,7 @@ interface MultiGroupModalProps {
   selectedCount: number;
   allChannels: Channel[];
   onClose: () => void;
-  onSave: (group: string) => void;
+  onSave: (group: string, colorMode: 'none' | 'uncolored' | 'all') => void;
 }
 
 export const MultiGroupModal: React.FC<MultiGroupModalProps> = ({
@@ -17,6 +17,7 @@ export const MultiGroupModal: React.FC<MultiGroupModalProps> = ({
   onSave,
 }) => {
   const [group, setGroup] = useState('');
+  const [colorMode, setColorMode] = useState<'none' | 'uncolored' | 'all'>('uncolored');
   
   // Autocomplete suggestions state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -111,7 +112,7 @@ export const MultiGroupModal: React.FC<MultiGroupModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(group.trim());
+    onSave(group.trim(), colorMode);
     onClose();
   };
 
@@ -213,6 +214,37 @@ export const MultiGroupModal: React.FC<MultiGroupModalProps> = ({
               )}
             </AnimatePresence>
           </div>
+          {/* Group Color Assignment Option */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Assign Group Color to:
+            </label>
+            <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              {(['none', 'uncolored', 'all'] as const).map((mode) => {
+                const isActive = colorMode === mode;
+                const labels = {
+                  none: 'None',
+                  uncolored: 'Uncolored',
+                  all: 'All'
+                };
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setColorMode(mode)}
+                    className={`py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/50 cursor-pointer'
+                        : 'text-slate-500 hover:text-slate-800 cursor-pointer'
+                    }`}
+                  >
+                    {labels[mode]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <p className="text-[10px] text-slate-500 leading-normal italic">
             Channels sharing the same group name are linked. Setting an existing group name will automatically apply its color.
           </p>
