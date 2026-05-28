@@ -328,7 +328,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         transition={{ type: "spring", stiffness: 450, damping: 35 }}
-        className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden"
+        className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]"
       >
         
         <div className="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
@@ -347,7 +347,8 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
           </motion.button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
+          <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Channel Name</label>
             <input
@@ -719,7 +720,9 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end gap-3">
+          </div>
+
+          <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
             <motion.button
               type="button"
               whileHover={{ scale: 1.02 }}
