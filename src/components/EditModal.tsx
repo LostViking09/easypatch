@@ -618,7 +618,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                   >
                     <span>{p}</span>
                     {occupant && (
-                      <span className={`text-[7px] truncate max-w-[90%] px-0.5 mt-0.5 leading-none ${isSelected ? 'text-amber-950 font-bold' : 'text-amber-600'}`}>
+                      <span className={`text-micro truncate max-w-[90%] px-0.5 mt-0.5 leading-none ${isSelected ? 'text-amber-950 font-bold' : 'text-amber-600'}`}>
                         {(() => {
                           const nameLabel = occupant.name 
                             ? `${occupant.number}: ${occupant.name}` 
@@ -634,16 +634,16 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
               return (
                 <div className="space-y-2 mt-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-2xs font-bold text-slate-500 uppercase tracking-wider">Select Port (Unique Port Map)</span>
+                    <span className="text-2xs font-bold text-slate-500 tracking-wider">Select SubSnake Port</span>
                     {isDynamicSubSnake && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-2xs font-semibold text-slate-500">Custom Port:</span>
+                        <span className="text-xxs font-semibold text-slate-500">Custom Port:</span>
                         <input
                           type="number"
                           min="1"
                           value={formData.subSnakeChannel || ''}
                           onChange={e => setFormData({ ...formData, subSnakeChannel: Math.max(1, parseInt(e.target.value) || 1) })}
-                          className="w-14 px-1 py-0.5 text-2xs border border-gray-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold"
+                          className="w-14 px-1 py-0.5 text-xs border border-gray-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold"
                         />
                       </div>
                     )}
@@ -657,7 +657,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                     {ports}
                   </div>
                   {formData.subSnakeChannel && (
-                    <div className="text-[10px] text-gray-500 italic leading-tight">
+                    <div className="text-xxs text-gray-500 italic leading-tight">
                       {(() => {
                         const currentOccupant = allChannels.find(
                           c => c.id !== formData.id && c.type === channel.type && c.subSnakeId === selectedSubSnake.id && c.subSnakeChannel === formData.subSnakeChannel
@@ -700,8 +700,6 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                   title={color.label}
                 />
               ))}
-              
-              <div className="w-px h-8 bg-gray-300 mx-1"></div>
               
               <motion.div 
                 whileHover={{ scale: 1.1 }}

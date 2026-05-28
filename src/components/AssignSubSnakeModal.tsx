@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Network, Plus, Check, AlertTriangle, Play } from 'lucide-react';
+import { X, Network, Plus, Check, AlertTriangle, Play, Pipette } from 'lucide-react';
 import { hexToRgba } from '../utils/colors';
 import { Channel, SubSnake, SettingsConfig } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -224,17 +224,17 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
         >
           <span>{p}</span>
           {occupant && !isTarget && !hoverStatus.isTarget && (
-            <span className="text-[7px] truncate max-w-[90%] px-0.5 mt-0.5 leading-none text-slate-450 font-normal">
+            <span className="text-micro truncate max-w-[90%] px-0.5 mt-0.5 leading-none text-slate-450 font-normal">
               {occupant.name || `${type.toUpperCase()}${occupant.number}`}
             </span>
           )}
           {isTarget && occupant && (
-            <span className="text-[7px] truncate max-w-[90%] px-0.5 mt-0.5 leading-none text-amber-700 font-semibold animate-pulse">
+            <span className="text-micro truncate max-w-[90%] px-0.5 mt-0.5 leading-none text-amber-700 font-semibold animate-pulse">
               Overwrite
             </span>
           )}
           {isTarget && !occupant && (
-            <span className="text-[7px] truncate max-w-[90%] px-0.5 mt-0.5 leading-none text-indigo-200 font-medium">
+            <span className="text-micro truncate max-w-[90%] px-0.5 mt-0.5 leading-none text-indigo-200 font-medium">
               {(type === 'in' ? selectedInputs : selectedOutputs)[p - startPort]?.name || `${type.toUpperCase()}${(type === 'in' ? selectedInputs : selectedOutputs)[p - startPort]?.number}`}
             </span>
           )}
@@ -249,7 +249,7 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
             <span className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
             <span>{type === 'in' ? 'Inputs' : 'Outputs'} Port Grid ({selectedList.length} channels selected)</span>
           </span>
-          <span className="text-[10px] text-slate-400 italic">
+          <span className="text-xxs text-slate-400 italic">
             Click a port to set starting position
           </span>
         </div>
@@ -372,6 +372,36 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
                         title={color.label}
                       />
                     ))}
+
+                    {/* Custom color picker */}
+                    <div 
+                      className={`relative w-6 h-6 rounded-full border border-slate-200 overflow-hidden hover:opacity-85 transition-opacity flex items-center justify-center cursor-pointer ${
+                        !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                          ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
+                          : ''
+                      }`}
+                      style={{
+                        backgroundColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                          ? hexToRgba(newSnakeColor, 0.4)
+                          : '#f8fafc',
+                        borderColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                          ? newSnakeColor
+                          : '#cbd5e1'
+                      }}
+                      title="Custom color"
+                    >
+                      <Pipette className={`w-3.5 h-3.5 ${
+                        !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                          ? 'text-slate-700 font-bold'
+                          : 'text-slate-500'
+                      }`} />
+                      <input 
+                        type="color" 
+                        value={newSnakeColor}
+                        onChange={e => setNewSnakeColor(e.target.value)}
+                        className="absolute inset-[-5px] w-10 h-10 cursor-pointer opacity-0"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -438,7 +468,7 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
                         )}
                         <span className="truncate text-sm font-bold">{s.name}</span>
                       </div>
-                      <span className="text-[10px] text-slate-500 font-mono flex-shrink-0">
+                      <span className="text-xxs text-slate-500 font-mono flex-shrink-0">
                         {s.grid ? `IN:${totalIn} | OUT:${totalOut}` : 'Dynamic'}
                       </span>
                     </motion.button>
@@ -458,7 +488,7 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div className="space-y-0.5">
                   <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider">Start Port Selection</label>
-                  <p className="text-[10px] text-slate-500 leading-tight">
+                  <p className="text-xxs text-slate-500 leading-tight">
                     Mapping will occupy ports <b>{startPort}</b> to <b>{startPort + Math.max(selectedInputs.length, selectedOutputs.length) - 1}</b>.
                   </p>
                 </div>

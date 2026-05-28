@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Edit2, Check, Network, HelpCircle, Grid, AlertTriangle, Unlink } from 'lucide-react';
+import { X, Plus, Trash2, Edit2, Check, Network, HelpCircle, Grid, AlertTriangle, Unlink, Pipette } from 'lucide-react';
 import { Channel, SubSnake, SettingsConfig } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { PALETTES } from '../utils/constants';
@@ -253,6 +253,36 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                       title={color.label}
                     />
                   ))}
+                  
+                  {/* Custom color picker */}
+                  <div 
+                    className={`relative w-6 h-6 rounded-full border border-slate-250 overflow-hidden hover:opacity-85 transition-opacity flex items-center justify-center cursor-pointer ${
+                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                        ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
+                        : ''
+                    }`}
+                    style={{
+                      backgroundColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                        ? hexToRgba(newSnakeColor, 0.4)
+                        : '#f8fafc',
+                      borderColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                        ? newSnakeColor
+                        : '#cbd5e1'
+                    }}
+                    title="Custom color"
+                  >
+                    <Pipette className={`w-3.5 h-3.5 ${
+                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                        ? 'text-slate-700 font-bold'
+                        : 'text-slate-500'
+                    }`} />
+                    <input 
+                      type="color" 
+                      value={newSnakeColor}
+                      onChange={e => setNewSnakeColor(e.target.value)}
+                      className="absolute inset-[-5px] w-10 h-10 cursor-pointer opacity-0"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -274,7 +304,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                 <div className="space-y-3 pt-2 border-t border-slate-200">
                   {/* INPUT */}
                   <div className={`p-3 rounded-lg border transition-all ${isInputEnabled ? 'bg-white border-slate-300 shadow-sm' : 'bg-transparent border-slate-200 opacity-60'}`}>
-                    <label className="flex items-center gap-2 font-bold text-[10px] text-slate-700 uppercase tracking-wider cursor-pointer select-none mb-2">
+                    <label className="flex items-center gap-2 font-bold text-xxs text-slate-700 uppercase tracking-wider cursor-pointer select-none mb-2">
                       <input 
                         type="checkbox"
                         checked={isInputEnabled}
@@ -287,15 +317,15 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                       <div className="space-y-1.5">
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-[10px] text-gray-500 mb-0.5">Columns</label>
+                            <label className="block text-xxs text-gray-500 mb-0.5">Columns</label>
                             <input type="number" min="1" max="32" value={inputGrid.cols} onChange={e => setInputGrid({ ...inputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) })} className="w-full px-2 py-1 border rounded text-xs" />
                           </div>
                           <div>
-                            <label className="block text-[10px] text-gray-500 mb-0.5">Rows</label>
+                            <label className="block text-xxs text-gray-500 mb-0.5">Rows</label>
                             <input type="number" min="1" max="32" value={inputGrid.rows} onChange={e => setInputGrid({ ...inputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) })} className="w-full px-2 py-1 border rounded text-xs" />
                           </div>
                         </div>
-                        <div className="text-[10px] font-semibold text-indigo-700">
+                        <div className="text-xxs font-semibold text-indigo-700">
                           Total: {inputGrid.cols * inputGrid.rows} channels
                         </div>
                       </div>
@@ -304,7 +334,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
 
                   {/* OUTPUT */}
                   <div className={`p-3 rounded-lg border transition-all ${isOutputEnabled ? 'bg-white border-slate-300 shadow-sm' : 'bg-transparent border-slate-200 opacity-60'}`}>
-                    <label className="flex items-center gap-2 font-bold text-[10px] text-slate-700 uppercase tracking-wider cursor-pointer select-none mb-2">
+                    <label className="flex items-center gap-2 font-bold text-xxs text-slate-700 uppercase tracking-wider cursor-pointer select-none mb-2">
                       <input 
                         type="checkbox"
                         checked={isOutputEnabled}
@@ -317,15 +347,15 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                       <div className="space-y-1.5">
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-[10px] text-gray-500 mb-0.5">Columns</label>
+                            <label className="block text-xxs text-gray-500 mb-0.5">Columns</label>
                             <input type="number" min="1" max="32" value={outputGrid.cols} onChange={e => setOutputGrid({ ...outputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) })} className="w-full px-2 py-1 border rounded text-xs" />
                           </div>
                           <div>
-                            <label className="block text-[10px] text-gray-500 mb-0.5">Rows</label>
+                            <label className="block text-xxs text-gray-500 mb-0.5">Rows</label>
                             <input type="number" min="1" max="32" value={outputGrid.rows} onChange={e => setOutputGrid({ ...outputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) })} className="w-full px-2 py-1 border rounded text-xs" />
                           </div>
                         </div>
-                        <div className="text-[10px] font-semibold text-indigo-700">
+                        <div className="text-xxs font-semibold text-indigo-700">
                           Total: {outputGrid.cols * outputGrid.rows} channels
                         </div>
                       </div>
@@ -355,7 +385,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
               <div className="flex flex-col items-center justify-center text-center p-8 bg-slate-50 rounded-xl border border-dashed border-slate-350 text-slate-500 flex-1">
                 <HelpCircle className="w-8 h-8 mb-2 text-slate-400" />
                 <p className="text-sm font-medium">No SubSnakes created yet.</p>
-                <p className="text-xs text-slate-400 mt-1 max-w-[200px]">Create one on the left to map physical stage boxes.</p>
+                <p className="text-xs text-slate-400 mt-1 max-w-[12.5rem]">Create one on the left to map physical stage boxes.</p>
               </div>
             ) : (
               <div className="space-y-3 max-h-[45vh] md:max-h-none overflow-y-auto pr-1">
@@ -381,7 +411,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                           {isEditing ? (
                             <div className="space-y-3 w-full">
                               <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Name</label>
+                                <label className="block text-xxs font-bold text-slate-500 uppercase mb-1">Name</label>
                                 <input
                                   type="text"
                                   value={editingName}
@@ -392,7 +422,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                               </div>
 
                               <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Color theme</label>
+                                <label className="block text-xxs font-bold text-slate-505 uppercase mb-1">Color theme</label>
                                 <div className="flex flex-wrap gap-1 items-center bg-white p-1.5 border rounded">
                                   {PALETTES[settings.palette].map(color => (
                                     <button
@@ -411,11 +441,41 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                                       title={color.label}
                                     />
                                   ))}
+
+                                  {/* Custom color picker */}
+                                  <div 
+                                    className={`relative w-5 h-5 rounded-full border border-slate-200 overflow-hidden hover:opacity-85 transition-opacity flex items-center justify-center cursor-pointer ${
+                                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === editingColor.toLowerCase())
+                                        ? 'ring-1.5 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
+                                        : ''
+                                    }`}
+                                    style={{
+                                      backgroundColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === editingColor.toLowerCase())
+                                        ? hexToRgba(editingColor, 0.4)
+                                        : '#f8fafc',
+                                      borderColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === editingColor.toLowerCase())
+                                        ? editingColor
+                                        : '#cbd5e1'
+                                    }}
+                                    title="Custom color"
+                                  >
+                                    <Pipette className={`w-3 h-3 ${
+                                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === editingColor.toLowerCase())
+                                        ? 'text-slate-700 font-bold'
+                                        : 'text-slate-500'
+                                    }`} />
+                                    <input 
+                                      type="color" 
+                                      value={editingColor}
+                                      onChange={e => setEditingColor(e.target.value)}
+                                      className="absolute inset-[-5px] w-8 h-8 cursor-pointer opacity-0"
+                                    />
+                                  </div>
                                 </div>
                               </div>
                               
                               <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Layout</label>
+                                <label className="block text-xxs font-bold text-slate-500 uppercase mb-1">Layout</label>
                                 <select 
                                   value={editPreset}
                                   onChange={(e) => handlePresetChange(e.target.value, true)}
@@ -429,7 +489,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                                 <div className="grid grid-cols-2 gap-3 pt-1">
                                   {/* Edit INPUT */}
                                   <div className={`p-2 rounded border ${editIsInputEnabled ? 'bg-white border-slate-300' : 'bg-transparent border-slate-200 opacity-60'}`}>
-                                    <label className="flex items-center gap-1.5 font-bold text-[9px] text-slate-700 uppercase tracking-wider cursor-pointer mb-1">
+                                    <label className="flex items-center gap-1.5 font-bold text-tiny text-slate-700 uppercase tracking-wider cursor-pointer mb-1">
                                       <input type="checkbox" checked={editIsInputEnabled} onChange={(e) => setEditIsInputEnabled(e.target.checked)} className="w-3 h-3 text-indigo-600 rounded focus:ring-indigo-500" />
                                       <span>INPUT</span>
                                     </label>
@@ -439,7 +499,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                                           <input type="number" min="1" max="32" value={editInputGrid.cols} onChange={e => setEditInputGrid({ ...editInputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) })} className="w-1/2 px-1 py-0.5 border rounded text-xs" title="Cols" />
                                           <input type="number" min="1" max="32" value={editInputGrid.rows} onChange={e => setEditInputGrid({ ...editInputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) })} className="w-1/2 px-1 py-0.5 border rounded text-xs" title="Rows" />
                                         </div>
-                                        <div className="text-[9px] font-semibold text-indigo-700">
+                                        <div className="text-tiny font-semibold text-indigo-700">
                                           Total: {editInputGrid.cols * editInputGrid.rows} ch
                                         </div>
                                       </div>
@@ -448,7 +508,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
 
                                   {/* Edit OUTPUT */}
                                   <div className={`p-2 rounded border ${editIsOutputEnabled ? 'bg-white border-slate-300' : 'bg-transparent border-slate-200 opacity-60'}`}>
-                                    <label className="flex items-center gap-1.5 font-bold text-[9px] text-slate-700 uppercase tracking-wider cursor-pointer mb-1">
+                                    <label className="flex items-center gap-1.5 font-bold text-tiny text-slate-700 uppercase tracking-wider cursor-pointer mb-1">
                                       <input type="checkbox" checked={editIsOutputEnabled} onChange={(e) => setEditIsOutputEnabled(e.target.checked)} className="w-3 h-3 text-indigo-600 rounded focus:ring-indigo-500" />
                                       <span>OUTPUT</span>
                                     </label>
@@ -458,7 +518,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                                           <input type="number" min="1" max="32" value={editOutputGrid.cols} onChange={e => setEditOutputGrid({ ...editOutputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) })} className="w-1/2 px-1 py-0.5 border rounded text-xs" title="Cols" />
                                           <input type="number" min="1" max="32" value={editOutputGrid.rows} onChange={e => setEditOutputGrid({ ...editOutputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) })} className="w-1/2 px-1 py-0.5 border rounded text-xs" title="Rows" />
                                         </div>
-                                        <div className="text-[9px] font-semibold text-indigo-700">
+                                        <div className="text-tiny font-semibold text-indigo-700">
                                           Total: {editOutputGrid.cols * editOutputGrid.rows} ch
                                         </div>
                                       </div>
@@ -498,7 +558,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                                 <span>{snake.name}</span>
                               </div>
                               <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                                <span className="text-[10px] text-slate-500 font-medium">
+                                <span className="text-xxs text-slate-500 font-medium">
                                   {snake.grid ? (
                                     <>
                                       IN: {snake.grid.input.rows * snake.grid.input.cols > 0 ? `${snake.grid.input.cols}×${snake.grid.input.rows}` : '0'} 
@@ -509,9 +569,9 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                                 </span>
                                 <span className="w-1 h-1 bg-slate-300 rounded-full" />
                                 <div className="flex gap-1.5">
-                                  {inMapped > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">{inMapped} IN</span>}
-                                  {outMapped > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">{outMapped} OUT</span>}
-                                  {inMapped === 0 && outMapped === 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">0 mapped</span>}
+                                  {inMapped > 0 && <span className="text-tiny font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">{inMapped} IN</span>}
+                                  {outMapped > 0 && <span className="text-tiny font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">{outMapped} OUT</span>}
+                                  {inMapped === 0 && outMapped === 0 && <span className="text-tiny font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">0 mapped</span>}
                                 </div>
                               </div>
                             </div>

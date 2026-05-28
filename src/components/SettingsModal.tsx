@@ -102,17 +102,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
                 { key: 'name', label: 'Channel Name' },
                 { key: 'tech', label: 'Tech Data' },
                 { key: 'group', label: 'Group Name' },
+                { key: 'subSnakeBadge', label: 'SubSnake Badge' },
               ].map(({ key, label }) => (
                 <div key={key} className="flex items-center gap-4">
                   <label className="text-sm font-medium w-32">{label}</label>
                   <input 
                     type="range" 
                     min="0.5" max="2" step="0.1" 
-                    value={settings.fontSizes[key as keyof SettingsConfig['fontSizes']]} 
+                    value={settings.fontSizes[key as keyof SettingsConfig['fontSizes']] ?? 1} 
                     onChange={(e) => updateFontSize(key as keyof SettingsConfig['fontSizes'], parseFloat(e.target.value))}
                     className="flex-1"
                   />
-                  <span className="text-xs font-mono w-8 text-right">{settings.fontSizes[key as keyof SettingsConfig['fontSizes']].toFixed(1)}x</span>
+                  <span className="text-xs font-mono w-8 text-right">{(settings.fontSizes[key as keyof SettingsConfig['fontSizes']] ?? 1).toFixed(1)}x</span>
                 </div>
               ))}
             </div>
@@ -243,7 +244,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
                   onChange={(e) => setSettings({ ...settings, xlrOpacity: parseFloat(e.target.value) })}
                   className="w-full"
                 />
-                <p className="text-[10px] text-gray-500 italic">Hidden completely at 0%.</p>
+                <p className="text-xxs text-gray-500 italic">Hidden completely at 0%.</p>
               </div>
             </div>
           </div>

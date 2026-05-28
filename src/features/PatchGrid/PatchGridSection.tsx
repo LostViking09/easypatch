@@ -41,6 +41,7 @@ export function PatchGridSection({
     const isLastInGroup = isInGroup && (index === channels.length - 1 || channels[index + 1].group !== ch.group);
     const isFirstInRow = index % cols === 0;
     const isLastInRow = index % cols === cols - 1;
+    const isBottomRow = index >= channels.length - cols;
     const subSnake = subSnakes.find(s => s.id === ch.subSnakeId);
     const subSnakeName = subSnake?.name;
     const subSnakeColor = subSnake?.color;
@@ -58,6 +59,7 @@ export function PatchGridSection({
         isLastInGroup={isLastInGroup}
         isFirstInRow={isFirstInRow}
         isLastInRow={isLastInRow}
+        isBottomRow={isBottomRow}
         subSnakeName={subSnakeName}
         subSnakeColor={subSnakeColor}
         isMultiSelectMode={isMultiEdit}
@@ -83,7 +85,7 @@ export function PatchGridSection({
         <h2 className="text-sm font-bold tracking-wider uppercase">{type}</h2>
       </div>
       <div
-        className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border-t border-l border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border-t print:border-l')}`}
+        className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border')}`}
         style={{
           gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
           gridAutoRows: '1fr',

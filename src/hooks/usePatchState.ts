@@ -26,7 +26,21 @@ export function usePatchState() {
     if (savedTitle) setTitle(savedTitle);
     if (savedNotes) setNotes(savedNotes);
     if (savedSettings) {
-      try { setSettings({ ...defaultSettings, ...JSON.parse(savedSettings) }); } catch (e) { console.error(e); }
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setSettings({
+          ...defaultSettings,
+          ...parsed,
+          fontSizes: {
+            ...defaultSettings.fontSizes,
+            ...(parsed.fontSizes || {})
+          },
+          grid: {
+            ...defaultSettings.grid,
+            ...(parsed.grid || {})
+          }
+        });
+      } catch (e) { console.error(e); }
     } else {
       // Migrate old palette setting if exists
       const oldPalette = localStorage.getItem('ar2412-palette');

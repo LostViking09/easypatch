@@ -245,7 +245,7 @@ export const MultiGroupModal: React.FC<MultiGroupModalProps> = ({
             </div>
           </div>
 
-          <p className="text-[10px] text-slate-500 leading-normal italic">
+          <p className="text-xxs text-slate-500 leading-normal italic">
             Channels sharing the same group name are linked. Setting an existing group name will automatically apply its color.
           </p>
 

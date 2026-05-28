@@ -28,6 +28,7 @@ export type SettingsConfig = {
     name: number;
     tech: number;
     group: number;
+    subSnakeBadge: number;
   };
   printHeight: number;
   useEditorLookInPrint: boolean;

@@ -15,6 +15,7 @@ interface ChannelCellProps {
   isLastInGroup: boolean;
   isFirstInRow: boolean;
   isLastInRow: boolean;
+  isBottomRow?: boolean;
   subSnakeName?: string;
   subSnakeColor?: string;
   isMultiSelectMode?: boolean;
@@ -24,25 +25,28 @@ interface ChannelCellProps {
 
 export const ChannelCell: React.FC<ChannelCellProps> = ({ 
   channel, settings, onClick, isSelected, onDrop, isInGroup, isFirstInGroup, isLastInGroup, isFirstInRow, isLastInRow,
-  subSnakeName, subSnakeColor, isMultiSelectMode, onCellMouseDown, onCellMouseEnter
+  isBottomRow, subSnakeName, subSnakeColor, isMultiSelectMode, onCellMouseDown, onCellMouseEnter
 }) => {
   const isUnused = channel.name.trim() === '';
   const bgColor = isUnused ? '#f1f5f9' : hexToRgba(channel.color, settings.colorOpacity);
   const baseBorderColor = isUnused ? '#cbd5e1' : (channel.color === '#ffffff' || channel.color === '#000000' ? '#cbd5e1' : channel.color);
   const groupBorderColor = hexToRgba(baseBorderColor, settings.groupBorderOpacity ?? 1);
   
-  const badgeStyle: React.CSSProperties = subSnakeColor && subSnakeColor !== '#ffffff'
-    ? {
-        backgroundColor: hexToRgba(subSnakeColor, 0.12),
-        borderColor: hexToRgba(subSnakeColor, 0.4),
-      }
-    : {};
+  const badgeStyle: React.CSSProperties = {
+    fontSize: `${0.65 * (settings.fontSizes.subSnakeBadge ?? 1)}rem`,
+    ...(subSnakeColor && subSnakeColor !== '#ffffff'
+      ? {
+          backgroundColor: hexToRgba(subSnakeColor, 0.12),
+          borderColor: hexToRgba(subSnakeColor, 0.4),
+        }
+      : {})
+  };
   
   // Base style with consistent 1px borders to keep the grid aligned
   const style: React.CSSProperties = {
     backgroundColor: bgColor,
-    borderRight: '1px solid #cbd5e1',
-    borderBottom: '1px solid #cbd5e1',
+    borderRight: isLastInRow ? 'none' : '1px solid #cbd5e1',
+    borderBottom: isBottomRow ? 'none' : '1px solid #cbd5e1',
     boxShadow: 'none',
   };
 
@@ -208,7 +212,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
         {subSnakeName && channel.subSnakeChannel && (
           <span 
             style={badgeStyle}
-            className={`flex items-center gap-px text-[9px] ml-1 px-0.5 py-0 rounded border font-bold font-mono tracking-normal shadow-3xs select-none transition-all text-slate-550 group-hover:text-slate-700 min-w-0 ${
+            className={`flex items-center gap-px text-xxs ml-1 px-0.5 py-0 rounded border font-bold font-mono tracking-normal shadow-3xs select-none transition-all text-slate-550 group-hover:text-slate-700 min-w-0 ${
               subSnakeColor && subSnakeColor !== '#ffffff'
                 ? ''
                 : 'border-slate-250 bg-slate-100/90 group-hover:bg-slate-200/90 group-hover:border-slate-355'
@@ -229,7 +233,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       {/* Centered Bottom-Aligned Stereo Link Badge */}
       {channel.stereoLink === 'next' && (
         <div className="absolute bottom-1.5 right-0 translate-x-1/2 z-30 pointer-events-none">
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-[9px] font-bold font-mono select-none">
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-tiny font-bold font-mono select-none">
             <span>L</span>
             <Link2 className="w-3 h-3 text-blue-500 flex-shrink-0" />
             <span>R</span>
@@ -239,7 +243,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
 
       {channel.stereoLink === 'prev' && (
         <div className="absolute bottom-1.5 left-0 -translate-x-1/2 z-30 pointer-events-none">
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-[9px] font-bold font-mono select-none">
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-300 bg-blue-50/25 text-blue-600 shadow-sm text-tiny font-bold font-mono select-none">
             <span>L</span>
             <Link2 className="w-3 h-3 text-blue-500 flex-shrink-0" />
             <span>R</span>

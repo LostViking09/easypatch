@@ -2,7 +2,7 @@ import { Channel, SettingsConfig } from '../types';
 
 export const defaultSettings: SettingsConfig = {
   palette: 'qu5',
-  fontSizes: { number: 1, name: 1, tech: 1, group: 1 },
+  fontSizes: { number: 1, name: 1, tech: 1, group: 1, subSnakeBadge: 1 },
   printHeight: 100,
   useEditorLookInPrint: true,
   colorOpacity: 0.25,

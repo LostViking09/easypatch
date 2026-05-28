@@ -1,5 +1,5 @@
 import React from 'react';
-import { Network, HelpCircle } from 'lucide-react';
+import { Network, HelpCircle, Lock, X } from 'lucide-react';
 import { Channel, SubSnake, SettingsConfig } from '../../types';
 import { ChannelCell } from '../../components/ChannelCell';
 import { hexToRgba } from '../../utils/colors';
@@ -25,6 +25,16 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
   projectTitle = '',
   projectNotes = '',
 }) => {
+  const [showBanner, setShowBanner] = React.useState(() => {
+    if (typeof document === 'undefined') return false;
+    return !document.cookie.includes('easypatch-subsnake-banner-dismissed=true');
+  });
+
+  const handleDismissBanner = () => {
+    document.cookie = "easypatch-subsnake-banner-dismissed=true; max-age=31536000; path=/";
+    setShowBanner(false);
+  };
+
   const getMappedCount = (snakeId: string, type?: 'in' | 'out') => {
     if (type === 'in') return inputs.filter(c => c.subSnakeId === snakeId).length;
     if (type === 'out') return outputs.filter(c => c.subSnakeId === snakeId).length;
@@ -105,6 +115,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
       
       const isFirstInRow = i % colsCount === 0;
       const isLastInRow = i % colsCount === colsCount - 1;
+      const isBottomRow = i >= portChannels.length - colsCount;
 
       return (
         <ChannelCell
@@ -119,9 +130,10 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
           isLastInGroup={isLastInGroup}
           isFirstInRow={isFirstInRow}
           isLastInRow={isLastInRow}
+          isBottomRow={isBottomRow}
           subSnakeName={assignedCh ? "Main" : undefined}
           subSnakeColor={assignedCh ? "#cbd5e1" : undefined}
-          isMultiSelectMode={true} // Disables dragging & visual select indicators
+          isMultiSelectMode={true} // Disables dragging & visual visual select indicators
         />
       );
     });
@@ -137,7 +149,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
     }
 
     // Determine a neat maximum width based on the number of columns to prevent cells from stretching too wide
-    const maxGridWidth = colsCount <= 2 ? 'max-w-[280px]' : colsCount <= 4 ? 'max-w-[480px]' : 'max-w-[800px]';
+    const maxGridWidth = colsCount <= 2 ? 'max-w-[17.5rem]' : colsCount <= 4 ? 'max-w-[30rem]' : 'max-w-[50rem]';
 
     return (
       <div className={`print-section-wrapper flex flex-col flex-1 min-w-0 ${maxGridWidth}`}>
@@ -145,7 +157,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
           <h5 className="text-xs font-bold tracking-wider uppercase">{title}</h5>
         </div>
         <div
-          className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border-t border-l border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border-t print:border-l')}`}
+          className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border')}`}
           style={{
             gridTemplateColumns: `repeat(${colsCount}, minmax(0, 1fr))`,
             gridAutoRows: '1fr',
@@ -160,6 +172,28 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
 
   return (
     <div className="space-y-8 flex-1 flex flex-col min-h-0">
+      {!isPrintMode && showBanner && (
+        <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3.5 flex items-start justify-between gap-3 text-slate-700 text-xs shadow-3xs relative">
+          <div className="flex items-start gap-3">
+            <Lock className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <span className="font-bold text-slate-800">Read-Only Stagebox View</span>
+              <p className="text-slate-500 mt-0.5">
+                This layout visualizes how channels map to your SubSnakes (stage boxes). To edit assignments, switch to the <b>Main Grid</b> and edit channels directly, or use <b>Multi-Select</b>.
+              </p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            onClick={handleDismissBanner}
+            className="text-slate-400 hover:text-slate-650 transition-colors p-1 rounded-lg hover:bg-indigo-100/50 flex-shrink-0 cursor-pointer"
+            aria-label="Dismiss banner"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Grid List */}
       <div className={`space-y-12 flex-1 ${isPrintMode ? 'space-y-16' : ''}`}>
         {activeSubSnakes.map((snake, index) => {
@@ -176,10 +210,10 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
               className={`print-avoid-break ${breakClass} flex flex-col space-y-4`}
             >
               {shouldShowPrintHeader && (
-                <div className="hidden print:flex items-center justify-between border-b border-slate-300 pb-1 mb-1 text-slate-500 text-[10px] font-extrabold tracking-wider uppercase">
+                <div className="hidden print:flex items-center justify-between border-b border-slate-300 pb-1 mb-1 text-slate-500 text-xxs font-extrabold tracking-wider uppercase">
                   <span>{projectTitle || 'EasyPatch Sheet'}</span>
                   {projectNotes && (
-                    <span className="normal-case font-semibold italic text-slate-400 text-[9px]">
+                    <span className="normal-case font-semibold italic text-slate-400 text-tiny">
                       {projectNotes}
                     </span>
                   )}
@@ -194,7 +228,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
                     style={{ backgroundColor: snake.color || '#cbd5e1' }}
                   />
                   <h4 className="font-extrabold text-lg text-slate-850 tracking-tight">{snake.name}</h4>
-                  <span className="text-xs text-slate-550 font-semibold hidden sm:inline">
+                  <span className="text-xs text-slate-555 font-semibold hidden sm:inline">
                     ({isGridDefined 
                       ? `${snake.grid?.input.cols}×${snake.grid?.input.rows} IN / ${snake.grid?.output.cols}×${snake.grid?.output.rows} OUT Grid` 
                       : 'Auto-sized Sequential'}
@@ -202,10 +236,10 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
                   </span>
                 </div>
                 <div className="flex gap-1.5 print:hidden">
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                     {assignedInputs.length} IN Mapped
                   </span>
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
                     {assignedOutputs.length} OUT Mapped
                   </span>
                 </div>

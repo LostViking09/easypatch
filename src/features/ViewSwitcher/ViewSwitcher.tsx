@@ -50,7 +50,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
             />
             <span>{snake.name}</span>
             {portCount > 0 && (
-              <span className="text-[9px] bg-slate-200/80 text-slate-700 px-1.5 py-0.5 rounded-full font-extrabold ml-0.5">
+              <span className="text-tiny bg-slate-200/80 text-slate-700 px-1.5 py-0.5 rounded-full font-extrabold ml-0.5">
                 {portCount}
               </span>
             )}
