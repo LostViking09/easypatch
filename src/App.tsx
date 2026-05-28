@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence, MotionGlobalConfig } from 'motion/react';
-import { AlertCircle, X, LayoutGrid, Network } from 'lucide-react';
+import { MotionGlobalConfig } from 'motion/react';
 import { Channel } from './types';
+import { PrintStyles } from './components/PrintStyles';
+import { ToastRenderer } from './components/ToastRenderer';
+import { ViewSwitcher } from './features/ViewSwitcher/ViewSwitcher';
+import { useMassAssignment } from './hooks/useMassAssignment';
 import { usePatchState } from './hooks/usePatchState';
 import { useMultiSelect } from './hooks/useMultiSelect';
 import { useToast } from './hooks/useToast';
@@ -98,75 +101,16 @@ export default function App() {
     }
   };
 
-  const handleMassAssignGroup = (group: string, colorMode: 'none' | 'uncolored' | 'all') => {
-    const allChs = [...inputs, ...outputs];
-    const groupColor = allChs.find(
-      ch => ch.group?.trim().toLowerCase() === group.trim().toLowerCase() && ch.color && ch.color !== '#ffffff'
-    )?.color;
-
-    const updateList = (list: Channel[]) => list.map(ch => {
-      if (selectedIds.includes(ch.id)) {
-        let updatedColor = ch.color;
-        if (groupColor && colorMode !== 'none') {
-          if (colorMode === 'all' || !ch.color || ch.color === '#ffffff') {
-            updatedColor = groupColor;
-          }
-        }
-        return { ...ch, group, color: updatedColor };
-      }
-      return ch;
-    });
-    setInputs(updateList(inputs));
-    setOutputs(updateList(outputs));
-    setIsMultiGroupOpen(false);
-    setSelectedIds([]);
-    setIsMultiEdit(false);
-  };
-
-  const handleMassAssignColor = (color: string) => {
-    const updateList = (list: Channel[]) => list.map(ch => {
-      if (selectedIds.includes(ch.id)) {
-        return { ...ch, color };
-      }
-      return ch;
-    });
-    setInputs(updateList(inputs));
-    setOutputs(updateList(outputs));
-    setIsMultiColorOpen(false);
-    setSelectedIds([]);
-    setIsMultiEdit(false);
-  };
-
-  const handleMassAssignSubSnake = (subSnakeId: string, startPort: number) => {
-    const selectedInputs = inputs.filter(ch => selectedIds.includes(ch.id));
-    const selectedOutputs = outputs.filter(ch => selectedIds.includes(ch.id));
-
-    const updateList = (list: Channel[], selectedForType: Channel[], type: 'in' | 'out') => {
-      return list.map(ch => {
-        if (selectedIds.includes(ch.id) && ch.type === type) {
-          const idx = selectedForType.findIndex(c => c.id === ch.id);
-          return {
-            ...ch,
-            subSnakeId,
-            subSnakeChannel: startPort + idx
-          };
-        } else if (ch.subSnakeId === subSnakeId && ch.subSnakeChannel !== undefined && ch.type === type) {
-          const portMin = startPort;
-          const portMax = startPort + selectedForType.length - 1;
-          if (ch.subSnakeChannel >= portMin && ch.subSnakeChannel <= portMax) {
-            return { ...ch, subSnakeId: undefined, subSnakeChannel: undefined };
-          }
-        }
-        return ch;
-      });
-    };
-
-    setInputs(prev => updateList(prev, selectedInputs, 'in'));
-    setOutputs(prev => updateList(prev, selectedOutputs, 'out'));
-    setIsAssignSubSnakeOpen(false);
-    setSelectedIds([]);
-    setIsMultiEdit(false);
-  };
+  const {
+    handleMassAssignGroup,
+    handleMassAssignColor,
+    handleMassAssignSubSnake
+  } = useMassAssignment(
+    inputs, setInputs,
+    outputs, setOutputs,
+    selectedIds, setSelectedIds,
+    setIsMultiEdit, setIsMultiGroupOpen, setIsMultiColorOpen, setIsAssignSubSnakeOpen
+  );
 
   const pClass = (cls: string) => settings.useEditorLookInPrint ? '' : cls;
   const shouldStackPrint = inputs.length > 24 || outputs.length > 16;
@@ -175,166 +119,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')}`}>
-      <style>{`
-        .grid-row-wrapper {
-          display: contents;
-        }
-        @media print {
-          body, html, #root {
-            background: white !important;
-            ${isMultiPagePrint
-          ? `
-                height: auto !important;
-                min-height: 0 !important;
-                overflow: visible !important;
-              `
-          : `
-                height: 100% !important;
-                min-height: 100% !important;
-                overflow: hidden !important;
-                margin: 0 !important;
-                padding: 0 !important;
-              `
-        }
-          }
-          
-          /* Single-page side-by-side stretching rules */
-          ${!isMultiPagePrint ? `
-            .min-h-screen {
-              height: 100% !important;
-              min-height: 100% !important;
-              overflow: hidden !important;
-            }
-            .main-content {
-              height: 100% !important;
-              display: flex !important;
-              flex-direction: column !important;
-              overflow: hidden !important;
-            }
-            .main-content > main {
-              flex: 1 1 0% !important;
-              display: flex !important;
-              flex-direction: column !important;
-              min-height: 0 !important;
-              height: auto !important;
-              padding: 0 !important;
-              margin: 0 !important;
-            }
-            .main-content > main > div {
-              flex: 1 1 0% !important;
-              display: flex !important;
-              flex-direction: column !important;
-              min-height: 0 !important;
-              padding: 0 !important;
-            }
-          ` : `
-            .min-h-screen, .main-content {
-              height: auto !important;
-              min-height: 0 !important;
-              overflow: visible !important;
-            }
-          `}
-          
-          .print-grid-container {
-            display: flex !important;
-            max-height: none !important;
-          }
-          .print-grid-container.print-stacked {
-            display: block !important;
-            height: auto !important;
-          }
-          .print-grid-container.print-stacked .print-section-wrapper {
-            display: block !important;
-            margin-bottom: 2.5rem !important;
-            page-break-inside: auto !important;
-            break-inside: auto !important;
-          }
-          .print-grid-container.print-stacked .print-section-wrapper:nth-child(2) {
-            page-break-before: always !important;
-            break-before: page !important;
-          }
-          .print-grid-container.print-side-by-side {
-            flex-direction: row !important;
-            gap: 1.5rem !important;
-            height: ${settings.printHeight}% !important;
-            flex: 1 1 0% !important;
-            min-height: 0 !important;
-          }
-          .print-grid-container.print-side-by-side .print-section-wrapper {
-            display: flex !important;
-            flex-direction: column !important;
-            height: 100% !important;
-          }
-          
-          /* Print project header page-break rules */
-          .print-header-wrapper {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            page-break-after: avoid !important;
-            break-after: avoid !important;
-            break-after: avoid-page !important;
-          }
-          
-          /* Force header row to stay attached to grid */
-          .print-section-wrapper > div:first-child {
-            page-break-after: avoid !important;
-            break-after: avoid !important;
-            break-after: avoid-page !important;
-          }
-          
-          .print-section-wrapper .grid {
-            page-break-before: avoid !important;
-            break-before: avoid !important;
-            break-before: avoid-page !important;
-          }
-          
-          /* When side by side, keep CSS Grid to allow perfect stretching like on editor */
-          .print-side-by-side .grid {
-            display: grid !important;
-            height: 100% !important;
-            grid-auto-rows: 1fr !important;
-          }
-          
-          /* When stacked, use flex rows to allow perfect row stretching and no-split pagination */
-          .print-stacked .grid {
-            display: block !important;
-            height: auto !important;
-            page-break-inside: auto !important;
-            background-color: transparent !important;
-          }
-          .print-stacked .grid-row-wrapper {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: stretch !important;
-            width: 100% !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-            break-inside: avoid-page !important;
-          }
-          /* Each cell is styled as a flex child of the row container */
-          .print-stacked .grid-row-wrapper > div {
-            display: flex !important;
-            flex-direction: column !important;
-            flex: 1 !important;
-            width: calc(100% / var(--grid-cols, 8)) !important;
-            box-sizing: border-box !important;
-            height: auto !important; /* Grow naturally so text is never clipped! */
-            min-height: 5.5rem !important;
-          }
-          
-          .print-subsnake-page-break {
-            page-break-before: always !important;
-            break-before: page !important;
-          }
-          
-          .print-avoid-break {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-            break-inside: avoid-page !important;
-          }
-        }
-      `}</style>
+      <PrintStyles isMultiPagePrint={isMultiPagePrint} settings={settings} />
 
       <div className="main-content flex flex-col flex-1 h-full">
         <Header
@@ -362,45 +147,14 @@ export default function App() {
               />
 
               {/* View Switcher Segmented Control */}
-              <div className="flex items-center gap-1 bg-slate-105 p-1 rounded-xl border border-slate-200 self-start md:self-auto shadow-3xs flex-wrap max-w-full print:hidden">
-                <button
-                  onClick={() => setCurrentView('main')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
-                    activeView === 'main'
-                      ? 'bg-white text-slate-800 shadow-sm border border-slate-250'
-                      : 'text-slate-555 hover:text-slate-850 hover:bg-slate-200'
-                  }`}
-                >
-                  <LayoutGrid className="w-4 h-4 text-slate-500" />
-                  <span>Main I/O</span>
-                </button>
-
-                {subSnakes.map(snake => {
-                  const portCount = inputs.filter(c => c.subSnakeId === snake.id).length + outputs.filter(c => c.subSnakeId === snake.id).length;
-                  return (
-                    <button
-                      key={snake.id}
-                      onClick={() => setCurrentView(snake.id)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
-                        activeView === snake.id
-                          ? 'bg-white text-slate-800 shadow-sm border border-slate-250'
-                          : 'text-slate-555 hover:text-slate-850 hover:bg-slate-200'
-                      }`}
-                    >
-                      <Network 
-                        className="w-4 h-4" 
-                        style={{ color: snake.color && snake.color !== '#ffffff' ? snake.color : '#64748b' }} 
-                      />
-                      <span>{snake.name}</span>
-                      {portCount > 0 && (
-                        <span className="text-[9px] bg-slate-200/80 text-slate-700 px-1.5 py-0.5 rounded-full font-extrabold ml-0.5">
-                          {portCount}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <ViewSwitcher
+                subSnakes={subSnakes}
+                inputs={inputs}
+                outputs={outputs}
+                currentView={currentView}
+                setCurrentView={setCurrentView}
+                activeView={activeView}
+              />
             </div>
 
             {/* Main Patch Grid */}
@@ -494,26 +248,7 @@ export default function App() {
       />
 
       {/* Toast Notification */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: -50, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: -50, x: "-50%" }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed top-6 left-1/2 z-50 bg-amber-500 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-semibold max-w-md border border-amber-400 print:hidden"
-          >
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <div className="flex-1">{toast.message}</div>
-            <button
-              onClick={() => setToast(null)}
-              className="ml-2 hover:bg-white/20 p-1 rounded-full transition-colors flex items-center justify-center"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ToastRenderer toast={toast} setToast={setToast} />
     </div>
   );
 }
