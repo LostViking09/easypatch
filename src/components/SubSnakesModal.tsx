@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Edit2, Check, Network, HelpCircle, Grid, AlertTriangle, Unlink, Pipette } from 'lucide-react';
 import { Channel, SubSnake, SettingsConfig } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { PALETTES } from '../utils/constants';
+import { PALETTES, SUB_SNAKE_PRESETS } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
 
 interface SubSnakesModalProps {
@@ -17,14 +17,8 @@ interface SubSnakesModalProps {
   onClearSubSnakeAssignments: (id: string) => void;
 }
 
-const PRESETS = [
-  { name: 'Dynamic (Auto-size)', value: 'dynamic' },
-  { name: '2×2 (4 ch)', value: '2x2', in: { rows: 2, cols: 2 }, out: { rows: 0, cols: 0 } },
-  { name: '4×2 (8 ch)', value: '4x2', in: { rows: 2, cols: 4 }, out: { rows: 0, cols: 0 } },
-  { name: '4×3 (12 ch)', value: '4x3', in: { rows: 3, cols: 4 }, out: { rows: 0, cols: 0 } },
-  { name: '4×4 (16 ch)', value: '4x4', in: { rows: 4, cols: 4 }, out: { rows: 0, cols: 0 } },
-  { name: 'Custom', value: 'custom', in: { rows: 2, cols: 4 }, out: { rows: 0, cols: 0 } },
-];
+const PRESETS = SUB_SNAKE_PRESETS;
+
 
 export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
   subSnakes,

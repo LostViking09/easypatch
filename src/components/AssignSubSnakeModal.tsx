@@ -3,7 +3,7 @@ import { X, Network, Plus, Check, AlertTriangle, Play, Pipette } from 'lucide-re
 import { hexToRgba } from '../utils/colors';
 import { Channel, SubSnake, SettingsConfig } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { PALETTES } from '../utils/constants';
+import { PALETTES, SUB_SNAKE_PRESETS } from '../utils/constants';
 
 interface AssignSubSnakeModalProps {
   selectedCount: number;
@@ -69,10 +69,12 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
     if (!newSnakeName.trim()) return;
 
     let grid = undefined;
-    if (newSnakePreset === '4x2') {
-      grid = { input: { rows: 2, cols: 4 }, output: { rows: 0, cols: 0 } };
-    } else if (newSnakePreset === '4x4') {
-      grid = { input: { rows: 4, cols: 4 }, output: { rows: 0, cols: 0 } };
+    const preset = SUB_SNAKE_PRESETS.find(p => p.value === newSnakePreset);
+    if (preset && preset.value !== 'dynamic' && preset.value !== 'custom') {
+      grid = {
+        input: preset.in || { rows: 0, cols: 0 },
+        output: preset.out || { rows: 0, cols: 0 },
+      };
     }
 
     const newSnake = onAddSubSnake(newSnakeName.trim(), newSnakeColor, grid);
@@ -345,9 +347,9 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
                       onChange={e => setNewSnakePreset(e.target.value)}
                       className="w-full px-3 py-1.5 border border-slate-350 bg-white rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-medium"
                     >
-                      <option value="dynamic">Dynamic (Auto-size)</option>
-                      <option value="4x2">4×2 (8 inputs)</option>
-                      <option value="4x4">4×4 (16 inputs)</option>
+                      {SUB_SNAKE_PRESETS.filter(p => p.value !== 'custom').map(p => (
+                        <option key={p.value} value={p.value}>{p.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

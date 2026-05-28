@@ -60,3 +60,20 @@ export const initialOutputs: Channel[] = Array.from({ length: 12 }, (_, i) => ({
   color: '#ffffff',
   group: '',
 }));
+
+export interface SubSnakePreset {
+  name: string;
+  value: string;
+  in?: { rows: number; cols: number };
+  out?: { rows: number; cols: number };
+}
+
+export const SUB_SNAKE_PRESETS: SubSnakePreset[] = [
+  { name: 'Dynamic (Auto-size)', value: 'dynamic' },
+  { name: '2×2 (4 ch)', value: '2x2', in: { rows: 2, cols: 2 }, out: { rows: 0, cols: 0 } },
+  { name: '4×2 (8 ch)', value: '4x2', in: { rows: 2, cols: 4 }, out: { rows: 0, cols: 0 } },
+  { name: '4×3 (12 ch)', value: '4x3', in: { rows: 3, cols: 4 }, out: { rows: 0, cols: 0 } },
+  { name: '4×4 (16 ch)', value: '4x4', in: { rows: 4, cols: 4 }, out: { rows: 0, cols: 0 } },
+  { name: 'Custom', value: 'custom', in: { rows: 2, cols: 4 }, out: { rows: 0, cols: 0 } },
+];
+
