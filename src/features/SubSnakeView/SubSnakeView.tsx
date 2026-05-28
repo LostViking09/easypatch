@@ -230,7 +230,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
                   <h4 className="font-extrabold text-lg text-slate-850 tracking-tight">{snake.name}</h4>
                   <span className="text-xs text-slate-555 font-semibold hidden sm:inline">
                     ({isGridDefined 
-                      ? `${snake.grid?.input.cols}×${snake.grid?.input.rows} IN / ${snake.grid?.output.cols}×${snake.grid?.output.rows} OUT Grid` 
+                      ? `${(snake.grid?.input.cols || 0) * (snake.grid?.input.rows || 0)} in / ${(snake.grid?.output.cols || 0) * (snake.grid?.output.rows || 0)} out` 
                       : 'Auto-sized Sequential'}
                     )
                   </span>
