@@ -48,6 +48,7 @@ export default function App() {
   const [isAssignSubSnakeOpen, setIsAssignSubSnakeOpen] = useState(false);
   const [isSubSnakesOpen, setIsSubSnakesOpen] = useState(false);
   const [currentView, setCurrentView] = useState<string>('main');
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
 
   const { toast, setToast } = useToast();
 
@@ -115,8 +116,8 @@ export default function App() {
 
   const pClass = (cls: string) => settings.useEditorLookInPrint ? '' : cls;
   const shouldStackPrint = inputs.length > 24 || outputs.length > 16;
-  const activeView = (currentView === 'main' || currentView === 'table' || subSnakes.some(s => s.id === currentView)) ? currentView : 'main';
-  const isMultiPagePrint = shouldStackPrint || activeView !== 'main' || (settings.includeSubSnakesInPrint && subSnakes.length > 0);
+  const activeView = (currentView === 'main' || subSnakes.some(s => s.id === currentView)) ? currentView : 'main';
+  const isMultiPagePrint = shouldStackPrint || activeView !== 'main' || (settings.includeSubSnakesInPrint && subSnakes.length > 0) || layoutMode === 'table';
 
   return (
     <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')} ${settings.printTheme === 'bw' ? 'print-bw-mode' : ''}`}>
@@ -155,6 +156,8 @@ export default function App() {
                 currentView={currentView}
                 setCurrentView={setCurrentView}
                 activeView={activeView}
+                layoutMode={layoutMode}
+                setLayoutMode={setLayoutMode}
               />
             </div>
 
@@ -162,7 +165,7 @@ export default function App() {
             <div 
               className={`print-grid-container flex-col lg:flex-row gap-6 lg:gap-8 flex-1 ${
                 shouldStackPrint ? 'print-stacked' : 'print-side-by-side'
-              } ${activeView === 'main' ? 'flex print:flex' : 'hidden print:hidden'}`}
+              } ${activeView === 'main' && layoutMode === 'grid' ? 'flex print:flex' : 'hidden print:hidden'}`}
             >
               <PatchGridSection
                 channels={inputs}
@@ -196,7 +199,7 @@ export default function App() {
 
             <div 
               className={`${
-                activeView !== 'main' && activeView !== 'table'
+                activeView !== 'main'
                   ? 'block print:block' 
                   : `hidden ${(settings.includeSubSnakesInPrint && subSnakes.length > 0) ? 'print:block print-subsnake-page-break' : 'print:hidden'}`
               }`}
@@ -210,11 +213,14 @@ export default function App() {
                 isPrintMode={activeView === 'main'}
                 projectTitle={title}
                 projectNotes={notes}
+                onUpdateChannel={saveEdit}
+                onEditChannel={(ch) => setEditingChannel(ch)}
+                layoutMode={layoutMode}
               />
             </div>
 
             {/* Table View */}
-            <div className={`${activeView === 'table' ? 'block print:block' : 'hidden print:hidden'} flex-1`}>
+            <div className={`${activeView === 'main' && layoutMode === 'table' ? 'block print:block' : 'hidden print:hidden'} flex-1`}>
               <TableView
                 inputs={inputs}
                 outputs={outputs}

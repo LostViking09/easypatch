@@ -1,8 +1,9 @@
 import React from 'react';
-import { Network, HelpCircle, Lock, X } from 'lucide-react';
+import { Network, Lock, X } from 'lucide-react';
 import { Channel, SubSnake, SettingsConfig } from '../../types';
 import { ChannelCell } from '../../components/ChannelCell';
 import { hexToRgba } from '../../utils/colors';
+import { SubSnakeTable } from './SubSnakeTable';
 
 interface SubSnakeViewProps {
   subSnakes: SubSnake[];
@@ -13,6 +14,9 @@ interface SubSnakeViewProps {
   isPrintMode?: boolean;
   projectTitle?: string;
   projectNotes?: string;
+  onUpdateChannel?: (channel: Channel) => void;
+  onEditChannel?: (channel: Channel) => void;
+  layoutMode: 'grid' | 'table';
 }
 
 export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
@@ -24,6 +28,9 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
   isPrintMode = false,
   projectTitle = '',
   projectNotes = '',
+  onUpdateChannel,
+  onEditChannel,
+  layoutMode
 }) => {
   const [showBanner, setShowBanner] = React.useState(() => {
     if (typeof document === 'undefined') return false;
@@ -176,29 +183,34 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
 
   return (
     <div className="space-y-8 flex-1 flex flex-col min-h-0">
-      {!isPrintMode && showBanner && (
-        <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3.5 flex items-start justify-between gap-3 text-slate-700 text-xs shadow-3xs relative">
-          <div className="flex items-start gap-3">
-            <Lock className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <span className="font-bold text-slate-800">Read-Only Stagebox View</span>
-              <p className="text-slate-500 mt-0.5">
-                This layout visualizes how channels map to your SubSnakes (stage boxes). To edit assignments, switch to the <b>Main Grid</b> and edit channels directly, or use <b>Multi-Select</b>.
-              </p>
+      {/* Top Banner and Controls */}
+      <div className="flex flex-col gap-4 print:hidden">
+        {!isPrintMode && showBanner && (
+          <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3.5 flex items-start justify-between gap-3 text-slate-700 text-xs shadow-3xs relative">
+            <div className="flex items-start gap-3">
+              <Lock className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <span className="font-bold text-slate-800">Read-Only Stagebox View</span>
+                <p className="text-slate-500 mt-0.5">
+                  This layout visualizes how channels map to your SubSnakes (stage boxes). To edit assignments, switch to the <b>Main Grid</b> and edit channels directly, or use <b>Multi-Select</b>.
+                </p>
+              </div>
             </div>
+            <button 
+              type="button" 
+              onClick={handleDismissBanner}
+              className="text-slate-400 hover:text-slate-650 transition-colors p-1 rounded-lg hover:bg-indigo-100/50 flex-shrink-0 cursor-pointer"
+              aria-label="Dismiss banner"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button 
-            type="button" 
-            onClick={handleDismissBanner}
-            className="text-slate-400 hover:text-slate-650 transition-colors p-1 rounded-lg hover:bg-indigo-100/50 flex-shrink-0 cursor-pointer"
-            aria-label="Dismiss banner"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+        )}
 
-      {/* Grid List */}
+        {/* Global View Toggle (Removed as it's now in ViewSwitcher) */}
+      </div>
+
+      {/* Grid/Table List */}
       <div className={`space-y-12 flex-1 ${isPrintMode ? 'space-y-16' : ''}`}>
         {activeSubSnakes.map((snake, index) => {
           const { inputs: assignedInputs, outputs: assignedOutputs } = getAssignedChannelsForSnake(snake.id);
@@ -207,6 +219,12 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
           const isGridDefined = !!snake.grid;
           const breakClass = index > 0 ? 'print-subsnake-page-break' : '';
           const shouldShowPrintHeader = isPrintMode || index > 0;
+
+          // Calculate total ports for dynamic layouts
+          const maxInputPort = Math.max(...assignedInputs.map(c => c.subSnakeChannel || 0), 0);
+          const maxOutputPort = Math.max(...assignedOutputs.map(c => c.subSnakeChannel || 0), 0);
+          const dynamicInputPorts = Math.max(Math.ceil(assignedInputs.length / 4) * 4, maxInputPort);
+          const dynamicOutputPorts = Math.max(Math.ceil(assignedOutputs.length / 4) * 4, maxOutputPort);
 
           return (
             <div
@@ -249,63 +267,96 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
                 </div>
               </div>
 
-              {/* Grid Layout Section */}
+              {/* View Layout Section */}
               <div className="w-full">
-                {isGridDefined ? (
-                  // FIXED GRID LAYOUT
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-                    {/* Inputs Grid */}
-                    {snake.grid!.input.rows * snake.grid!.input.cols > 0 && 
-                      renderGridSection(
-                        'INPUT CHANNELS', 
-                        snake.grid!.input.rows, 
-                        snake.grid!.input.cols, 
-                        assignedInputs, 
-                        'in'
-                      )
-                    }
-
-                    {/* Outputs Grid */}
-                    {snake.grid!.output.rows * snake.grid!.output.cols > 0 && 
-                      renderGridSection(
-                        'OUTPUT CHANNELS', 
-                        snake.grid!.output.rows, 
-                        snake.grid!.output.cols, 
-                        assignedOutputs, 
-                        'out'
-                      )
-                    }
-                  </div>
-                ) : (
-                  // DYNAMIC LAYOUT LIST
-                  <div>
-                    {!hasInputs && !hasOutputs ? (
+                {layoutMode === 'table' ? (
+                  // TABLE VIEW
+                  <div className="w-full max-w-7xl bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none">
+                    {/* Inputs Table */}
+                    {(isGridDefined ? snake.grid!.input.rows * snake.grid!.input.cols > 0 : hasInputs) && (
+                      <SubSnakeTable
+                        title="INPUT CHANNELS"
+                        type="in"
+                        totalPorts={isGridDefined ? snake.grid!.input.rows * snake.grid!.input.cols : dynamicInputPorts}
+                        assignedChannels={assignedInputs}
+                        settings={settings}
+                        subSnake={snake}
+                        onUpdateChannel={onUpdateChannel}
+                        onEditChannel={onEditChannel}
+                      />
+                    )}
+                    {/* Outputs Table */}
+                    {(isGridDefined ? snake.grid!.output.rows * snake.grid!.output.cols > 0 : hasOutputs) && (
+                      <SubSnakeTable
+                        title="OUTPUT CHANNELS"
+                        type="out"
+                        totalPorts={isGridDefined ? snake.grid!.output.rows * snake.grid!.output.cols : dynamicOutputPorts}
+                        assignedChannels={assignedOutputs}
+                        settings={settings}
+                        subSnake={snake}
+                        onUpdateChannel={onUpdateChannel}
+                        onEditChannel={onEditChannel}
+                      />
+                    )}
+                    {/* Empty State */}
+                    {!isGridDefined && !hasInputs && !hasOutputs && (
                       <div className="text-center p-6 bg-slate-55 border border-slate-200 border-dashed rounded-xl text-slate-400 text-xs font-semibold max-w-sm mx-auto my-2">
                         No channels currently assigned to this Auto-sized SubSnake Box.
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Dynamic Inputs */}
-                        {hasInputs && 
+                    )}
+                  </div>
+                ) : (
+                  // GRID VIEW
+                  <div>
+                    {isGridDefined ? (
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                        {snake.grid!.input.rows * snake.grid!.input.cols > 0 && 
                           renderGridSection(
                             'INPUT CHANNELS', 
-                            Math.ceil(assignedInputs.length / 4), 
-                            4, 
-                            assignedInputs.sort((a, b) => (a.subSnakeChannel || 0) - (b.subSnakeChannel || 0)), 
+                            snake.grid!.input.rows, 
+                            snake.grid!.input.cols, 
+                            assignedInputs, 
                             'in'
                           )
                         }
-
-                        {/* Dynamic Outputs */}
-                        {hasOutputs && 
+                        {snake.grid!.output.rows * snake.grid!.output.cols > 0 && 
                           renderGridSection(
                             'OUTPUT CHANNELS', 
-                            Math.ceil(assignedOutputs.length / 4), 
-                            4, 
-                            assignedOutputs.sort((a, b) => (a.subSnakeChannel || 0) - (b.subSnakeChannel || 0)), 
+                            snake.grid!.output.rows, 
+                            snake.grid!.output.cols, 
+                            assignedOutputs, 
                             'out'
                           )
                         }
+                      </div>
+                    ) : (
+                      <div>
+                        {!hasInputs && !hasOutputs ? (
+                          <div className="text-center p-6 bg-slate-55 border border-slate-200 border-dashed rounded-xl text-slate-400 text-xs font-semibold max-w-sm mx-auto my-2">
+                            No channels currently assigned to this Auto-sized SubSnake Box.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {hasInputs && 
+                              renderGridSection(
+                                'INPUT CHANNELS', 
+                                Math.ceil(dynamicInputPorts / 4), 
+                                4, 
+                                assignedInputs.sort((a, b) => (a.subSnakeChannel || 0) - (b.subSnakeChannel || 0)), 
+                                'in'
+                              )
+                            }
+                            {hasOutputs && 
+                              renderGridSection(
+                                'OUTPUT CHANNELS', 
+                                Math.ceil(dynamicOutputPorts / 4), 
+                                4, 
+                                assignedOutputs.sort((a, b) => (a.subSnakeChannel || 0) - (b.subSnakeChannel || 0)), 
+                                'out'
+                              )
+                            }
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

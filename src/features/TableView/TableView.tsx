@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Channel, SubSnake, SettingsConfig } from '../../types';
 import { hexToRgba } from '../../utils/colors';
+import { InlineEditCell } from '../../components/InlineEditCell';
 
 type EditableField = 'name' | 'mic' | 'stand' | 'notes' | 'group';
 const EDITABLE_FIELDS: EditableField[] = ['name', 'mic', 'stand', 'notes', 'group'];
@@ -27,94 +28,7 @@ interface ChannelTableProps {
   onEditChannel?: (channel: Channel) => void;
 }
 
-interface InlineEditCellProps {
-  value: string;
-  isEditing: boolean;
-  onEditStart: () => void;
-  onSave: (val: string) => void;
-  onCancel: () => void;
-  onNavigate: (direction: 'next' | 'prev' | 'up' | 'down') => void;
-  className?: string;
-  children: React.ReactNode;
-}
 
-const InlineEditCell: React.FC<InlineEditCellProps> = ({
-  value,
-  isEditing,
-  onEditStart,
-  onSave,
-  onCancel,
-  onNavigate,
-  className = '',
-  children
-}) => {
-  const [localValue, setLocalValue] = useState(value);
-  const saved = useRef(false);
-
-  useEffect(() => {
-    if (isEditing) {
-      setLocalValue(value);
-      saved.current = false;
-    }
-  }, [isEditing, value]);
-
-  const handleSave = (val: string) => {
-    if (!saved.current) {
-      saved.current = true;
-      onSave(val);
-    }
-  };
-
-  if (isEditing) {
-    return (
-      <td className={`${className} p-0 relative align-middle`}>
-        <div className="absolute inset-0 flex items-center px-2">
-          <input
-            autoFocus
-            className="w-full bg-blue-50 border border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1.5 py-0.5 text-slate-900 text-sm font-medium"
-            value={localValue}
-            onChange={(e) => setLocalValue(e.target.value)}
-            onBlur={() => handleSave(localValue)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSave(localValue);
-                onNavigate(e.shiftKey ? 'up' : 'down');
-              } else if (e.key === 'Tab') {
-                e.preventDefault();
-                handleSave(localValue);
-                onNavigate(e.shiftKey ? 'prev' : 'next');
-              } else if (e.key === 'Escape') {
-                e.preventDefault();
-                saved.current = true;
-                onCancel();
-              } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                handleSave(localValue);
-                onNavigate('up');
-              } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                handleSave(localValue);
-                onNavigate('down');
-              }
-            }}
-          />
-        </div>
-        {/* Invisible content forces the cell to maintain its original height/width */}
-        <div className="invisible px-4 py-2 print:px-3 print:py-0.5">{children}</div>
-      </td>
-    );
-  }
-
-  return (
-    <td 
-      className={`${className} px-4 py-2 print:px-3 print:py-0.5 cursor-pointer hover:bg-black/5 print:cursor-default print:hover:bg-transparent transition-colors`}
-      onClick={onEditStart}
-    >
-      {children}
-    </td>
-  );
-};
 
 const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes, settings, projectTitle = '', projectNotes = '', onUpdateChannel, onEditChannel }) => {
   const [editingCell, setEditingCell] = useState<{ id: string, field: EditableField, rowIndex: number, colIndex: number } | null>(null);
@@ -355,10 +269,6 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
                   </td>
                   {renderEditableCell(ch, 'name', index, 0, (
                     <div className="flex items-center gap-2">
-                      {ch.name.trim() !== '' && (
-                        <div 
-                          className="w-3.5 h-3.5 print:w-2.5 print:h-2.5 rounded-sm border border-slate-300 shrink-0 table-color-block hover:brightness-95 cursor-pointer transition-all"
-                          style={ch.color && ch.color !== '#ffffff' ? { backgroundColor: ch.color } : { backgroundColor: 'transparent' }}
                       <div 
                         className={`w-3.5 h-3.5 print:w-2.5 print:h-2.5 rounded-sm border border-slate-300 shrink-0 table-color-block hover:brightness-95 cursor-pointer transition-all ${ch.name.trim() === '' ? 'opacity-0' : ''}`}
                         style={ch.color && ch.color !== '#ffffff' ? { backgroundColor: ch.color } : { backgroundColor: 'transparent' }}

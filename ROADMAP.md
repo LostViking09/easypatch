@@ -16,6 +16,8 @@ This document serves as the central repository for planned features, refined ide
   - Subsnakes (selectable subsnakes)
   - Table view: input
   - Table view: output
+- Every block should print a new page
+- Make sure there are no 2 page breaks accidentally.
 
 ### 1. Snippets
 
