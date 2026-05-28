@@ -332,6 +332,7 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
                       type="text"
                       value={newSnakeName}
                       onChange={e => setNewSnakeName(e.target.value)}
+                      maxLength={6}
                       placeholder="e.g. Stage Right, Drums..."
                       className="w-full px-3 py-1.5 border border-slate-350 bg-white rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-bold"
                       required

@@ -6,7 +6,7 @@ This document serves as the central repository for planned features, refined ide
 
 ### BUGS
 
-- Multi-Edit Group assign does not assign colors. -> Assign colors, if none is selected
+- EDIT dialog not scrollable
 
 ### 1. App.tsx refactor
 

@@ -201,21 +201,25 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       )}
 
       <div 
-        className={`absolute top-1 left-2 flex items-center gap-1 font-mono font-bold tracking-tighter text-gray-500 group-hover:text-gray-800 ${pClass('print:text-black')} z-10`}
+        className={`absolute top-1 left-2 right-2 flex items-center gap-1 font-mono font-bold tracking-tighter text-gray-550 group-hover:text-gray-800 ${pClass('print:text-black')} z-10 min-w-0`}
         style={{ fontSize: `${0.875 * settings.fontSizes.number}rem` }}
       >
         <span>{channel.number}</span>
         {subSnakeName && channel.subSnakeChannel && (
           <span 
             style={badgeStyle}
-            className={`text-[9px] ml-1.5 px-1 py-0.25 rounded border font-bold font-mono tracking-normal shadow-3xs select-none transition-all text-slate-550 group-hover:text-slate-700 ${
+            className={`flex items-center gap-px text-[9px] ml-1 px-0.5 py-0 rounded border font-bold font-mono tracking-normal shadow-3xs select-none transition-all text-slate-550 group-hover:text-slate-700 min-w-0 ${
               subSnakeColor && subSnakeColor !== '#ffffff'
                 ? ''
                 : 'border-slate-250 bg-slate-100/90 group-hover:bg-slate-200/90 group-hover:border-slate-355'
             } ${pClass('print:bg-white print:text-black print:border-gray-400')}`}
             title={`${subSnakeName} #${channel.subSnakeChannel}`}
           >
-            {subSnakeName.length > 8 ? subSnakeName.slice(0, 6) + '..' : subSnakeName} #{channel.subSnakeChannel}
+            <span className="truncate">{subSnakeName}</span>
+            <span className="flex-shrink-0">
+              <span className="opacity-60 mr-px">#</span>
+              <span className="font-extrabold">{channel.subSnakeChannel}</span>
+            </span>
           </span>
         )}
       </div>

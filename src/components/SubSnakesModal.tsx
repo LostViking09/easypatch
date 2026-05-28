@@ -226,6 +226,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                   type="text"
                   value={newSnakeName}
                   onChange={e => setNewSnakeName(e.target.value)}
+                  maxLength={6}
                   placeholder="e.g. Stage Left, Drums..."
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
                   required
@@ -385,6 +386,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                                   type="text"
                                   value={editingName}
                                   onChange={e => setEditingName(e.target.value)}
+                                  maxLength={6}
                                   className="w-full px-2 py-1 text-sm border rounded focus:outline-indigo-550 focus:ring-1 focus:ring-indigo-500 font-bold"
                                 />
                               </div>
