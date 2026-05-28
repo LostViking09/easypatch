@@ -100,7 +100,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
               {[
                 { key: 'number', label: 'Channel Number' },
                 { key: 'name', label: 'Channel Name' },
-                { key: 'tech', label: 'Tech Data' },
+                { key: 'metadata', label: 'Metadata' },
                 { key: 'group', label: 'Group Name' },
                 { key: 'subSnakeBadge', label: 'SubSnake Badge' },
               ].map(({ key, label }) => (

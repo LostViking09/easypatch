@@ -58,7 +58,7 @@ export const NewProjectConfirmModal: React.FC<NewProjectConfirmModalProps> = ({ 
           <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-red-800">
             <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
             <div className="text-xs font-semibold leading-relaxed">
-              This action will reset your grid structure to default dimensions and permanently erase all channel names, tech data, group colors, and stereo links.
+              This action will reset your grid structure to default dimensions and permanently erase all channel names, metadata (mic, stand, notes), group colors, and stereo links.
             </div>
           </div>
           <p className="text-sm text-gray-600 leading-relaxed">

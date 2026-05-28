@@ -48,10 +48,10 @@ export function usePatchState() {
     }
 
     if (savedInputs) {
-      try { setInputs(JSON.parse(savedInputs)); } catch (e) { console.error(e); }
+      try { setInputs(JSON.parse(savedInputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }))); } catch (e) { console.error(e); }
     }
     if (savedOutputs) {
-      try { setOutputs(JSON.parse(savedOutputs)); } catch (e) { console.error(e); }
+      try { setOutputs(JSON.parse(savedOutputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }))); } catch (e) { console.error(e); }
     }
     if (savedSubSnakes) {
       try { 
@@ -219,7 +219,9 @@ export function usePatchState() {
           updates[partner.id] = {
             stereoLink: 'prev',
             name: pName,
-            tech: updatedChannel.tech,
+            mic: updatedChannel.mic,
+            stand: updatedChannel.stand,
+            notes: updatedChannel.notes,
             group: updatedChannel.group,
             color: updatedChannel.color
           };
@@ -257,7 +259,9 @@ export function usePatchState() {
           updates[partner.id] = {
             stereoLink: 'next',
             name: pName,
-            tech: updatedChannel.tech,
+            mic: updatedChannel.mic,
+            stand: updatedChannel.stand,
+            notes: updatedChannel.notes,
             group: updatedChannel.group,
             color: updatedChannel.color
           };
@@ -275,7 +279,9 @@ export function usePatchState() {
     // Write source updates
     updates[finalSourceChannel.id] = {
       name: finalSourceChannel.name,
-      tech: finalSourceChannel.tech,
+      mic: finalSourceChannel.mic,
+      stand: finalSourceChannel.stand,
+      notes: finalSourceChannel.notes,
       group: finalSourceChannel.group,
       color: finalSourceChannel.color,
       stereoLink: finalSourceChannel.stereoLink,
@@ -283,7 +289,7 @@ export function usePatchState() {
       subSnakeChannel: finalSourceChannel.subSnakeChannel
     };
     
-    // 3. If the channel is already linked, propagate editing changes (names, tech, group, color)
+    // 3. If the channel is already linked, propagate editing changes (names, mic, stand, notes, group, color)
     if (updatedChannel.stereoLink === originalChannel.stereoLink && updatedChannel.stereoLink) {
       const partnerIdx = updatedChannel.stereoLink === 'next' ? originalIdx + 1 : originalIdx - 1;
       if (partnerIdx >= 0 && partnerIdx < list.length) {
@@ -311,7 +317,9 @@ export function usePatchState() {
         updates[partner.id] = {
           ...updates[partner.id],
           ...nameUpdate,
-          tech: updatedChannel.tech,
+          mic: updatedChannel.mic,
+          stand: updatedChannel.stand,
+          notes: updatedChannel.notes,
           group: updatedChannel.group,
           color: updatedChannel.color
         };
@@ -377,7 +385,9 @@ export function usePatchState() {
       type: 'in',
       number: i + 1,
       name: '',
-      tech: '',
+      mic: '',
+      stand: '',
+      notes: '',
       color: '#ffffff',
       group: '',
     }));
@@ -387,7 +397,9 @@ export function usePatchState() {
       type: 'out',
       number: i + 1,
       name: '',
-      tech: '',
+      mic: '',
+      stand: '',
+      notes: '',
       color: '#ffffff',
       group: '',
     }));
@@ -421,7 +433,9 @@ export function usePatchState() {
         type: 'in',
         number: i + 1,
         name: '',
-        tech: '',
+        mic: '',
+        stand: '',
+        notes: '',
         color: '#ffffff',
         group: '',
       };
@@ -438,7 +452,9 @@ export function usePatchState() {
         type: 'out',
         number: i + 1,
         name: '',
-        tech: '',
+        mic: '',
+        stand: '',
+        notes: '',
         color: '#ffffff',
         group: '',
       };
@@ -505,8 +521,8 @@ export function usePatchState() {
     if (data.title) setTitle(data.title);
     if (data.notes !== undefined) setNotes(data.notes);
     if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
-    if (data.inputs && Array.isArray(data.inputs)) setInputs(data.inputs);
-    if (data.outputs && Array.isArray(data.outputs)) setOutputs(data.outputs);
+    if (data.inputs && Array.isArray(data.inputs)) setInputs(data.inputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
+    if (data.outputs && Array.isArray(data.outputs)) setOutputs(data.outputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
     if (data.subSnakes && Array.isArray(data.subSnakes)) {
       setSubSnakes(data.subSnakes.map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) })));
     } else {

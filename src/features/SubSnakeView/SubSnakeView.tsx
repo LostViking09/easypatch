@@ -53,8 +53,10 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
 
   // If no SubSnakes exist at all
   if (subSnakes.length === 0) {
+    if (isPrintMode) return null;
+    
     return (
-      <div className="flex flex-col items-center justify-center text-center p-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-slate-500 my-8">
+      <div className="flex flex-col items-center justify-center text-center p-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-slate-500 my-8 print:hidden">
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-indigo-500 mb-4 shadow-sm border border-slate-200">
           <Network className="w-8 h-8" />
         </div>
@@ -98,7 +100,9 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
             type,
             number: portNum,
             name: '',
-            tech: '',
+            mic: '',
+            stand: '',
+            notes: '',
             color: '#ffffff',
             group: ''
           };

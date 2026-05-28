@@ -2,7 +2,7 @@ import { Channel, SettingsConfig } from '../types';
 
 export const defaultSettings: SettingsConfig = {
   palette: 'qu5',
-  fontSizes: { number: 1, name: 1, tech: 1, group: 1, subSnakeBadge: 1 },
+  fontSizes: { number: 1, name: 1, metadata: 1, group: 1, subSnakeBadge: 1 },
   printHeight: 100,
   useEditorLookInPrint: true,
   colorOpacity: 0.25,
@@ -47,7 +47,9 @@ export const initialInputs: Channel[] = Array.from({ length: 24 }, (_, i) => ({
   type: 'in',
   number: i + 1,
   name: '',
-  tech: '',
+  mic: '',
+  stand: '',
+  notes: '',
   color: '#ffffff',
   group: '',
 }));
@@ -57,7 +59,9 @@ export const initialOutputs: Channel[] = Array.from({ length: 12 }, (_, i) => ({
   type: 'out',
   number: i + 1,
   name: '',
-  tech: '',
+  mic: '',
+  stand: '',
+  notes: '',
   color: '#ffffff',
   group: '',
 }));

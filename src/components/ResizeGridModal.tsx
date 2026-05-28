@@ -115,7 +115,7 @@ export const ResizeGridModal: React.FC<ResizeGridModalProps> = ({
     // Check Inputs
     inputs.forEach((ch, idx) => {
       if (idx >= totalInputs) {
-        const hasData = ch.name.trim() !== '' || ch.tech.trim() !== '' || ch.group || ch.stereoLink;
+        const hasData = ch.name.trim() !== '' || ch.mic.trim() !== '' || ch.stand.trim() !== '' || ch.notes.trim() !== '' || ch.group || ch.stereoLink;
         if (hasData) {
           lostInCount++;
         }
@@ -125,7 +125,7 @@ export const ResizeGridModal: React.FC<ResizeGridModalProps> = ({
     // Check Outputs
     outputs.forEach((ch, idx) => {
       if (idx >= totalOutputs) {
-        const hasData = ch.name.trim() !== '' || ch.tech.trim() !== '' || ch.group || ch.stereoLink;
+        const hasData = ch.name.trim() !== '' || ch.mic.trim() !== '' || ch.stand.trim() !== '' || ch.notes.trim() !== '' || ch.group || ch.stereoLink;
         if (hasData) {
           lostOutCount++;
         }

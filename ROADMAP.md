@@ -6,20 +6,26 @@ This document serves as the central repository for planned features, refined ide
 
 ### BUGS
 
-### 1. Snippets
+-
+
+### 1. Seperate channel metadata
+
+- **Goal:** Create seperate metadata fields for inputs, like mic, stand, notes (all of them strings)
+- **Tasks:**
+  - Create new data for inputs only, where there are seperate fields for:
+    - mic
+    - stand
+    - other notes
+  - Create inputs for these in the edit patch modal.
+  - Make it so that if a field is empty, it is not displayed in the patch view.
+- **Questions:**
+  - How should we display the data? Just MIC | Stand | Notes (concatenated), or by icons or how would you recommend?
+
+### 2. Snippets
 
 - **Goal:** Quickly insert data, like 8 drum channels from a snippet list into the patch
 
-### 5. SubSnake View Excerpt (Read-Only)
-
-- **Goal:** Provide a custom visual layout for specific subsnakes.
-- **Tasks:**
-  - Build a View Switcher (Main Grid vs SubSnakes).
-  - Allow defining custom grid layouts (e.g., 3x4, 2x4) for a SubSnake.
-  - _Constraint:_ This view will be **read-only** in the first iteration to simplify implementation. It will just display the data mapped in the main view.
-  - Also allow to toggle this view to be included in the printouts (separate page, similar page breaks as defined in the original printout rules.)
-
-### 6. Table View (Read-Only)
+### 3. Table View (Read-Only)
 
 - **Goal:** A spreadsheet-style list view of all patch data.
 - **Tasks:**
@@ -27,9 +33,13 @@ This document serves as the central repository for planned features, refined ide
   - Columns should include: Main IO, SubSnake IO, Group, Channel, Mic/DI type, Stand type, Notes.
   - _Constraint:_ This view will be **read-only** in the first iteration.
 
-### 7. URL sharing
+### 4. URL sharing
 
 - **Goal:** Allow users to share their patch data via a URL.
 - **Tasks:**
   - Create a URL sharing system.
   - Allow users to share their patch data via a URL.
+
+### 5. Monitor level template
+
+- **Goal:** Allow users to set a monitor levels for each channel per monitor send.

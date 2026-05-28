@@ -361,13 +361,38 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
             />
           </div>
 
+          {channel.type === 'in' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mic / DI</label>
+                <input
+                  type="text"
+                  value={formData.mic}
+                  onChange={e => setFormData({ ...formData, mic: e.target.value })}
+                  placeholder="e.g. Beta52"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Stand</label>
+                <input
+                  type="text"
+                  value={formData.stand}
+                  onChange={e => setFormData({ ...formData, stand: e.target.value })}
+                  placeholder="e.g. Short boom"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tech details (e.g., mic, stand)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
             <input
               type="text"
-              value={formData.tech}
-              onChange={e => setFormData({ ...formData, tech: e.target.value })}
-              placeholder="e.g. Beta52, short stand..."
+              value={formData.notes}
+              onChange={e => setFormData({ ...formData, notes: e.target.value })}
+              placeholder={channel.type === 'in' ? "e.g. 48V, Bring own mic..." : "e.g. IEM, Wedge, Stereo..."}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -795,7 +820,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                     {currentOccupant.type === 'in' ? 'Input' : 'Output'}  #{currentOccupant.number}
                   </div>
                   <div className="text-xs text-amber-800 font-mono truncate mt-0.5">
-                    {currentOccupant.name || 'Unused'} {currentOccupant.tech ? `(${currentOccupant.tech})` : ''}
+                    {currentOccupant.name || 'Unused'} {currentOccupant.mic ? `(${currentOccupant.mic})` : ''}
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed mt-2">

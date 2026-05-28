@@ -193,12 +193,11 @@ export default function App() {
               />
             </div>
 
-            {/* SubSnake Excerpts View */}
             <div 
               className={`${
                 activeView !== 'main' 
                   ? 'block print:block' 
-                  : `hidden ${settings.includeSubSnakesInPrint ? 'print:block print-subsnake-page-break' : 'print:hidden'}`
+                  : `hidden ${(settings.includeSubSnakesInPrint && subSnakes.length > 0) ? 'print:block print-subsnake-page-break' : 'print:hidden'}`
               }`}
             >
               <SubSnakeView

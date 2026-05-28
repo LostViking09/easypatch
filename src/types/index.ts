@@ -3,7 +3,9 @@ export type Channel = {
   type: 'in' | 'out';
   number: number;
   name: string;
-  tech: string;
+  mic: string;
+  stand: string;
+  notes: string;
   color: string;
   group?: string;
   stereoLink?: 'next' | 'prev';
@@ -26,7 +28,7 @@ export type SettingsConfig = {
   fontSizes: {
     number: number;
     name: number;
-    tech: number;
+    metadata: number;
     group: number;
     subSnakeBadge: number;
   };

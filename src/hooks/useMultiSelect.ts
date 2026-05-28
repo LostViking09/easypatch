@@ -71,7 +71,7 @@ export function useMultiSelect(
   const handleMultiEditClear = () => {
     const clearList = (list: Channel[]) => list.map(ch => {
       if (selectedIds.includes(ch.id)) {
-        return { ...ch, name: '', tech: '', group: '', color: '#ffffff' };
+        return { ...ch, name: '', mic: '', stand: '', notes: '', group: '', color: '#ffffff' };
       }
       return ch;
     });

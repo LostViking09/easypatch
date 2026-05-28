@@ -174,7 +174,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       }
     }}
     style={style}
-    className={`relative flex flex-col p-2 sm:p-3 cursor-pointer hover:shadow-md transition-shadow duration-150 min-h-[5.5rem] ${pClass('print:min-h-0')} overflow-hidden group select-none ${isSelected ? 'z-20' : ''}`}
+    className={`relative flex flex-col p-2 sm:p-3 cursor-pointer hover:shadow-md transition-shadow duration-150 min-h-[5.5rem] ${pClass('print:min-h-0')} group select-none ${isSelected ? 'z-20' : ''}`}
     >
       {/* Selection Overlay */}
       {isSelected && (
@@ -271,10 +271,21 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
           {channel.name || <span className="text-transparent select-none print:hidden">_</span>}
         </div>
         <div 
-          className={`text-gray-700 w-full px-1 mt-0.5 font-medium leading-tight ${pClass('print:text-black')}`}
-          style={{ fontSize: `${0.75 * settings.fontSizes.tech}rem` }}
+          className={`text-gray-700 w-full px-1 mt-0.5 font-medium leading-tight flex flex-col items-center gap-0.5 ${pClass('print:text-black')}`}
+          style={{ fontSize: `${0.75 * settings.fontSizes.metadata}rem` }}
         >
-          {channel.tech || <span className="text-transparent select-none print:hidden">_</span>}
+          {(channel.mic || channel.stand) ? (
+            <div className="flex gap-1 items-center justify-center flex-wrap max-w-full">
+              {channel.mic && <span>{channel.mic}</span>}
+              {channel.stand && <span className="opacity-75">[{channel.stand}]</span>}
+            </div>
+          ) : null}
+          {channel.notes ? (
+            <div className="italic opacity-80 max-w-full break-words text-balance">{channel.notes}</div>
+          ) : null}
+          {(!channel.mic && !channel.stand && !channel.notes) && (
+            <span className="text-transparent select-none print:hidden">_</span>
+          )}
         </div>
       </div>
     </motion.div>
