@@ -9,6 +9,7 @@ export const defaultSettings: SettingsConfig = {
   xlrOpacity: 0.03,
   groupBorderOpacity: 1,
   confirmSubsnakeOverwrite: true,
+  animationsEnabled: true,
   grid: {
     input: { rows: 3, cols: 8 },
     output: { rows: 3, cols: 4 },

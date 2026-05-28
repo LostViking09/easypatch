@@ -1,16 +1,18 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Printer, Download, Upload, Settings, Save, Edit3, Palette, Trash2, ListOrdered, CheckSquare, AlertCircle, X, Grid, Plus, Network } from 'lucide-react';
+import { motion, AnimatePresence, MotionConfig, MotionGlobalConfig } from 'motion/react';
+import { Printer, Download, Upload, Settings, Save, Edit3, Palette, Trash2, ListOrdered, CheckSquare, AlertCircle, X, Grid, Plus, Network, Folder } from 'lucide-react';
 import { Channel } from './types';
 import { usePatchState } from './hooks/usePatchState';
 import { ChannelCell } from './components/ChannelCell';
 import { EditModal } from './components/EditModal';
 import { FastInputModal } from './components/FastInputModal';
-import { MultiEditModal } from './components/MultiEditModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ResizeGridModal } from './components/ResizeGridModal';
 import { NewProjectConfirmModal } from './components/NewProjectConfirmModal';
 import { SubSnakesModal } from './components/SubSnakesModal';
+import { AssignSubSnakeModal } from './components/AssignSubSnakeModal';
+import { MultiGroupModal } from './components/MultiGroupModal';
+import { MultiColorModal } from './components/MultiColorModal';
 import { PALETTES } from './utils/constants';
 
 export default function App() {
@@ -40,7 +42,9 @@ export default function App() {
   const [isNewProjectConfirmOpen, setIsNewProjectConfirmOpen] = useState(false);
   const [isMultiEdit, setIsMultiEdit] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isMultiEditModalOpen, setIsMultiEditModalOpen] = useState(false);
+  const [isMultiGroupOpen, setIsMultiGroupOpen] = useState(false);
+  const [isMultiColorOpen, setIsMultiColorOpen] = useState(false);
+  const [isAssignSubSnakeOpen, setIsAssignSubSnakeOpen] = useState(false);
   const [isSubSnakesOpen, setIsSubSnakesOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,6 +61,10 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  React.useEffect(() => {
+    MotionGlobalConfig.skipAnimations = settings.animationsEnabled === false;
+  }, [settings.animationsEnabled]);
 
   // Global mouseup listener to terminate drag range selection
   React.useEffect(() => {
@@ -85,8 +93,8 @@ export default function App() {
 
   const handleCellClick = (ch: Channel, e: React.MouseEvent) => {
     if (isMultiEdit) {
-      const allSeq = [...inputs, ...outputs];
       if (e.shiftKey && lastSelectedId.current) {
+        const allSeq = [...inputs, ...outputs];
         const lastIdx = allSeq.findIndex(c => c.id === lastSelectedId.current);
         const currentIdx = allSeq.findIndex(c => c.id === ch.id);
         if (lastIdx !== -1 && currentIdx !== -1) {
@@ -104,10 +112,8 @@ export default function App() {
             return newSelection;
           });
         }
-      } else {
-        handleCellToggle(ch.id);
+        lastSelectedId.current = ch.id;
       }
-      lastSelectedId.current = ch.id;
     } else {
       setEditingChannel(ch);
     }
@@ -138,70 +144,61 @@ export default function App() {
     }
   };
 
-  const handleMultiEditSave = (
-    group: string,
-    color: string,
-    subSnakeAction?: {
-      type: 'existing' | 'new' | 'clear' | 'none';
-      subSnakeId?: string;
-      newName?: string;
-      startPort?: number;
-    }
-  ) => {
-    let targetSubSnakeId = subSnakeAction?.subSnakeId;
-    const startPort = subSnakeAction?.startPort || 1;
-
-    // Create new subsnake inline if needed
-    if (subSnakeAction?.type === 'new' && subSnakeAction.newName) {
-      const newSnake = addSubSnake(subSnakeAction.newName);
-      targetSubSnakeId = newSnake.id;
-    }
-
-    // Sort selected IDs chronologically by their rendering order
-    const sortedSelectedIds = [...inputs, ...outputs]
-      .filter(ch => selectedIds.includes(ch.id))
-      .map(ch => ch.id);
-
+  const handleMassAssignGroup = (group: string) => {
     const updateList = (list: Channel[]) => list.map(ch => {
       if (selectedIds.includes(ch.id)) {
-        const updated = { ...ch };
-        if (group !== '') updated.group = group;
-        if (color) updated.color = color;
+        return { ...ch, group };
+      }
+      return ch;
+    });
+    setInputs(updateList(inputs));
+    setOutputs(updateList(outputs));
+    setIsMultiGroupOpen(false);
+    setSelectedIds([]);
+    setIsMultiEdit(false);
+  };
 
-        if (subSnakeAction) {
-          if (subSnakeAction.type === 'clear') {
-            updated.subSnakeId = undefined;
-            updated.subSnakeChannel = undefined;
-          } else if (subSnakeAction.type === 'existing' || subSnakeAction.type === 'new') {
-            const idx = sortedSelectedIds.indexOf(ch.id);
-            if (idx !== -1) {
-              updated.subSnakeId = targetSubSnakeId;
-              updated.subSnakeChannel = startPort + idx;
-            }
-          }
-        }
-        return updated;
-      } else {
-        // Displace any other channel mapped to the newly occupied subsnake ports
-        if (
-          subSnakeAction && 
-          (subSnakeAction.type === 'existing' || subSnakeAction.type === 'new') &&
-          ch.subSnakeId === targetSubSnakeId && 
-          ch.subSnakeChannel !== undefined
-        ) {
+  const handleMassAssignColor = (color: string) => {
+    const updateList = (list: Channel[]) => list.map(ch => {
+      if (selectedIds.includes(ch.id)) {
+        return { ...ch, color };
+      }
+      return ch;
+    });
+    setInputs(updateList(inputs));
+    setOutputs(updateList(outputs));
+    setIsMultiColorOpen(false);
+    setSelectedIds([]);
+    setIsMultiEdit(false);
+  };
+
+  const handleMassAssignSubSnake = (subSnakeId: string, startPort: number) => {
+    const selectedInputs = inputs.filter(ch => selectedIds.includes(ch.id));
+    const selectedOutputs = outputs.filter(ch => selectedIds.includes(ch.id));
+
+    const updateList = (list: Channel[], selectedForType: Channel[], type: 'in' | 'out') => {
+      return list.map(ch => {
+        if (selectedIds.includes(ch.id) && ch.type === type) {
+          const idx = selectedForType.findIndex(c => c.id === ch.id);
+          return {
+            ...ch,
+            subSnakeId,
+            subSnakeChannel: startPort + idx
+          };
+        } else if (ch.subSnakeId === subSnakeId && ch.subSnakeChannel !== undefined && ch.type === type) {
           const portMin = startPort;
-          const portMax = startPort + sortedSelectedIds.length - 1;
+          const portMax = startPort + selectedForType.length - 1;
           if (ch.subSnakeChannel >= portMin && ch.subSnakeChannel <= portMax) {
             return { ...ch, subSnakeId: undefined, subSnakeChannel: undefined };
           }
         }
         return ch;
-      }
-    });
+      });
+    };
 
-    setInputs(updateList(inputs));
-    setOutputs(updateList(outputs));
-    setIsMultiEditModalOpen(false);
+    setInputs(prev => updateList(prev, selectedInputs, 'in'));
+    setOutputs(prev => updateList(prev, selectedOutputs, 'out'));
+    setIsAssignSubSnakeOpen(false);
     setSelectedIds([]);
     setIsMultiEdit(false);
   };
@@ -286,7 +283,7 @@ export default function App() {
   const shouldStackPrint = inputs.length > 24 || outputs.length > 16;
 
   return (
-    <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')}`}>
+      <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')}`}>
       <style>{`
         .grid-row-wrapper {
           display: contents;
@@ -635,18 +632,34 @@ export default function App() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setIsMultiEditModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full text-sm font-bold transition-colors"
+                onClick={() => setIsAssignSubSnakeOpen(true)}
+                className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-full text-sm font-bold transition-colors flex items-center gap-1.5"
               >
-                Edit
+                <Network className="w-4 h-4 text-indigo-200" /> SubSnake
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsMultiGroupOpen(true)}
+                className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full text-sm font-bold transition-colors flex items-center gap-1.5"
+              >
+                <Folder className="w-4 h-4 text-blue-200" /> Group
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsMultiColorOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-full text-sm font-bold transition-colors flex items-center gap-1.5"
+              >
+                <Palette className="w-4 h-4 text-emerald-200" /> Color
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleMultiEditClear}
-                className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-full text-sm font-bold transition-colors"
+                className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-full text-sm font-bold transition-colors flex items-center gap-1.5"
               >
-                Clear Cells
+                <Trash2 className="w-4 h-4 text-red-200" /> Clear
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -687,15 +700,43 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Multi-Edit Modal */}
+      {/* Multi-Group Modal */}
       <AnimatePresence>
-        {isMultiEditModalOpen && (
-          <MultiEditModal
+        {isMultiGroupOpen && (
+          <MultiGroupModal
+            selectedCount={selectedIds.length}
+            allChannels={[...inputs, ...outputs]}
+            onClose={() => setIsMultiGroupOpen(false)}
+            onSave={handleMassAssignGroup}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Multi-Color Modal */}
+      <AnimatePresence>
+        {isMultiColorOpen && (
+          <MultiColorModal
             selectedCount={selectedIds.length}
             activePalette={PALETTES[settings.palette]}
+            onClose={() => setIsMultiColorOpen(false)}
+            onSave={handleMassAssignColor}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Assign to SubSnake Modal */}
+      <AnimatePresence>
+        {isAssignSubSnakeOpen && (
+          <AssignSubSnakeModal
+            selectedCount={selectedIds.length}
+            selectedIds={selectedIds}
+            inputs={inputs}
+            outputs={outputs}
             subSnakes={subSnakes}
-            onClose={() => setIsMultiEditModalOpen(false)}
-            onSave={handleMultiEditSave}
+            settings={settings}
+            onClose={() => setIsAssignSubSnakeOpen(false)}
+            onSave={handleMassAssignSubSnake}
+            onAddSubSnake={addSubSnake}
           />
         )}
       </AnimatePresence>
@@ -775,6 +816,6 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
   );
 }

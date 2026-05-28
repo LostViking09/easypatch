@@ -35,6 +35,7 @@ export type SettingsConfig = {
   xlrOpacity: number;
   groupBorderOpacity: number;
   confirmSubsnakeOverwrite?: boolean;
+  animationsEnabled?: boolean;
   grid: {
     input: { rows: number; cols: number };
     output: { rows: number; cols: number };

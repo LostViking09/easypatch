@@ -158,7 +158,7 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       }
     }}
     style={style}
-    className={`relative flex flex-col p-2 sm:p-3 cursor-pointer hover:shadow-md transition-shadow duration-150 min-h-[5.5rem] ${pClass('print:min-h-0')} overflow-hidden group ${isSelected ? 'z-20' : ''}`}
+    className={`relative flex flex-col p-2 sm:p-3 cursor-pointer hover:shadow-md transition-shadow duration-150 min-h-[5.5rem] ${pClass('print:min-h-0')} overflow-hidden group select-none ${isSelected ? 'z-20' : ''}`}
     >
       {/* Selection Overlay */}
       {isSelected && (
