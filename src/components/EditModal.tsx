@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Pipette, ChevronDown, AlertCircle, Link2 } from 'lucide-react';
-import { Channel, SettingsConfig } from '../types';
+import { X, Save, Pipette, ChevronDown, AlertCircle, Link2, Network } from 'lucide-react';
+import { Channel, SettingsConfig, SubSnake } from '../types';
 import { PALETTES } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
 import { motion, AnimatePresence } from 'motion/react';
@@ -8,13 +8,15 @@ import { motion, AnimatePresence } from 'motion/react';
 interface EditModalProps {
   channel: Channel;
   allChannels: Channel[];
+  subSnakes: SubSnake[];
   settings: SettingsConfig;
   onClose: () => void;
   onSave: (ch: Channel) => void;
 }
 
-export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, settings, onClose, onSave }) => {
+export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subSnakes, settings, onClose, onSave }) => {
   const [formData, setFormData] = useState<Channel>({ ...channel });
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const activePalette = PALETTES[settings.palette];
 
   const sameTypeChannels = allChannels.filter(c => c.type === channel.type);
@@ -24,6 +26,17 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
   const isEvenToOddPair = 
     (formData.stereoLink === 'next' && formData.number % 2 === 0) ||
     (formData.stereoLink === 'prev' && formData.number % 2 !== 0);
+
+  const selectedSubSnake = subSnakes.find(s => s.id === formData.subSnakeId);
+  const currentOccupant = selectedSubSnake && formData.subSnakeChannel
+    ? allChannels.find(
+        c => c.id !== formData.id &&
+             c.type === channel.type &&
+             c.subSnakeId === formData.subSnakeId &&
+             c.subSnakeChannel === formData.subSnakeChannel
+      )
+    : undefined;
+  const isOverwriting = !!currentOccupant;
 
   // Combobox State
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -85,12 +98,57 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        if (showConfirmModal) {
+          setShowConfirmModal(false);
+        } else {
+          onClose();
+        }
+        return;
+      }
+      
+      if (e.key === 'Enter') {
+        // Do not intercept if dropdown is open so that the combobox can use Enter to select an item
+        if (isDropdownOpen) {
+          return;
+        }
+
+        if (showConfirmModal) {
+          e.preventDefault();
+          onSave(formData);
+          onClose();
+          return;
+        }
+
+        // Allow Enter to work naturally on certain interactive elements
+        const activeEl = document.activeElement as HTMLElement;
+        if (activeEl) {
+          const tagName = activeEl.tagName;
+          const type = activeEl.getAttribute('type');
+          
+          if (tagName === 'BUTTON') {
+             const text = activeEl.textContent?.trim().toLowerCase() || '';
+             const ariaLabel = activeEl.getAttribute('aria-label') || '';
+             
+             // Let Cancel, Close, and submit buttons work natively
+             if (text.includes('cancel') || ariaLabel === 'Close' || type === 'submit') {
+                return;
+             }
+          }
+        }
+
+        e.preventDefault();
+        
+        if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+          setShowConfirmModal(true);
+        } else {
+          onSave(formData);
+          onClose();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, showConfirmModal, formData, isDropdownOpen, isOverwriting, settings.confirmSubsnakeOverwrite, currentOccupant, onSave]);
 
   const handleGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newGroup = e.target.value;
@@ -162,8 +220,18 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-    onClose();
+    
+    if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+      if (showConfirmModal) {
+        onSave(formData);
+        onClose();
+      } else {
+        setShowConfirmModal(true);
+      }
+    } else {
+      onSave(formData);
+      onClose();
+    }
   };
 
   return (
@@ -191,6 +259,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
             whileTap={{ scale: 0.9 }}
             onClick={onClose} 
             type="button"
+            aria-label="Close"
             className="text-slate-300 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
@@ -359,6 +428,174 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
             </AnimatePresence>
           </div>
 
+          {/* SubSnake Mapping Section */}
+          <div className="border-t border-gray-100 pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5">
+              <Network className="w-4 h-4 text-indigo-500" />
+              <span>Map to SubSnake</span>
+            </label>
+            <div className="flex flex-wrap gap-2 mt-1.5">
+              <button
+                type="button"
+                onClick={() => setFormData({ 
+                  ...formData, 
+                  subSnakeId: undefined, 
+                  subSnakeChannel: undefined 
+                })}
+                className={`py-1.5 px-3 text-xs font-bold rounded-md border transition-all flex items-center gap-1.5 cursor-pointer shadow-3xs ${
+                  !formData.subSnakeId
+                    ? 'bg-slate-800 text-white border-slate-800'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                None
+              </button>
+              {subSnakes.map(s => {
+                const isSelected = formData.subSnakeId === s.id;
+                const totalCh = s.grid 
+                  ? (channel.type === 'in' ? s.grid.input.cols * s.grid.input.rows : s.grid.output.cols * s.grid.output.rows) 
+                  : 'Dyn';
+                
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setFormData({ 
+                      ...formData, 
+                      subSnakeId: s.id, 
+                      subSnakeChannel: formData.subSnakeId === s.id ? (formData.subSnakeChannel || 1) : 1 
+                    })}
+                    className={`py-1.5 px-3 text-xs font-bold rounded-md border transition-all flex items-center gap-2 cursor-pointer shadow-3xs ${
+                      isSelected
+                        ? 'bg-slate-800 text-white border-slate-800'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {s.color && s.color !== '#ffffff' && (
+                      <span 
+                        className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0"
+                        style={{ backgroundColor: s.color }}
+                      />
+                    )}
+                    <span>{s.name} ({totalCh} ch)</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {(() => {
+              const selectedSubSnake = subSnakes.find(s => s.id === formData.subSnakeId);
+              if (!selectedSubSnake) return null;
+              
+              const isDynamicSubSnake = selectedSubSnake && !selectedSubSnake.grid;
+              
+              let totalPorts = 0;
+              let gridCols = 4;
+              if (selectedSubSnake.grid) {
+                const subGrid = channel.type === 'in' ? selectedSubSnake.grid.input : selectedSubSnake.grid.output;
+                totalPorts = subGrid.rows * subGrid.cols;
+                gridCols = subGrid.cols || 4;
+              } else {
+                const subSnakeChannels = allChannels.filter(c => c.subSnakeId === selectedSubSnake.id && c.type === channel.type);
+                const mappedPorts = subSnakeChannels.map(c => c.subSnakeChannel || 0);
+                const highestPort = Math.max(...mappedPorts, 0);
+                totalPorts = Math.max(12, Math.ceil((highestPort + 1) / 4) * 4);
+              }
+              
+              const ports = [];
+
+              for (let p = 1; p <= totalPorts; p++) {
+                const occupant = allChannels.find(
+                  c => c.id !== formData.id && c.type === channel.type && c.subSnakeId === selectedSubSnake.id && c.subSnakeChannel === p
+                );
+                const isSelected = formData.subSnakeChannel === p;
+                
+                ports.push(
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, subSnakeChannel: p })}
+                    className={`h-9 relative rounded border font-mono font-bold text-xs flex flex-col items-center justify-center transition-all ${
+                      isSelected
+                        ? occupant
+                          ? 'bg-amber-500 border-amber-600 text-slate-950 shadow-xs z-10 scale-105 hover:bg-amber-600'
+                          : 'bg-blue-600 border-blue-600 text-white shadow-xs z-10 scale-105 hover:bg-blue-700'
+                        : occupant
+                        ? 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 hover:border-amber-400'
+                        : 'bg-white border-gray-250 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                    }`}
+                    title={
+                      isSelected
+                        ? occupant
+                          ? `Port ${p}: Selected. Occupied by ${occupant.type === 'in' ? 'IN' : 'OUT'} ${occupant.number} (${occupant.name || 'Unused'}). Saving will displace it.`
+                          : `Port ${p}: Currently selected`
+                        : occupant
+                        ? `Port ${p}: Occupied by ${occupant.type === 'in' ? 'IN' : 'OUT'} ${occupant.number} (${occupant.name || 'Unused'}). Clicking will select and displace it.`
+                        : `Port ${p}: Available`
+                    }
+                  >
+                    <span>{p}</span>
+                    {occupant && (
+                      <span className={`text-[7px] truncate max-w-[90%] px-0.5 mt-0.5 leading-none ${isSelected ? 'text-amber-950 font-bold' : 'text-amber-600'}`}>
+                        {(() => {
+                          const nameLabel = occupant.name 
+                            ? `${occupant.number}: ${occupant.name}` 
+                            : `${occupant.type === 'in' ? 'IN' : 'OUT'}${occupant.number}`;
+                          return nameLabel.length > 9 ? nameLabel.slice(0, 8) + '..' : nameLabel;
+                        })()}
+                      </span>
+                    )}
+                  </button>
+                );
+              }
+
+              return (
+                <div className="space-y-2 mt-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-2xs font-bold text-slate-500 uppercase tracking-wider">Select Port (Unique Port Map)</span>
+                    {isDynamicSubSnake && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-2xs font-semibold text-slate-500">Custom Port:</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={formData.subSnakeChannel || ''}
+                          onChange={e => setFormData({ ...formData, subSnakeChannel: Math.max(1, parseInt(e.target.value) || 1) })}
+                          className="w-14 px-1 py-0.5 text-2xs border border-gray-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div 
+                    className="grid gap-1.5"
+                    style={{
+                      gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`
+                    }}
+                  >
+                    {ports}
+                  </div>
+                  {formData.subSnakeChannel && (
+                    <div className="text-[10px] text-gray-500 italic leading-tight">
+                      {(() => {
+                        const currentOccupant = allChannels.find(
+                          c => c.id !== formData.id && c.type === channel.type && c.subSnakeId === selectedSubSnake.id && c.subSnakeChannel === formData.subSnakeChannel
+                        );
+                        if (currentOccupant) {
+                          return (
+                            <span className="text-amber-700 font-medium">
+                              ⚠️ Port {formData.subSnakeChannel} is in use by "{currentOccupant.name || `${currentOccupant.type === 'in' ? 'IN' : 'OUT'} ${currentOccupant.number}`}". Saving will clear its mapping.
+                            </span>
+                          );
+                        }
+                        return `Selected Port: ${formData.subSnakeChannel} (available).`;
+                      })()}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
             <div className="flex flex-wrap gap-2 items-center">
@@ -415,13 +652,91 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, sett
               type="submit"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-sm"
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-bold shadow-sm rounded-md transition-all duration-150 ${
+                isOverwriting
+                  ? 'bg-amber-500 hover:bg-amber-600 text-slate-900'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
             >
               <Save className="w-4 h-4" /> Save
             </motion.button>
           </div>
         </form>
       </motion.div>
+      <AnimatePresence>
+        {showConfirmModal && currentOccupant && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-60 p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 450, damping: 35 }}
+              className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="bg-amber-600 text-white px-4 py-3 flex justify-between items-center">
+                <h3 className="font-bold flex items-center gap-2 text-sm sm:text-base">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" /> Overwrite Mapping?
+                </h3>
+                <button 
+                  type="button"
+                  onClick={() => setShowConfirmModal(false)}
+                  aria-label="Close Confirm"
+                  className="text-amber-200 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-5 space-y-3 text-slate-800">
+                <div className="text-sm leading-relaxed">
+                  Port <span className="font-bold font-mono bg-slate-100 px-1 py-0.5 rounded border border-slate-200">{formData.subSnakeChannel}</span> on SubSnake <span className="font-bold">"{selectedSubSnake?.name || 'SubSnake'}"</span> is already occupied by:
+                </div>
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="font-bold text-sm text-amber-900 font-mono">
+                    {currentOccupant.type === 'in' ? 'IN' : 'OUT'} {currentOccupant.number}
+                  </div>
+                  <div className="text-xs text-amber-800 font-mono truncate mt-0.5">
+                    {currentOccupant.name || 'Unused'} {currentOccupant.tech ? `(${currentOccupant.tech})` : ''}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed mt-2">
+                  Saving will overwrite and clear the mapping for this channel. Do you want to proceed?
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="p-3 bg-gray-50 border-t flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmModal(false)}
+                  className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    onSave(formData);
+                    onClose();
+                  }}
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-md shadow-sm transition-colors"
+                >
+                  Yes, Overwrite
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

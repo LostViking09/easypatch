@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Printer, Download, Upload, Settings, Save, Edit3, Palette, Trash2, ListOrdered, CheckSquare, AlertCircle, X, Grid, Plus } from 'lucide-react';
+import { Printer, Download, Upload, Settings, Save, Edit3, Palette, Trash2, ListOrdered, CheckSquare, AlertCircle, X, Grid, Plus, Network } from 'lucide-react';
 import { Channel } from './types';
 import { usePatchState } from './hooks/usePatchState';
 import { ChannelCell } from './components/ChannelCell';
@@ -10,6 +10,7 @@ import { MultiEditModal } from './components/MultiEditModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ResizeGridModal } from './components/ResizeGridModal';
 import { NewProjectConfirmModal } from './components/NewProjectConfirmModal';
+import { SubSnakesModal } from './components/SubSnakesModal';
 import { PALETTES } from './utils/constants';
 
 export default function App() {
@@ -19,13 +20,17 @@ export default function App() {
     inputs, setInputs,
     outputs, setOutputs,
     settings, setSettings,
+    subSnakes, setSubSnakes,
     handleDrop,
     saveEdit,
     saveFastInput,
     handleCreateNewProject,
     handleResizeGrid,
     handleExport,
-    loadImportData
+    loadImportData,
+    addSubSnake,
+    updateSubSnake,
+    deleteSubSnake
   } = usePatchState();
 
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
@@ -36,7 +41,13 @@ export default function App() {
   const [isMultiEdit, setIsMultiEdit] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isMultiEditModalOpen, setIsMultiEditModalOpen] = useState(false);
+  const [isSubSnakesOpen, setIsSubSnakesOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Drag selection and shift-click state refs
+  const isSelectingRange = useRef(false);
+  const selectionMode = useRef<'select' | 'deselect'>('select');
+  const lastSelectedId = useRef<string | null>(null);
 
   const [toast, setToast] = useState<{ message: string; type: 'warning' | 'info' } | null>(null);
 
@@ -47,6 +58,79 @@ export default function App() {
     }
   }, [toast]);
 
+  // Global mouseup listener to terminate drag range selection
+  React.useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      isSelectingRange.current = false;
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, []);
+
+  const handleCellToggle = (id: string, forceMode?: 'select' | 'deselect') => {
+    setSelectedIds(prev => {
+      const exists = prev.includes(id);
+      const mode = forceMode || (exists ? 'deselect' : 'select');
+      
+      if (mode === 'select' && !exists) {
+        return [...prev, id];
+      } else if (mode === 'deselect' && exists) {
+        return prev.filter(item => item !== id);
+      }
+      return prev;
+    });
+  };
+
+  const handleCellClick = (ch: Channel, e: React.MouseEvent) => {
+    if (isMultiEdit) {
+      const allSeq = [...inputs, ...outputs];
+      if (e.shiftKey && lastSelectedId.current) {
+        const lastIdx = allSeq.findIndex(c => c.id === lastSelectedId.current);
+        const currentIdx = allSeq.findIndex(c => c.id === ch.id);
+        if (lastIdx !== -1 && currentIdx !== -1) {
+          const start = Math.min(lastIdx, currentIdx);
+          const end = Math.max(lastIdx, currentIdx);
+          const rangeIds = allSeq.slice(start, end + 1).map(c => c.id);
+          
+          setSelectedIds(prev => {
+            const newSelection = [...prev];
+            rangeIds.forEach(id => {
+              if (!newSelection.includes(id)) {
+                newSelection.push(id);
+              }
+            });
+            return newSelection;
+          });
+        }
+      } else {
+        handleCellToggle(ch.id);
+      }
+      lastSelectedId.current = ch.id;
+    } else {
+      setEditingChannel(ch);
+    }
+  };
+
+  const handleCellMouseDown = (ch: Channel, e: React.MouseEvent) => {
+    if (e.button !== 0) return; // Left click only
+    if (e.shiftKey) return; // Shift key reserved for block select
+    
+    isSelectingRange.current = true;
+    const exists = selectedIds.includes(ch.id);
+    const mode = exists ? 'deselect' : 'select';
+    selectionMode.current = mode;
+    handleCellToggle(ch.id, mode);
+    lastSelectedId.current = ch.id;
+  };
+
+  const handleCellMouseEnter = (ch: Channel, e: React.MouseEvent) => {
+    if (!isSelectingRange.current) return;
+    handleCellToggle(ch.id, selectionMode.current);
+    lastSelectedId.current = ch.id;
+  };
+
   const handleCellDrop = (sourceId: string, targetId: string) => {
     const warning = handleDrop(sourceId, targetId);
     if (warning) {
@@ -54,13 +138,67 @@ export default function App() {
     }
   };
 
-  const handleMultiEditSave = (group: string, color: string) => {
+  const handleMultiEditSave = (
+    group: string,
+    color: string,
+    subSnakeAction?: {
+      type: 'existing' | 'new' | 'clear' | 'none';
+      subSnakeId?: string;
+      newName?: string;
+      startPort?: number;
+    }
+  ) => {
+    let targetSubSnakeId = subSnakeAction?.subSnakeId;
+    const startPort = subSnakeAction?.startPort || 1;
+
+    // Create new subsnake inline if needed
+    if (subSnakeAction?.type === 'new' && subSnakeAction.newName) {
+      const newSnake = addSubSnake(subSnakeAction.newName);
+      targetSubSnakeId = newSnake.id;
+    }
+
+    // Sort selected IDs chronologically by their rendering order
+    const sortedSelectedIds = [...inputs, ...outputs]
+      .filter(ch => selectedIds.includes(ch.id))
+      .map(ch => ch.id);
+
     const updateList = (list: Channel[]) => list.map(ch => {
       if (selectedIds.includes(ch.id)) {
-        return { ...ch, group: group !== '' ? group : ch.group, color: color || ch.color };
+        const updated = { ...ch };
+        if (group !== '') updated.group = group;
+        if (color) updated.color = color;
+
+        if (subSnakeAction) {
+          if (subSnakeAction.type === 'clear') {
+            updated.subSnakeId = undefined;
+            updated.subSnakeChannel = undefined;
+          } else if (subSnakeAction.type === 'existing' || subSnakeAction.type === 'new') {
+            const idx = sortedSelectedIds.indexOf(ch.id);
+            if (idx !== -1) {
+              updated.subSnakeId = targetSubSnakeId;
+              updated.subSnakeChannel = startPort + idx;
+            }
+          }
+        }
+        return updated;
+      } else {
+        // Displace any other channel mapped to the newly occupied subsnake ports
+        if (
+          subSnakeAction && 
+          (subSnakeAction.type === 'existing' || subSnakeAction.type === 'new') &&
+          ch.subSnakeId === targetSubSnakeId && 
+          ch.subSnakeChannel !== undefined
+        ) {
+          const portMin = startPort;
+          const portMax = startPort + sortedSelectedIds.length - 1;
+          if (ch.subSnakeChannel >= portMin && ch.subSnakeChannel <= portMax) {
+            return { ...ch, subSnakeId: undefined, subSnakeChannel: undefined };
+          }
+        }
+        return ch;
       }
-      return ch;
     });
+
     setInputs(updateList(inputs));
     setOutputs(updateList(outputs));
     setIsMultiEditModalOpen(false);
@@ -106,19 +244,16 @@ export default function App() {
       const isLastInGroup = isInGroup && (index === channels.length - 1 || channels[index + 1].group !== ch.group);
       const isFirstInRow = index % columns === 0;
       const isLastInRow = index % columns === columns - 1;
+      const subSnake = subSnakes.find(s => s.id === ch.subSnakeId);
+      const subSnakeName = subSnake?.name;
+      const subSnakeColor = subSnake?.color;
 
       return (
         <ChannelCell
           key={ch.id}
           channel={ch}
           settings={settings}
-          onClick={() => {
-            if (isMultiEdit) {
-              setSelectedIds(prev => prev.includes(ch.id) ? prev.filter(id => id !== ch.id) : [...prev, ch.id]);
-            } else {
-              setEditingChannel(ch);
-            }
-          }}
+          onClick={(e) => handleCellClick(ch, e)}
           isSelected={selectedIds.includes(ch.id)}
           onDrop={handleCellDrop}
           isInGroup={isInGroup}
@@ -126,6 +261,11 @@ export default function App() {
           isLastInGroup={isLastInGroup}
           isFirstInRow={isFirstInRow}
           isLastInRow={isLastInRow}
+          subSnakeName={subSnakeName}
+          subSnakeColor={subSnakeColor}
+          isMultiSelectMode={isMultiEdit}
+          onCellMouseDown={(e) => handleCellMouseDown(ch, e)}
+          onCellMouseEnter={(e) => handleCellMouseEnter(ch, e)}
         />
       );
     });
@@ -379,6 +519,16 @@ export default function App() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => setIsSubSnakesOpen(true)}
+              className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-sm font-medium transition-colors"
+              title="Manage SubSnakes"
+            >
+              <Network className="w-4 h-4 text-indigo-400" /> SubSnakes
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setIsSettingsOpen(true)}
               className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-sm font-medium transition-colors"
             >
@@ -517,6 +667,7 @@ export default function App() {
           <EditModal
             channel={editingChannel}
             allChannels={[...inputs, ...outputs]}
+            subSnakes={subSnakes}
             settings={settings}
             onClose={() => setEditingChannel(null)}
             onSave={saveEdit}
@@ -542,8 +693,25 @@ export default function App() {
           <MultiEditModal
             selectedCount={selectedIds.length}
             activePalette={PALETTES[settings.palette]}
+            subSnakes={subSnakes}
             onClose={() => setIsMultiEditModalOpen(false)}
             onSave={handleMultiEditSave}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* SubSnakes Modal */}
+      <AnimatePresence>
+        {isSubSnakesOpen && (
+          <SubSnakesModal
+            subSnakes={subSnakes}
+            inputs={inputs}
+            outputs={outputs}
+            settings={settings}
+            onClose={() => setIsSubSnakesOpen(false)}
+            onAddSubSnake={addSubSnake}
+            onUpdateSubSnake={updateSubSnake}
+            onDeleteSubSnake={deleteSubSnake}
           />
         )}
       </AnimatePresence>

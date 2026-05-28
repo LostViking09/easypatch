@@ -8,6 +8,7 @@ export const defaultSettings: SettingsConfig = {
   colorOpacity: 0.25,
   xlrOpacity: 0.03,
   groupBorderOpacity: 1,
+  confirmSubsnakeOverwrite: true,
   grid: {
     input: { rows: 3, cols: 8 },
     output: { rows: 3, cols: 4 },

@@ -7,6 +7,18 @@ export type Channel = {
   color: string;
   group?: string;
   stereoLink?: 'next' | 'prev';
+  subSnakeId?: string;
+  subSnakeChannel?: number;
+};
+
+export type SubSnake = {
+  id: string;
+  name: string;
+  color: string;
+  grid?: {
+    input: { rows: number; cols: number };
+    output: { rows: number; cols: number };
+  };
 };
 
 export type SettingsConfig = {
@@ -22,8 +34,10 @@ export type SettingsConfig = {
   colorOpacity: number;
   xlrOpacity: number;
   groupBorderOpacity: number;
+  confirmSubsnakeOverwrite?: boolean;
   grid: {
     input: { rows: number; cols: number };
     output: { rows: number; cols: number };
   };
 };
+

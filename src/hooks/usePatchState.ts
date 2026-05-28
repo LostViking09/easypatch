@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Channel, SettingsConfig } from '../types';
-import { defaultSettings, initialInputs, initialOutputs } from '../utils/constants';
+import { Channel, SettingsConfig, SubSnake } from '../types';
+import { defaultSettings, initialInputs, initialOutputs, PALETTES } from '../utils/constants';
 
 export function usePatchState() {
   const [title, setTitle] = useState('EasyPatch');
@@ -8,6 +8,7 @@ export function usePatchState() {
   const [inputs, setInputs] = useState<Channel[]>(initialInputs);
   const [outputs, setOutputs] = useState<Channel[]>(initialOutputs);
   const [settings, setSettings] = useState<SettingsConfig>(defaultSettings);
+  const [subSnakes, setSubSnakes] = useState<SubSnake[]>([]);
 
   useEffect(() => {
     document.title = title.trim() !== '' ? title : 'EasyPatch';
@@ -20,6 +21,7 @@ export function usePatchState() {
     const savedInputs = localStorage.getItem('ar2412-inputs');
     const savedOutputs = localStorage.getItem('ar2412-outputs');
     const savedSettings = localStorage.getItem('ar2412-settings');
+    const savedSubSnakes = localStorage.getItem('ar2412-subsnakes');
     
     if (savedTitle) setTitle(savedTitle);
     if (savedNotes) setNotes(savedNotes);
@@ -37,6 +39,9 @@ export function usePatchState() {
     if (savedOutputs) {
       try { setOutputs(JSON.parse(savedOutputs)); } catch (e) { console.error(e); }
     }
+    if (savedSubSnakes) {
+      try { setSubSnakes(JSON.parse(savedSubSnakes)); } catch (e) { console.error(e); }
+    }
   }, []);
 
   // Save to localStorage on change
@@ -46,7 +51,8 @@ export function usePatchState() {
     localStorage.setItem('ar2412-settings', JSON.stringify(settings));
     localStorage.setItem('ar2412-inputs', JSON.stringify(inputs));
     localStorage.setItem('ar2412-outputs', JSON.stringify(outputs));
-  }, [title, notes, settings, inputs, outputs]);
+    localStorage.setItem('ar2412-subsnakes', JSON.stringify(subSnakes));
+  }, [title, notes, settings, inputs, outputs, subSnakes]);
 
   const sanitizeStereoLinks = (channels: Channel[]): Channel[] => {
     const list = channels.map(c => ({ ...c }));
@@ -253,7 +259,9 @@ export function usePatchState() {
       tech: finalSourceChannel.tech,
       group: finalSourceChannel.group,
       color: finalSourceChannel.color,
-      stereoLink: finalSourceChannel.stereoLink
+      stereoLink: finalSourceChannel.stereoLink,
+      subSnakeId: finalSourceChannel.subSnakeId,
+      subSnakeChannel: finalSourceChannel.subSnakeChannel
     };
     
     // 3. If the channel is already linked, propagate editing changes (names, tech, group, color)
@@ -299,8 +307,31 @@ export function usePatchState() {
       return ch;
     });
     
-    if (isInput) setInputs(newList);
-    else setOutputs(newList);
+    // Strict port uniqueness: clear the same subsnake/channel combination if mapped elsewhere
+    const sId = updatedChannel.subSnakeId;
+    const sChan = updatedChannel.subSnakeChannel;
+
+    if (sId && sChan) {
+      const cleanInputs = (isInput ? newList : inputs).map(ch => {
+        if (ch.id !== updatedChannel.id && ch.subSnakeId === sId && ch.subSnakeChannel === sChan) {
+          return { ...ch, subSnakeId: undefined, subSnakeChannel: undefined };
+        }
+        return ch;
+      });
+      
+      const cleanOutputs = (!isInput ? newList : outputs).map(ch => {
+        if (ch.id !== updatedChannel.id && ch.subSnakeId === sId && ch.subSnakeChannel === sChan) {
+          return { ...ch, subSnakeId: undefined, subSnakeChannel: undefined };
+        }
+        return ch;
+      });
+
+      setInputs(cleanInputs);
+      setOutputs(cleanOutputs);
+    } else {
+      if (isInput) setInputs(newList);
+      else setOutputs(newList);
+    }
   };
 
   const saveFastInput = (newInputs: Channel[], newOutputs: Channel[]) => {
@@ -334,6 +365,7 @@ export function usePatchState() {
 
     setInputs(newInputs);
     setOutputs(newOutputs);
+    setSubSnakes([]);
     setSettings(prev => ({
       ...prev,
       grid: {
@@ -398,8 +430,31 @@ export function usePatchState() {
     }));
   };
 
+  const addSubSnake = (name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => {
+    const defaultColor = PALETTES[settings.palette][0]?.value || '#017fba';
+    const newSnake: SubSnake = {
+      id: 'subsnake-' + (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11)),
+      name,
+      color: color || defaultColor,
+      grid,
+    };
+    setSubSnakes(prev => [...prev, newSnake]);
+    return newSnake;
+  };
+
+  const updateSubSnake = (id: string, name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => {
+    const defaultColor = PALETTES[settings.palette][0]?.value || '#017fba';
+    setSubSnakes(prev => prev.map(s => s.id === id ? { ...s, name, color: color || s.color || defaultColor, grid } : s));
+  };
+
+  const deleteSubSnake = (id: string) => {
+    setSubSnakes(prev => prev.filter(s => s.id !== id));
+    setInputs(prev => prev.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch));
+    setOutputs(prev => prev.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch));
+  };
+
   const handleExport = () => {
-    const data = { title, notes, settings, inputs, outputs };
+    const data = { title, notes, settings, inputs, outputs, subSnakes };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -418,6 +473,11 @@ export function usePatchState() {
     if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
     if (data.inputs && Array.isArray(data.inputs)) setInputs(data.inputs);
     if (data.outputs && Array.isArray(data.outputs)) setOutputs(data.outputs);
+    if (data.subSnakes && Array.isArray(data.subSnakes)) {
+      setSubSnakes(data.subSnakes);
+    } else {
+      setSubSnakes([]);
+    }
   };
 
   return {
@@ -426,12 +486,16 @@ export function usePatchState() {
     inputs, setInputs,
     outputs, setOutputs,
     settings, setSettings,
+    subSnakes, setSubSnakes,
     handleDrop,
     saveEdit,
     saveFastInput,
     handleCreateNewProject,
     handleResizeGrid,
     handleExport,
-    loadImportData
+    loadImportData,
+    addSubSnake,
+    updateSubSnake,
+    deleteSubSnake
   };
 }

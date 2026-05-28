@@ -7,7 +7,7 @@ import { motion } from 'motion/react';
 interface ChannelCellProps {
   channel: Channel;
   settings: SettingsConfig;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
   isSelected: boolean;
   onDrop: (sourceId: string, targetId: string) => void;
   isInGroup: boolean;
@@ -15,15 +15,28 @@ interface ChannelCellProps {
   isLastInGroup: boolean;
   isFirstInRow: boolean;
   isLastInRow: boolean;
+  subSnakeName?: string;
+  subSnakeColor?: string;
+  isMultiSelectMode?: boolean;
+  onCellMouseDown?: (e: React.MouseEvent) => void;
+  onCellMouseEnter?: (e: React.MouseEvent) => void;
 }
 
 export const ChannelCell: React.FC<ChannelCellProps> = ({ 
-  channel, settings, onClick, isSelected, onDrop, isInGroup, isFirstInGroup, isLastInGroup, isFirstInRow, isLastInRow 
+  channel, settings, onClick, isSelected, onDrop, isInGroup, isFirstInGroup, isLastInGroup, isFirstInRow, isLastInRow,
+  subSnakeName, subSnakeColor, isMultiSelectMode, onCellMouseDown, onCellMouseEnter
 }) => {
   const isUnused = channel.name.trim() === '';
   const bgColor = isUnused ? '#f1f5f9' : hexToRgba(channel.color, settings.colorOpacity);
   const baseBorderColor = isUnused ? '#cbd5e1' : (channel.color === '#ffffff' || channel.color === '#000000' ? '#cbd5e1' : channel.color);
   const groupBorderColor = hexToRgba(baseBorderColor, settings.groupBorderOpacity ?? 1);
+  
+  const badgeStyle: React.CSSProperties = subSnakeColor && subSnakeColor !== '#ffffff'
+    ? {
+        backgroundColor: hexToRgba(subSnakeColor, 0.12),
+        borderColor: hexToRgba(subSnakeColor, 0.4),
+      }
+    : {};
   
   // Base style with consistent 1px borders to keep the grid aligned
   const style: React.CSSProperties = {
@@ -63,71 +76,89 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
     <motion.div 
       layout="position"
       transition={{ type: "spring", stiffness: 450, damping: 38 }}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('text/plain', channel.id);
-        
-        if (channel.stereoLink) {
-          const currentEl = e.currentTarget as HTMLElement;
-          const partnerEl = (channel.stereoLink === 'next'
-            ? currentEl.nextElementSibling
-            : currentEl.previousElementSibling) as HTMLElement;
-            
-          if (partnerEl) {
-            const currentRect = currentEl.getBoundingClientRect();
-            const partnerRect = partnerEl.getBoundingClientRect();
-            
-            // Clone both cells and set their widths/heights explicitly to preserve styling
-            const leftClone = (channel.stereoLink === 'next' ? currentEl : partnerEl).cloneNode(true) as HTMLElement;
-            const rightClone = (channel.stereoLink === 'next' ? partnerEl : currentEl).cloneNode(true) as HTMLElement;
-            
-            leftClone.style.width = `${channel.stereoLink === 'next' ? currentRect.width : partnerRect.width}px`;
-            leftClone.style.height = `${channel.stereoLink === 'next' ? currentRect.height : partnerRect.height}px`;
-            rightClone.style.width = `${channel.stereoLink === 'next' ? partnerRect.width : currentRect.width}px`;
-            rightClone.style.height = `${channel.stereoLink === 'next' ? partnerRect.height : currentRect.height}px`;
-            
-            // Wrap in an absolute container to serve as the drag image
-            const dragImage = document.createElement('div');
-            dragImage.style.display = 'flex';
-            dragImage.style.flexDirection = 'row';
-            dragImage.style.position = 'absolute';
-            dragImage.style.top = '-9999px';
-            dragImage.style.left = '-9999px';
-            dragImage.style.zIndex = '-1000';
-            dragImage.style.pointerEvents = 'none';
-            
-            dragImage.appendChild(leftClone);
-            dragImage.appendChild(rightClone);
-            document.body.appendChild(dragImage);
-            
-            // Calculate drag offsets relative to the combined drag image
-            const x = e.clientX - currentRect.left;
-            const y = e.clientY - currentRect.top;
-            
-            let dragX = x;
-            if (channel.stereoLink === 'prev') {
-              dragX += partnerRect.width;
-            }
-            
-            e.dataTransfer.setDragImage(dragImage, dragX, y);
-            
-            // Remove the off-screen clone container after drag starts
-            setTimeout(() => {
-              if (dragImage.parentNode) {
-                document.body.removeChild(dragImage);
-              }
-            }, 0);
-          }
-        }
-      }}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => {
+    draggable={!isMultiSelectMode}
+    onDragStart={(e) => {
+      if (isMultiSelectMode) {
         e.preventDefault();
-        onDrop(e.dataTransfer.getData('text/plain'), channel.id);
-      }}
-      onClick={onClick}
-      style={style}
-      className={`relative flex flex-col p-2 sm:p-3 cursor-pointer hover:shadow-md transition-shadow duration-150 min-h-[5.5rem] ${pClass('print:min-h-0')} overflow-hidden group ${isSelected ? 'z-20' : ''}`}
+        return;
+      }
+      e.dataTransfer.setData('text/plain', channel.id);
+      
+      if (channel.stereoLink) {
+        const currentEl = e.currentTarget as HTMLElement;
+        const partnerEl = (channel.stereoLink === 'next'
+          ? currentEl.nextElementSibling
+          : currentEl.previousElementSibling) as HTMLElement;
+          
+        if (partnerEl) {
+          const currentRect = currentEl.getBoundingClientRect();
+          const partnerRect = partnerEl.getBoundingClientRect();
+          
+          // Clone both cells and set their widths/heights explicitly to preserve styling
+          const leftClone = (channel.stereoLink === 'next' ? currentEl : partnerEl).cloneNode(true) as HTMLElement;
+          const rightClone = (channel.stereoLink === 'next' ? partnerEl : currentEl).cloneNode(true) as HTMLElement;
+          
+          leftClone.style.width = `${channel.stereoLink === 'next' ? currentRect.width : partnerRect.width}px`;
+          leftClone.style.height = `${channel.stereoLink === 'next' ? currentRect.height : partnerRect.height}px`;
+          rightClone.style.width = `${channel.stereoLink === 'next' ? partnerRect.width : currentRect.width}px`;
+          rightClone.style.height = `${channel.stereoLink === 'next' ? partnerRect.height : currentRect.height}px`;
+          
+          // Wrap in an absolute container to serve as the drag image
+          const dragImage = document.createElement('div');
+          dragImage.style.display = 'flex';
+          dragImage.style.flexDirection = 'row';
+          dragImage.style.position = 'absolute';
+          dragImage.style.top = '-9999px';
+          dragImage.style.left = '-9999px';
+          dragImage.style.zIndex = '-1000';
+          dragImage.style.pointerEvents = 'none';
+          
+          dragImage.appendChild(leftClone);
+          dragImage.appendChild(rightClone);
+          document.body.appendChild(dragImage);
+          
+          // Calculate drag offsets relative to the combined drag image
+          const x = e.clientX - currentRect.left;
+          const y = e.clientY - currentRect.top;
+          
+          let dragX = x;
+          if (channel.stereoLink === 'prev') {
+            dragX += partnerRect.width;
+          }
+          
+          e.dataTransfer.setDragImage(dragImage, dragX, y);
+          
+          // Remove the off-screen clone container after drag starts
+          setTimeout(() => {
+            if (dragImage.parentNode) {
+              document.body.removeChild(dragImage);
+            }
+          }, 0);
+        }
+      }
+    }}
+    onDragOver={(e) => {
+      if (isMultiSelectMode) return;
+      e.preventDefault();
+    }}
+    onDrop={(e) => {
+      if (isMultiSelectMode) return;
+      e.preventDefault();
+      onDrop(e.dataTransfer.getData('text/plain'), channel.id);
+    }}
+    onClick={onClick}
+    onMouseDown={(e) => {
+      if (isMultiSelectMode && onCellMouseDown) {
+        onCellMouseDown(e);
+      }
+    }}
+    onMouseEnter={(e) => {
+      if (isMultiSelectMode && onCellMouseEnter) {
+        onCellMouseEnter(e);
+      }
+    }}
+    style={style}
+    className={`relative flex flex-col p-2 sm:p-3 cursor-pointer hover:shadow-md transition-shadow duration-150 min-h-[5.5rem] ${pClass('print:min-h-0')} overflow-hidden group ${isSelected ? 'z-20' : ''}`}
     >
       {/* Selection Overlay */}
       {isSelected && (
@@ -174,7 +205,22 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
         style={{ fontSize: `${0.875 * settings.fontSizes.number}rem` }}
       >
         <span>{channel.number}</span>
+        {subSnakeName && channel.subSnakeChannel && (
+          <span 
+            style={badgeStyle}
+            className={`text-[9px] ml-1.5 px-1 py-0.25 rounded border font-bold font-mono tracking-normal shadow-3xs select-none transition-all text-slate-550 group-hover:text-slate-700 ${
+              subSnakeColor && subSnakeColor !== '#ffffff'
+                ? ''
+                : 'border-slate-250 bg-slate-100/90 group-hover:bg-slate-200/90 group-hover:border-slate-355'
+            } ${pClass('print:bg-white print:text-black print:border-gray-400')}`}
+            title={`${subSnakeName} #${channel.subSnakeChannel}`}
+          >
+            {subSnakeName.length > 8 ? subSnakeName.slice(0, 6) + '..' : subSnakeName} #{channel.subSnakeChannel}
+          </span>
+        )}
       </div>
+
+
 
       {/* Centered Bottom-Aligned Stereo Link Badge */}
       {channel.stereoLink === 'next' && (
