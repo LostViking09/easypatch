@@ -222,6 +222,8 @@ export default function App() {
                 settings={settings}
                 projectTitle={title}
                 projectNotes={notes}
+                onUpdateChannel={saveEdit}
+                onEditChannel={(ch) => setEditingChannel(ch)}
               />
             </div>
           </div>
