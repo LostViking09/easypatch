@@ -290,6 +290,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
                 />
                 <p className="text-xxs text-gray-500 italic">Hidden completely at 0%.</p>
               </div>
+
+              <div className="space-y-2 border-t pt-3 border-gray-200">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium">Table Stripe Contrast</label>
+                  <span className="text-xs font-mono">{((settings.tableStripeOpacity ?? 0.05) * 100).toFixed(0)}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0.01" max="0.25" step="0.01" 
+                  value={settings.tableStripeOpacity ?? 0.05} 
+                  onChange={(e) => setSettings({ ...settings, tableStripeOpacity: parseFloat(e.target.value) })}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium">Table Header Background</label>
+                  <span className="text-xs font-mono">{((settings.tableHeaderOpacity ?? 0.08) * 100).toFixed(0)}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0.02" max="0.35" step="0.01" 
+                  value={settings.tableHeaderOpacity ?? 0.08} 
+                  onChange={(e) => setSettings({ ...settings, tableHeaderOpacity: parseFloat(e.target.value) })}
+                  className="w-full"
+                />
+              </div>
             </div>
           </div>
           

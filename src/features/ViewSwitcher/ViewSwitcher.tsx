@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Network } from 'lucide-react';
+import { LayoutGrid, Network, Table } from 'lucide-react';
 import { SubSnake, Channel } from '../../types';
 
 interface ViewSwitcherProps {
@@ -30,6 +30,18 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
       >
         <LayoutGrid className="w-4 h-4 text-slate-500" />
         <span>Main I/O</span>
+      </button>
+
+      <button
+        onClick={() => setCurrentView('table')}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+          activeView === 'table'
+            ? 'bg-white text-slate-800 shadow-sm border border-slate-250'
+            : 'text-slate-555 hover:text-slate-850 hover:bg-slate-200'
+        }`}
+      >
+        <Table className="w-4 h-4 text-slate-500" />
+        <span>Table View</span>
       </button>
 
       {subSnakes.map(snake => {

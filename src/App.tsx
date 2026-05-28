@@ -15,6 +15,7 @@ import { PatchGridSection } from './features/PatchGrid/PatchGridSection';
 import { MultiEditBar } from './features/MultiEditBar/MultiEditBar';
 import { AppModals } from './features/Modals/AppModals';
 import { SubSnakeView } from './features/SubSnakeView/SubSnakeView';
+import { TableView } from './features/TableView/TableView';
 
 export default function App() {
   const {
@@ -46,7 +47,7 @@ export default function App() {
   const [isMultiColorOpen, setIsMultiColorOpen] = useState(false);
   const [isAssignSubSnakeOpen, setIsAssignSubSnakeOpen] = useState(false);
   const [isSubSnakesOpen, setIsSubSnakesOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<'main' | 'subsnake'>('main');
+  const [currentView, setCurrentView] = useState<string>('main');
 
   const { toast, setToast } = useToast();
 
@@ -114,7 +115,7 @@ export default function App() {
 
   const pClass = (cls: string) => settings.useEditorLookInPrint ? '' : cls;
   const shouldStackPrint = inputs.length > 24 || outputs.length > 16;
-  const activeView = (currentView === 'main' || subSnakes.some(s => s.id === currentView)) ? currentView : 'main';
+  const activeView = (currentView === 'main' || currentView === 'table' || subSnakes.some(s => s.id === currentView)) ? currentView : 'main';
   const isMultiPagePrint = shouldStackPrint || activeView !== 'main' || (settings.includeSubSnakesInPrint && subSnakes.length > 0);
 
   return (
@@ -195,7 +196,7 @@ export default function App() {
 
             <div 
               className={`${
-                activeView !== 'main' 
+                activeView !== 'main' && activeView !== 'table'
                   ? 'block print:block' 
                   : `hidden ${(settings.includeSubSnakesInPrint && subSnakes.length > 0) ? 'print:block print-subsnake-page-break' : 'print:hidden'}`
               }`}
@@ -207,6 +208,18 @@ export default function App() {
                 settings={settings}
                 selectedSubSnakeId={activeView === 'main' ? 'all' : activeView}
                 isPrintMode={activeView === 'main'}
+                projectTitle={title}
+                projectNotes={notes}
+              />
+            </div>
+
+            {/* Table View */}
+            <div className={`${activeView === 'table' ? 'block print:block' : 'hidden print:hidden'} flex-1`}>
+              <TableView
+                inputs={inputs}
+                outputs={outputs}
+                subSnakes={subSnakes}
+                settings={settings}
                 projectTitle={title}
                 projectNotes={notes}
               />

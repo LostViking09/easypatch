@@ -13,6 +13,8 @@ export const defaultSettings: SettingsConfig = {
   showGroupNameOnEveryCell: false,
   alwaysDrawCellBorders: true,
   includeSubSnakesInPrint: true,
+  tableStripeOpacity: 0.05,
+  tableHeaderOpacity: 0.08,
   grid: {
     input: { rows: 3, cols: 8 },
     output: { rows: 3, cols: 4 },

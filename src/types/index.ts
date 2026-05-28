@@ -43,6 +43,8 @@ export type SettingsConfig = {
   alwaysDrawCellBorders?: boolean;
   includeSubSnakesInPrint?: boolean;
   printTheme?: 'color' | 'bw';
+  tableStripeOpacity?: number;
+  tableHeaderOpacity?: number;
   grid: {
     input: { rows: number; cols: number };
     output: { rows: number; cols: number };

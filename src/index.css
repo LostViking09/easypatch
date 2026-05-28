@@ -31,10 +31,14 @@
     --group-text-color: #000000 !important;
     --badge-bg: #ffffff !important;
     --badge-border: #000000 !important;
+    --table-stripe-bg: #ffffff !important;
+    --table-header-bg: #ffffff !important;
+    --table-row-bg: #ffffff !important;
   }
 
   .print-bw-mode .xlr-silhouette,
-  .print-bw-mode .subsnake-dot {
+  .print-bw-mode .subsnake-dot,
+  .print-bw-mode .table-color-block {
     display: none !important;
   }
   
@@ -46,5 +50,41 @@
   
   .print-bw-mode .stereo-badge * {
     color: #9ca3af !important;
+  }
+
+  /* Table View print optimization */
+  .print-table-wrapper {
+    display: block !important;
+    overflow: visible !important;
+    border: none !important;
+  }
+  
+  .print-table-wrapper table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  .print-table-wrapper thead {
+    display: table-header-group !important;
+  }
+
+  .print-table-wrapper tbody {
+    display: table-row-group !important;
+  }
+
+  .print-table-wrapper tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-table-wrapper th,
+  .print-table-wrapper td {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-page-break-before {
+    page-break-before: always !important;
+    break-before: page !important;
   }
 }
