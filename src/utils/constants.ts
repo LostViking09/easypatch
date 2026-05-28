@@ -11,6 +11,7 @@ export const defaultSettings: SettingsConfig = {
   confirmSubsnakeOverwrite: true,
   animationsEnabled: true,
   showGroupNameOnEveryCell: false,
+  alwaysDrawCellBorders: true,
   includeSubSnakesInPrint: true,
   grid: {
     input: { rows: 3, cols: 8 },

@@ -38,6 +38,7 @@ export type SettingsConfig = {
   confirmSubsnakeOverwrite?: boolean;
   animationsEnabled?: boolean;
   showGroupNameOnEveryCell?: boolean;
+  alwaysDrawCellBorders?: boolean;
   includeSubSnakesInPrint?: boolean;
   printTheme?: 'color' | 'bw';
   grid: {

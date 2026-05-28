@@ -235,6 +235,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
                 </div>
               </label>
 
+              <label className="flex items-center gap-3 cursor-pointer border-t pt-3 border-gray-200">
+                <input 
+                  type="checkbox" 
+                  checked={settings.alwaysDrawCellBorders === true}
+                  onChange={(e) => setSettings({ ...settings, alwaysDrawCellBorders: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <div>
+                  <div className="font-medium text-sm">Always draw thick cell borders</div>
+                  <div className="text-xs text-gray-500">If a port has a name but no group, draw full thick borders as if it had its own group.</div>
+                </div>
+              </label>
+
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium">Color Opacity</label>

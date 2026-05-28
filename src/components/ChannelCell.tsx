@@ -57,8 +57,10 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
     boxShadow: 'none',
   } as React.CSSProperties;
 
+  const isSingleNamedCell = settings.alwaysDrawCellBorders && !isUnused && !isInGroup;
+
   // Use inset box-shadow for the thick group borders so they don't shrink the content area
-  if (isInGroup) {
+  if (isInGroup || isSingleNamedCell) {
     const shadowColor = 'var(--group-border-color)';
     const thickness = '4px';
     
@@ -67,11 +69,11 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       `inset 0 -${thickness} 0 0 ${shadowColor}`, // Bottom
     ];
     
-    if (isFirstInGroup) {
+    if (isFirstInGroup || isSingleNamedCell) {
       shadows.push(`inset ${thickness} 0 0 0 ${shadowColor}`); // Left
     }
     
-    if (isLastInGroup) {
+    if (isLastInGroup || isSingleNamedCell) {
       shadows.push(`inset -${thickness} 0 0 0 ${shadowColor}`); // Right
     } else {
       // Subtle separator between grouped items
