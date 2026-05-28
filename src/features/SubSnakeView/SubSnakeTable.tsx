@@ -247,7 +247,7 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
                     ""
                   )}
                   {renderEditableCell(ch, 'notes', index, 3, 
-                    <span className="max-w-xs truncate block" title={ch?.notes}>{ch?.notes || <span className="text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity">-</span>}</span>,
+                    <span className="max-w-xs truncate block italic" title={ch?.notes}>{ch?.notes || <span className="text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity not-italic">-</span>}</span>,
                     ""
                   )}
                   {renderEditableCell(ch, 'group', index, 4, 
