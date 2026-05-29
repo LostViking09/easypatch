@@ -33,3 +33,9 @@ Please adhere to this structure when creating new files or moving existing ones:
 - Avoid using `any`. Define proper interfaces for all props, state, and API responses.
 - Prefix boolean variables/state with `is`, `has`, or `should` (e.g., `isSidebarOpen`, `hasChanges`).
 - Extract complex `useEffect` logic or API calls into custom hooks to keep component bodies clean and readable.
+
+## 6. UI / UX Guidelines
+- **Modals and Popups**:
+  - Clicking outside of modals (the background/backdrop) should act as a cancel/close action.
+  - Pressing `ESC` should act as a cancel/close action on all modals.
+  - Pressing `ENTER` should act as an OK, SAVE, or default positive action for modals.
