@@ -1,9 +1,9 @@
 import React from 'react';
-import { Settings } from '../types';
+import { SettingsConfig } from '../types';
 
 interface PrintStylesProps {
   isMultiPagePrint: boolean;
-  settings: Settings;
+  settings: SettingsConfig;
 }
 
 export const PrintStyles: React.FC<PrintStylesProps> = ({ isMultiPagePrint, settings }) => {
@@ -159,6 +159,11 @@ export const PrintStyles: React.FC<PrintStylesProps> = ({ isMultiPagePrint, sett
         .print-subsnake-page-break {
           page-break-before: always !important;
           break-before: page !important;
+        }
+        
+        .print-preview-container > div.print-subsnake-page-break:first-child {
+          page-break-before: auto !important;
+          break-before: auto !important;
         }
         
         .print-avoid-break {

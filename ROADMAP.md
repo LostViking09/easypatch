@@ -2,14 +2,11 @@
 
 This document serves as the central repository for planned features, refined ideas, and future architecture plans. When starting a new feature, pick one from this list, create a specific Implementation Plan, and move it to "In Progress".
 
-## 📦 Backlog
-
-### BUGS
-
--
+## ✅ Completed
 
 ### 0. Choose what to print
 
+- **Goal:** Creating a Print Modal, when clicking on the print button, before sending the patch to the printer.
 - Settings to choose what to print. Options:
   - Input grid
   - Output grid
@@ -18,6 +15,13 @@ This document serves as the central repository for planned features, refined ide
   - Table view: output
 - Every block should print a new page
 - Make sure there are no 2 page breaks accidentally.
+
+## 📦 Backlog
+
+### BUGS
+
+-
+
 
 ### 1. Snippets
 

@@ -12,6 +12,8 @@ import { SubSnakesModal } from '../../components/SubSnakesModal';
 import { SettingsModal } from '../../components/SettingsModal';
 import { NewProjectConfirmModal } from '../../components/NewProjectConfirmModal';
 import { ResizeGridModal } from '../../components/ResizeGridModal';
+import { PrintModal } from '../../components/PrintModal';
+import { PrintOptions } from '../../types';
 
 interface AppModalsProps {
   editingChannel: Channel | null;
@@ -37,6 +39,8 @@ interface AppModalsProps {
   setIsNewProjectConfirmOpen: (val: boolean) => void;
   isResizeGridOpen: boolean;
   setIsResizeGridOpen: (val: boolean) => void;
+  isPrintModalOpen: boolean;
+  setIsPrintModalOpen: (val: boolean) => void;
   selectedIds: string[];
   
   saveEdit: (updatedChannel: Channel) => { finalInputs: Channel[], finalOutputs: Channel[] };
@@ -51,6 +55,7 @@ interface AppModalsProps {
   clearSubSnakeAssignments: (id: string) => void;
   handleCreateNewProject: () => void;
   handleResizeGrid: (inputGrid: { rows: number; cols: number }, outputGrid: { rows: number; cols: number }) => void;
+  onConfirmPrint: (options: PrintOptions) => void;
 }
 
 export function AppModals({
@@ -65,12 +70,13 @@ export function AppModals({
   isSettingsOpen, setIsSettingsOpen,
   isNewProjectConfirmOpen, setIsNewProjectConfirmOpen,
   isResizeGridOpen, setIsResizeGridOpen,
+  isPrintModalOpen, setIsPrintModalOpen,
   selectedIds,
   
   saveEdit, handleNavigateEdit, saveFastInput,
   handleMassAssignGroup, handleMassAssignColor, handleMassAssignSubSnake,
   addSubSnake, updateSubSnake, deleteSubSnake, clearSubSnakeAssignments,
-  handleCreateNewProject, handleResizeGrid
+  handleCreateNewProject, handleResizeGrid, onConfirmPrint
 }: AppModalsProps) {
   return (
     <>
@@ -177,6 +183,17 @@ export function AppModals({
             currentGrid={settings.grid}
             inputs={inputs}
             outputs={outputs}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isPrintModalOpen && (
+          <PrintModal
+            onClose={() => setIsPrintModalOpen(false)}
+            onConfirm={onConfirmPrint}
+            inputs={inputs}
+            outputs={outputs}
+            subSnakes={subSnakes}
           />
         )}
       </AnimatePresence>

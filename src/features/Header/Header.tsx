@@ -13,6 +13,7 @@ interface HeaderProps {
   setIsResizeGridOpen: (val: boolean) => void;
   setIsSubSnakesOpen: (val: boolean) => void;
   setIsSettingsOpen: (val: boolean) => void;
+  setIsPrintModalOpen: (val: boolean) => void;
 }
 
 export function Header({
@@ -25,7 +26,8 @@ export function Header({
   setSelectedIds,
   setIsResizeGridOpen,
   setIsSubSnakesOpen,
-  setIsSettingsOpen
+  setIsSettingsOpen,
+  setIsPrintModalOpen
 }: HeaderProps) {
   const [isFileDropdownOpen, setIsFileDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -205,7 +207,7 @@ export function Header({
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => window.print()}
+          onClick={() => setIsPrintModalOpen(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium bg-slate-800 border border-slate-700/50 text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
         >
           <Printer className="w-4 h-4" /> Print

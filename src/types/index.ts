@@ -51,3 +51,13 @@ export type SettingsConfig = {
   };
 };
 
+export interface PrintSourceOptions {
+  printGrid: boolean;
+  printTable: boolean;
+}
+
+export interface PrintOptions {
+  mainInput: PrintSourceOptions;
+  mainOutput: PrintSourceOptions;
+  subSnakes: Record<string, PrintSourceOptions>;
+}

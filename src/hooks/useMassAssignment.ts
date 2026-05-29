@@ -1,3 +1,4 @@
+import React from 'react';
 import { Channel } from '../types';
 
 export function useMassAssignment(

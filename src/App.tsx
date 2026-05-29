@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MotionGlobalConfig } from 'motion/react';
-import { Channel } from './types';
+import { Channel, PrintOptions } from './types';
 import { PrintStyles } from './components/PrintStyles';
 import { ToastRenderer } from './components/ToastRenderer';
 import { ViewSwitcher } from './features/ViewSwitcher/ViewSwitcher';
@@ -49,6 +49,11 @@ export default function App() {
   const [isSubSnakesOpen, setIsSubSnakesOpen] = useState(false);
   const [currentView, setCurrentView] = useState<string>('main');
   const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
+  
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [printOptions, setPrintOptions] = useState<PrintOptions | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printTrigger, setPrintTrigger] = useState(false);
 
   const { toast, setToast } = useToast();
 
@@ -61,7 +66,8 @@ export default function App() {
     isSubSnakesOpen ||
     isAssignSubSnakeOpen ||
     isMultiGroupOpen ||
-    isMultiColorOpen;
+    isMultiColorOpen ||
+    isPrintModalOpen;
 
   const {
     isMultiEdit,
@@ -77,6 +83,24 @@ export default function App() {
   React.useEffect(() => {
     MotionGlobalConfig.skipAnimations = settings.animationsEnabled === false;
   }, [settings.animationsEnabled]);
+
+  React.useEffect(() => {
+    if (printTrigger) {
+      const timer = setTimeout(() => {
+        window.print();
+        setPrintTrigger(false);
+        setIsPrinting(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [printTrigger]);
+
+  const handleConfirmPrint = (options: PrintOptions) => {
+    setPrintOptions(options);
+    setIsPrintModalOpen(false);
+    setIsPrinting(true);
+    setPrintTrigger(true);
+  };
 
   const handleCellClick = (ch: Channel, e: React.MouseEvent) => {
     if (!isMultiEdit) {
@@ -117,13 +141,13 @@ export default function App() {
   const pClass = (cls: string) => settings.useEditorLookInPrint ? '' : cls;
   const shouldStackPrint = inputs.length > 24 || outputs.length > 16;
   const activeView = (currentView === 'main' || subSnakes.some(s => s.id === currentView)) ? currentView : 'main';
-  const isMultiPagePrint = shouldStackPrint || activeView !== 'main' || (settings.includeSubSnakesInPrint && subSnakes.length > 0) || layoutMode === 'table';
+  const isMultiPagePrint = true; // Always true now since we force page breaks per block
 
   return (
     <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')} ${settings.printTheme === 'bw' ? 'print-bw-mode' : ''}`}>
       <PrintStyles isMultiPagePrint={isMultiPagePrint} settings={settings} />
 
-      <div className="main-content flex flex-col flex-1 h-full">
+      <div className={`main-content flex flex-col flex-1 h-full ${isPrinting ? 'print:hidden' : ''}`}>
         <Header
           handleExport={handleExport}
           loadImportData={loadImportData}
@@ -135,6 +159,7 @@ export default function App() {
           setIsResizeGridOpen={setIsResizeGridOpen}
           setIsSubSnakesOpen={setIsSubSnakesOpen}
           setIsSettingsOpen={setIsSettingsOpen}
+          setIsPrintModalOpen={setIsPrintModalOpen}
         />
 
         {/* Main Content - Grid Layout */}
@@ -236,6 +261,124 @@ export default function App() {
         </main>
       </div>
 
+      {/* Print View Renderer */}
+      {isPrinting && printOptions && (
+        <div className="hidden print:flex flex-col w-full print-preview-container">
+          {/* Main Input Grid */}
+          {printOptions.mainInput.printGrid && (
+            <div className="print-subsnake-page-break">
+              <div className="print-grid-container print-stacked">
+                <PatchGridSection
+                  channels={inputs}
+                  type="INPUT"
+                  cols={settings.grid.input.cols}
+                  flexClass=""
+                  settings={settings}
+                  subSnakes={subSnakes}
+                  selectedIds={[]}
+                  isMultiEdit={false}
+                  onCellClick={() => {}}
+                  onCellDrop={() => {}}
+                  onCellMouseDown={() => {}}
+                  onCellMouseEnter={() => {}}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Main Output Grid */}
+          {printOptions.mainOutput.printGrid && (
+            <div className="print-subsnake-page-break">
+              <div className="print-grid-container print-stacked">
+                <PatchGridSection
+                  channels={outputs}
+                  type="OUTPUT"
+                  cols={settings.grid.output.cols}
+                  flexClass=""
+                  settings={settings}
+                  subSnakes={subSnakes}
+                  selectedIds={[]}
+                  isMultiEdit={false}
+                  onCellClick={() => {}}
+                  onCellDrop={() => {}}
+                  onCellMouseDown={() => {}}
+                  onCellMouseEnter={() => {}}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Main Input Table */}
+          {printOptions.mainInput.printTable && (
+            <div className="print-subsnake-page-break w-full max-w-7xl mx-auto">
+              <TableView
+                inputs={inputs}
+                outputs={[]}
+                subSnakes={subSnakes}
+                settings={settings}
+                projectTitle={title}
+                projectNotes={notes}
+              />
+            </div>
+          )}
+
+          {/* Main Output Table */}
+          {printOptions.mainOutput.printTable && (
+            <div className="print-subsnake-page-break w-full max-w-7xl mx-auto">
+              <TableView
+                inputs={[]}
+                outputs={outputs}
+                subSnakes={subSnakes}
+                settings={settings}
+                projectTitle={title}
+                projectNotes={notes}
+              />
+            </div>
+          )}
+
+          {/* SubSnakes */}
+          {subSnakes.map(snake => {
+            const options = printOptions.subSnakes[snake.id];
+            if (!options) return null;
+
+            return (
+              <React.Fragment key={snake.id}>
+                {options.printGrid && (
+                  <div className="print-subsnake-page-break">
+                    <SubSnakeView
+                      subSnakes={[snake]}
+                      inputs={inputs}
+                      outputs={outputs}
+                      settings={settings}
+                      selectedSubSnakeId={snake.id}
+                      isPrintMode={true}
+                      projectTitle={title}
+                      projectNotes={notes}
+                      layoutMode="grid"
+                    />
+                  </div>
+                )}
+                {options.printTable && (
+                  <div className="print-subsnake-page-break">
+                    <SubSnakeView
+                      subSnakes={[snake]}
+                      inputs={inputs}
+                      outputs={outputs}
+                      settings={settings}
+                      selectedSubSnakeId={snake.id}
+                      isPrintMode={true}
+                      projectTitle={title}
+                      projectNotes={notes}
+                      layoutMode="table"
+                    />
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      )}
+
       <MultiEditBar
         isMultiEdit={isMultiEdit}
         selectedIds={selectedIds}
@@ -259,12 +402,14 @@ export default function App() {
         isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen}
         isNewProjectConfirmOpen={isNewProjectConfirmOpen} setIsNewProjectConfirmOpen={setIsNewProjectConfirmOpen}
         isResizeGridOpen={isResizeGridOpen} setIsResizeGridOpen={setIsResizeGridOpen}
+        isPrintModalOpen={isPrintModalOpen} setIsPrintModalOpen={setIsPrintModalOpen}
         selectedIds={selectedIds}
         
         saveEdit={saveEdit} handleNavigateEdit={handleNavigateEdit} saveFastInput={saveFastInput}
         handleMassAssignGroup={handleMassAssignGroup} handleMassAssignColor={handleMassAssignColor} handleMassAssignSubSnake={handleMassAssignSubSnake}
         addSubSnake={addSubSnake} updateSubSnake={updateSubSnake} deleteSubSnake={deleteSubSnake} clearSubSnakeAssignments={clearSubSnakeAssignments}
         handleCreateNewProject={handleCreateNewProject} handleResizeGrid={handleResizeGrid}
+        onConfirmPrint={handleConfirmPrint}
       />
 
       {/* Toast Notification */}

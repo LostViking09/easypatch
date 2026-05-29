@@ -102,7 +102,7 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
   };
 
   return (
-    <div className={`mb-6 print:mb-6 ${title === 'Outputs' ? 'print-page-break-before' : ''}`}>
+    <div className="mb-6 print:mb-6">
       {/* Print Page Header */}
       <div className="hidden print:flex items-center justify-between border-b border-slate-300 pb-1 mb-2 text-slate-555 text-xxs font-extrabold tracking-wider uppercase">
         <span>{projectTitle || 'EasyPatch Sheet'}</span>
@@ -308,7 +308,7 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
 
 export const TableView: React.FC<TableViewProps> = ({ inputs, outputs, subSnakes, settings, projectTitle = '', projectNotes = '', onUpdateChannel, onEditChannel }) => {
   return (
-    <div className="w-full max-w-7xl mx-auto bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none print:mt-4 print:page-break-before">
+    <div className="w-full max-w-7xl mx-auto bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none print:mt-4">
       <ChannelTable title="Inputs" channels={inputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} />
       <ChannelTable title="Outputs" channels={outputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} />
     </div>

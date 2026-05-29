@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Network, List } from 'lucide-react';
+import { LayoutGrid, Network, List, SlidersHorizontal } from 'lucide-react';
 import { SubSnake, Channel } from '../../types';
 
 interface ViewSwitcherProps {
@@ -60,6 +60,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
               : 'text-slate-555 hover:text-slate-850 hover:bg-slate-200'
           }`}
         >
+          <SlidersHorizontal className="w-4 h-4 text-slate-500" />
           <span>Main I/O</span>
         </button>
 
