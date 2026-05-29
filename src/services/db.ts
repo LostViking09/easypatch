@@ -9,6 +9,7 @@ export interface Project {
   inputs: Channel[];
   outputs: Channel[];
   subSnakes: SubSnake[];
+  stageboxes?: import('../types').Stagebox[];
   updatedAt: number;
 }
 

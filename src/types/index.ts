@@ -11,6 +11,8 @@ export type Channel = {
   stereoLink?: 'next' | 'prev';
   subSnakeId?: string;
   subSnakeChannel?: number;
+  stageboxId?: string;
+  stageboxPort?: number;
 };
 
 export type SubSnake = {
@@ -18,6 +20,16 @@ export type SubSnake = {
   name: string;
   color: string;
   grid?: {
+    input: { rows: number; cols: number };
+    output: { rows: number; cols: number };
+  };
+};
+
+export type Stagebox = {
+  id: string;
+  name: string;
+  order: number;
+  grid: {
     input: { rows: number; cols: number };
     output: { rows: number; cols: number };
   };

@@ -1,8 +1,30 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import debounce from 'lodash.debounce';
 import { Channel, SettingsConfig, SubSnake, UserSettings } from '../types';
-import { defaultSettings, initialInputs, initialOutputs, PALETTES, defaultUserSettings, createEmptyInputs, createEmptyOutputs } from '../utils/constants';
+import { defaultSettings, initialInputs, initialOutputs, PALETTES, defaultUserSettings, createEmptyInputs, createEmptyOutputs, initialStageboxes } from '../utils/constants';
 import { db } from '../services/db';
+
+export const recalculateHardwareMapping = (channels: Channel[], stageboxes: import('../types').Stagebox[], isInput: boolean): Channel[] => {
+  let currentIndex = 0;
+  const list = [...channels];
+  for (const box of stageboxes) {
+    const capacity = isInput ? box.grid.input.rows * box.grid.input.cols : box.grid.output.rows * box.grid.output.cols;
+    for (let i = 0; i < capacity; i++) {
+      if (currentIndex < list.length) {
+        list[currentIndex] = {
+          ...list[currentIndex],
+          stageboxId: box.id,
+          stageboxPort: i + 1
+        };
+        currentIndex++;
+      }
+    }
+  }
+  for (let i = currentIndex; i < list.length; i++) {
+     list[i] = { ...list[i], stageboxId: undefined, stageboxPort: undefined };
+  }
+  return list;
+};
 
 export function usePatchState(projectId?: string) {
   const [title, setTitle] = useState('EasyPatch');
@@ -12,6 +34,7 @@ export function usePatchState(projectId?: string) {
   const [settings, setSettings] = useState<SettingsConfig>(defaultSettings);
   const [userSettings, setUserSettings] = useState<UserSettings>(defaultUserSettings);
   const [subSnakes, setSubSnakes] = useState<SubSnake[]>([]);
+  const [stageboxes, setStageboxes] = useState<import('../types').Stagebox[]>(initialStageboxes);
   
   const [isLoaded, setIsLoaded] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -53,11 +76,18 @@ export function usePatchState(projectId?: string) {
         setNotes(project.notes || '');
         setSettings({ ...defaultSettings, ...project.settings });
         
-        // Ensure properties like mic/stand are initialized to empty strings if missing
-        setInputs((project.inputs || initialInputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
-        setOutputs((project.outputs || initialOutputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
+        let loadedInputs = (project.inputs || initialInputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
+        let loadedOutputs = (project.outputs || initialOutputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
+        const loadedStageboxes = project.stageboxes || initialStageboxes;
+
+        loadedInputs = recalculateHardwareMapping(loadedInputs, loadedStageboxes, true);
+        loadedOutputs = recalculateHardwareMapping(loadedOutputs, loadedStageboxes, false);
+
+        setInputs(loadedInputs);
+        setOutputs(loadedOutputs);
         
         setSubSnakes((project.subSnakes || []).map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) })));
+        setStageboxes(loadedStageboxes);
       }
       setIsLoaded(true);
       hasLoadedRef.current = true;
@@ -96,9 +126,10 @@ export function usePatchState(projectId?: string) {
       settings,
       inputs,
       outputs,
-      subSnakes
+      subSnakes,
+      stageboxes
     });
-  }, [title, notes, settings, inputs, outputs, subSnakes, projectId, debouncedSave]);
+  }, [title, notes, settings, inputs, outputs, subSnakes, stageboxes, projectId, debouncedSave]);
 
   const sanitizeStereoLinks = (channels: Channel[]): Channel[] => {
     const list = channels.map(c => ({ ...c }));
@@ -164,7 +195,8 @@ export function usePatchState(projectId?: string) {
       }
 
       // Sanitize stereo links to ensure robustness
-      const sanitized = sanitizeStereoLinks(list);
+      let sanitized = sanitizeStereoLinks(list);
+      sanitized = recalculateHardwareMapping(sanitized, stageboxes, sourceIsInput);
       if (sourceIsInput) setInputs(sanitized);
       else setOutputs(sanitized);
 
@@ -176,7 +208,8 @@ export function usePatchState(projectId?: string) {
       list[targetIdx] = { ...temp, number: targetIdx + 1 };
 
       // Sanitize stereo links to ensure robustness
-      const sanitized = sanitizeStereoLinks(list);
+      let sanitized = sanitizeStereoLinks(list);
+      sanitized = recalculateHardwareMapping(sanitized, stageboxes, sourceIsInput);
       if (sourceIsInput) setInputs(sanitized);
       else setOutputs(sanitized);
 
@@ -398,10 +431,6 @@ export function usePatchState(projectId?: string) {
     return { finalInputs, finalOutputs };
   };
 
-  const saveFastInput = (newInputs: Channel[], newOutputs: Channel[]) => {
-    setInputs(newInputs);
-    setOutputs(newOutputs);
-  };
 
   const handleCreateNewProject = () => {
     const defaultInputGrid = { rows: 3, cols: 8 };
@@ -434,6 +463,7 @@ export function usePatchState(projectId?: string) {
     setInputs(newInputs);
     setOutputs(newOutputs);
     setSubSnakes([]);
+    setStageboxes(initialStageboxes);
     setSettings(prev => ({
       ...prev,
       grid: {
@@ -445,62 +475,6 @@ export function usePatchState(projectId?: string) {
     setNotes('');
   };
 
-  const handleResizeGrid = (inputGrid: { rows: number, cols: number }, outputGrid: { rows: number, cols: number }) => {
-    const newInputsCount = inputGrid.rows * inputGrid.cols;
-    const newOutputsCount = outputGrid.rows * outputGrid.cols;
-
-    // Map inputs
-    const newInputs: Channel[] = Array.from({ length: newInputsCount }, (_, i) => {
-      const existing = inputs[i];
-      if (existing) {
-        return { ...existing, number: i + 1 };
-      }
-      return {
-        id: `in-${i + 1}`,
-        type: 'in',
-        number: i + 1,
-        name: '',
-        mic: '',
-        stand: '',
-        notes: '',
-        color: '#ffffff',
-        group: '',
-      };
-    });
-
-    // Map outputs
-    const newOutputs: Channel[] = Array.from({ length: newOutputsCount }, (_, i) => {
-      const existing = outputs[i];
-      if (existing) {
-        return { ...existing, number: i + 1 };
-      }
-      return {
-        id: `out-${i + 1}`,
-        type: 'out',
-        number: i + 1,
-        name: '',
-        mic: '',
-        stand: '',
-        notes: '',
-        color: '#ffffff',
-        group: '',
-      };
-    });
-
-    // Sanitize stereo links
-    const sanitizedInputs = sanitizeStereoLinks(newInputs);
-    const sanitizedOutputs = sanitizeStereoLinks(newOutputs);
-
-    setInputs(sanitizedInputs);
-    setOutputs(sanitizedOutputs);
-    setSettings(prev => ({
-      ...prev,
-      grid: {
-        input: inputGrid,
-        output: outputGrid
-      }
-    }));
-  };
 
   const addSubSnake = (name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => {
     const defaultColor = PALETTES[settings.palette][0]?.value || '#017fba';
@@ -588,6 +562,78 @@ export function usePatchState(projectId?: string) {
     } else {
       setSubSnakes([]);
     }
+
+    if (data.stageboxes && Array.isArray(data.stageboxes)) {
+      setStageboxes(data.stageboxes);
+    } else {
+      setStageboxes(initialStageboxes);
+    }
+  };
+
+  const handleUpdateStageboxes = (newStageboxes: import('../types').Stagebox[]) => {
+    const migrateChannels = (oldChannels: Channel[], isInput: boolean): Channel[] => {
+      const oldChannelsMap: Record<string, Channel> = {};
+      oldChannels.forEach(ch => {
+        if (ch.stageboxId && ch.stageboxPort) {
+          oldChannelsMap[`${ch.stageboxId}-${ch.stageboxPort}`] = ch;
+        }
+      });
+
+      const newChannels: Channel[] = [];
+      let absoluteNumber = 1;
+
+      newStageboxes.forEach(box => {
+        const cols = isInput ? box.grid.input.cols : box.grid.output.cols;
+        const rows = isInput ? box.grid.input.rows : box.grid.output.rows;
+        const capacity = cols * rows;
+
+        for (let port = 1; port <= capacity; port++) {
+          const key = `${box.id}-${port}`;
+          const oldCh = oldChannelsMap[key];
+
+          if (oldCh) {
+            newChannels.push({
+              ...oldCh,
+              number: absoluteNumber,
+              stageboxId: box.id,
+              stageboxPort: port
+            });
+          } else {
+            newChannels.push({
+              id: `${isInput ? 'in' : 'out'}-${box.id}-${port}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              type: isInput ? 'in' : 'out',
+              number: absoluteNumber,
+              name: '',
+              mic: '',
+              stand: '',
+              notes: '',
+              color: '#ffffff',
+              group: '',
+              stageboxId: box.id,
+              stageboxPort: port
+            });
+          }
+          absoluteNumber++;
+        }
+      });
+
+      return newChannels;
+    };
+
+    let newInputs = migrateChannels(inputs, true);
+    let newOutputs = migrateChannels(outputs, false);
+
+    // Sanitize stereo links
+    let sanitizedInputs = sanitizeStereoLinks(newInputs);
+    let sanitizedOutputs = sanitizeStereoLinks(newOutputs);
+
+    // Recalculate physical mappings just in case
+    sanitizedInputs = recalculateHardwareMapping(sanitizedInputs, newStageboxes, true);
+    sanitizedOutputs = recalculateHardwareMapping(sanitizedOutputs, newStageboxes, false);
+
+    setStageboxes(newStageboxes);
+    setInputs(sanitizedInputs);
+    setOutputs(sanitizedOutputs);
   };
 
   return {
@@ -598,12 +644,12 @@ export function usePatchState(projectId?: string) {
     settings, setSettings,
     userSettings, setUserSettings,
     subSnakes, setSubSnakes,
+    stageboxes, setStageboxes,
     isLoaded, saveStatus,
     handleDrop,
     saveEdit,
-    saveFastInput,
     handleCreateNewProject,
-    handleResizeGrid,
+    handleUpdateStageboxes,
     handleExport,
     loadImportData,
     addSubSnake,

@@ -1,15 +1,14 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Settings, FolderOpen, ListOrdered, CheckSquare, Grid, Network, Palette, Printer, Share2 } from 'lucide-react';
+import { Settings, FolderOpen, CheckSquare, Network, Palette, Printer, Share2, Layers } from 'lucide-react';
 
 interface HeaderProps {
   handleShare: () => void;
-  setIsFastInputOpen: (val: boolean) => void;
   isMultiEdit: boolean;
   setIsMultiEdit: (val: boolean) => void;
   setSelectedIds: (val: string[]) => void;
-  setIsResizeGridOpen: (val: boolean) => void;
   setIsSubSnakesOpen: (val: boolean) => void;
+  setIsStageboxesOpen: (val: boolean) => void;
   setIsSettingsOpen: (val: boolean) => void;
   setIsPrintModalOpen: (val: boolean) => void;
   onOpenDashboard: () => void;
@@ -18,12 +17,11 @@ interface HeaderProps {
 
 export function Header({
   handleShare,
-  setIsFastInputOpen,
   isMultiEdit,
   setIsMultiEdit,
   setSelectedIds,
-  setIsResizeGridOpen,
   setIsSubSnakesOpen,
+  setIsStageboxesOpen,
   setIsSettingsOpen,
   setIsPrintModalOpen,
   onOpenDashboard,
@@ -87,16 +85,6 @@ export function Header({
         {/* Vertical Divider */}
         <div className="w-px h-5 bg-slate-800 self-center mx-1.5 hidden sm:block"></div>
 
-        {/* Fast Input */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setIsFastInputOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium bg-slate-800 border border-slate-700/50 text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
-        >
-          <ListOrdered className="w-4 h-4" /> Fast Input
-        </motion.button>
-
         {/* Multi-Select */}
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -117,15 +105,16 @@ export function Header({
         {/* Vertical Divider */}
         <div className="w-px h-5 bg-slate-800 self-center mx-1.5 hidden sm:block"></div>
 
-        {/* Resize Grid */}
+
+        {/* Stageboxes */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => setIsResizeGridOpen(true)}
+          onClick={() => setIsStageboxesOpen(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium bg-slate-800 border border-slate-700/50 text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
-          title="Resize Grid"
+          title="Stagebox Setup"
         >
-          <Grid className="w-4 h-4" /> Resize Grid
+          <Layers className="w-4 h-4" /> Stagebox Setup
         </motion.button>
 
         {/* SubSnakes */}

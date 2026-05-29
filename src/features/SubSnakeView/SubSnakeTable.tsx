@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Channel, SettingsConfig, SubSnake } from '../../types';
+import { Channel, SettingsConfig, SubSnake, Stagebox } from '../../types';
 import { InlineEditCell } from '../../components/InlineEditCell';
 
 type EditableField = 'name' | 'mic' | 'stand' | 'notes' | 'group';
@@ -12,6 +12,7 @@ interface SubSnakeTableProps {
   type: 'in' | 'out';
   settings: SettingsConfig;
   subSnake: SubSnake;
+  stageboxes?: Stagebox[];
   onUpdateChannel?: (channel: Channel) => void;
   onEditChannel?: (channel: Channel) => void;
 }
@@ -23,6 +24,7 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
   type,
   settings,
   subSnake,
+  stageboxes,
   onUpdateChannel,
   onEditChannel
 }) => {
@@ -163,10 +165,10 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
                 </div>
                 {ch && (
                   <span className="flex items-center gap-px text-xs px-1.5 py-0.5 rounded border font-bold font-mono tracking-normal shadow-3xs select-none text-slate-700 shrink-0 border-slate-250 bg-slate-100/90">
-                    <span className="truncate max-w-[80px]">Main</span>
+                    <span className="truncate max-w-[80px]">{stageboxes?.find(b => b.id === ch.stageboxId)?.name || "Main"}</span>
                     <span className="flex-shrink-0">
                       <span className="opacity-60 mr-px">#</span>
-                      <span className="font-extrabold">{ch.number}</span>
+                      <span className="font-extrabold">{ch.stageboxPort || ch.number}</span>
                     </span>
                   </span>
                 )}
@@ -197,7 +199,7 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
           >
             <tr>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-16">Port</th>
-              <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-32">Main I/O</th>
+              <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-32">Stagebox I/O</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/4">Name</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/6">Mic/DI</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/6">Stand</th>
@@ -241,10 +243,10 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
                   >
                     {ch ? (
                       <span className="flex items-center gap-px text-xs print:text-xxs px-1.5 py-0.5 print:py-px rounded border font-bold font-mono tracking-normal shadow-3xs select-none text-slate-700 border-slate-250 bg-slate-100/90 print:text-black inline-flex w-fit">
-                        <span className="truncate max-w-[120px] print:max-w-[50px]">Main</span>
+                        <span className="truncate max-w-[120px] print:max-w-[50px]">{stageboxes?.find(b => b.id === ch.stageboxId)?.name || "Main"}</span>
                         <span className="flex-shrink-0">
                           <span className="opacity-60 mr-px">#</span>
-                          <span className="font-extrabold">{ch.number}</span>
+                          <span className="font-extrabold">{ch.stageboxPort || ch.number}</span>
                         </span>
                       </span>
                     ) : (

@@ -28,7 +28,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
       <div className="flex items-center gap-1 bg-slate-105 p-1 rounded-xl border border-slate-200 self-start md:self-auto shadow-3xs">
         <button
           onClick={() => setLayoutMode('grid')}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
             layoutMode === 'grid'
               ? 'bg-white text-slate-800 shadow-sm border border-slate-250'
               : 'text-slate-555 hover:text-slate-850 hover:bg-slate-200'
@@ -36,10 +36,11 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
           title="Grid View"
         >
           <LayoutGrid className="w-4 h-4" />
+          <span>Grid</span>
         </button>
         <button
           onClick={() => setLayoutMode('table')}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
             layoutMode === 'table'
               ? 'bg-white text-slate-800 shadow-sm border border-slate-250'
               : 'text-slate-555 hover:text-slate-850 hover:bg-slate-200'
@@ -47,6 +48,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
           title="Table View"
         >
           <List className="w-4 h-4" />
+          <span>Table</span>
         </button>
       </div>
 

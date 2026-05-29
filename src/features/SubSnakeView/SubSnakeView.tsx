@@ -1,6 +1,6 @@
 import React from 'react';
 import { Network, Lock, X } from 'lucide-react';
-import { Channel, SubSnake, SettingsConfig } from '../../types';
+import { Channel, SubSnake, SettingsConfig, Stagebox } from '../../types';
 import { ChannelCell } from '../../components/ChannelCell';
 import { hexToRgba } from '../../utils/colors';
 import { SubSnakeTable } from './SubSnakeTable';
@@ -11,6 +11,7 @@ interface SubSnakeViewProps {
   outputs: Channel[];
   settings: SettingsConfig;
   selectedSubSnakeId: string;
+  stageboxes?: Stagebox[];
   isPrintMode?: boolean;
   projectTitle?: string;
   projectNotes?: string;
@@ -25,6 +26,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
   outputs,
   settings,
   selectedSubSnakeId,
+  stageboxes = [],
   isPrintMode = false,
   projectTitle = '',
   projectNotes = '',
@@ -99,8 +101,9 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
       const tempCh: Channel = assignedCh 
         ? {
             ...assignedCh,
+            stageboxPort: portNum,
             number: portNum,
-            subSnakeChannel: assignedCh.number
+            subSnakeChannel: assignedCh.stageboxPort
           }
         : {
             id: `ss-port-vacant-${type}-${portNum}`,
@@ -117,7 +120,8 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
     }
 
     const cellsMapped = portChannels.map((tempCh, i) => {
-      const assignedCh = assignedChannels.find(c => c.subSnakeChannel === tempCh.number);
+      const portNum = i + 1;
+      const assignedCh = assignedChannels.find(c => c.subSnakeChannel === portNum);
       const isInGroup = !!tempCh.group && tempCh.group.trim() !== '';
       
       // Calculate grouping boundaries across the port layout
@@ -142,7 +146,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
           isFirstInRow={isFirstInRow}
           isLastInRow={isLastInRow}
           isBottomRow={isBottomRow}
-          subSnakeName={assignedCh ? "Main" : undefined}
+          subSnakeName={assignedCh ? (stageboxes?.find(b => b.id === assignedCh.stageboxId)?.name || "Main") : undefined}
           subSnakeColor={assignedCh ? "#cbd5e1" : undefined}
           isMultiSelectMode={true} // Disables dragging & visual visual select indicators
         />
@@ -281,6 +285,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
                         assignedChannels={assignedInputs}
                         settings={settings}
                         subSnake={snake}
+                        stageboxes={stageboxes}
                         onUpdateChannel={onUpdateChannel}
                         onEditChannel={onEditChannel}
                       />
@@ -294,6 +299,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
                         assignedChannels={assignedOutputs}
                         settings={settings}
                         subSnake={snake}
+                        stageboxes={stageboxes}
                         onUpdateChannel={onUpdateChannel}
                         onEditChannel={onEditChannel}
                       />

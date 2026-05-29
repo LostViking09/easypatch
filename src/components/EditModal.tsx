@@ -477,10 +477,13 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                 ? (channel.type === 'in' ? s.grid.input.cols * s.grid.input.rows : s.grid.output.cols * s.grid.output.rows) 
                 : 'Dyn';
               
+              const isDisabled = totalCh === 0;
+
               return (
                 <button
                   key={s.id}
                   type="button"
+                  disabled={isDisabled}
                   onClick={() => setFormData({ 
                     ...formData, 
                     subSnakeId: s.id, 
@@ -489,7 +492,9 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                   className={`py-1.5 px-3 text-xs font-bold rounded-md border transition-all flex items-center gap-2 cursor-pointer shadow-3xs ${
                     isSelected
                       ? 'bg-slate-800 text-white border-slate-800'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      : isDisabled
+                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   {s.color && s.color !== '#ffffff' && (

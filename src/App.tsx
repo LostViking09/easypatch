@@ -62,24 +62,23 @@ function Editor() {
     isLoaded, saveStatus,
     handleDrop,
     saveEdit,
-    saveFastInput,
-    handleResizeGrid,
     handleExport,
     addSubSnake,
     updateSubSnake,
     deleteSubSnake,
-    clearSubSnakeAssignments
+    clearSubSnakeAssignments,
+    stageboxes,
+    handleUpdateStageboxes
   } = usePatchState(id);
 
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isFastInputOpen, setIsFastInputOpen] = useState(false);
-  const [isResizeGridOpen, setIsResizeGridOpen] = useState(false);
   const [isNewProjectConfirmOpen, setIsNewProjectConfirmOpen] = useState(false);
   const [isMultiGroupOpen, setIsMultiGroupOpen] = useState(false);
   const [isMultiColorOpen, setIsMultiColorOpen] = useState(false);
   const [isAssignSubSnakeOpen, setIsAssignSubSnakeOpen] = useState(false);
   const [isSubSnakesOpen, setIsSubSnakesOpen] = useState(false);
+  const [isStageboxesOpen, setIsStageboxesOpen] = useState(false);
   const [currentView, setCurrentView] = useState<string>('main');
   const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
   
@@ -108,11 +107,10 @@ function Editor() {
   const isAnyModalOpen =
     !!editingChannel ||
     isSettingsOpen ||
-    isFastInputOpen ||
-    isResizeGridOpen ||
     isNewProjectConfirmOpen ||
     isSubSnakesOpen ||
     isAssignSubSnakeOpen ||
+    isStageboxesOpen ||
     isMultiGroupOpen ||
     isMultiColorOpen ||
     isPrintModalOpen ||
@@ -294,12 +292,11 @@ function Editor() {
       <div className={`main-content flex flex-col flex-1 h-full ${isPrinting ? 'print:hidden' : ''}`}>
         <Header
           handleShare={handleShare}
-          setIsFastInputOpen={setIsFastInputOpen}
           isMultiEdit={isMultiEdit}
           setIsMultiEdit={setIsMultiEdit}
           setSelectedIds={setSelectedIds}
-          setIsResizeGridOpen={setIsResizeGridOpen}
           setIsSubSnakesOpen={setIsSubSnakesOpen}
+          setIsStageboxesOpen={setIsStageboxesOpen}
           setIsSettingsOpen={setIsSettingsOpen}
           setIsPrintModalOpen={setIsPrintModalOpen}
           onOpenDashboard={() => setIsDashboardOpen(true)}
@@ -353,38 +350,70 @@ function Editor() {
 
               {/* Main Patch Grid */}
               <div 
-                className={`print-grid-container flex-col lg:flex-row gap-6 lg:gap-8 flex-1 ${
+                className={`print-grid-container flex-col gap-6 lg:gap-8 flex-1 ${
                   shouldStackPrint ? 'print-stacked' : 'print-side-by-side'
                 } ${activeView === 'main' && layoutMode === 'grid' ? 'flex print:flex' : 'hidden print:hidden'}`}
               >
-                <PatchGridSection
-                  channels={inputs}
-                  type="INPUT"
-                  cols={settings.grid.input.cols}
-                  flexClass={outputs.length > 0 ? 'flex-[2]' : 'flex-grow flex-1'}
-                  settings={settings}
-                  subSnakes={subSnakes}
-                  selectedIds={selectedIds}
-                  isMultiEdit={isMultiEdit}
-                  onCellClick={handleCellClick}
-                  onCellDrop={handleCellDrop}
-                  onCellMouseDown={handleCellMouseDown}
-                  onCellMouseEnter={handleCellMouseEnter}
-                />
-                <PatchGridSection
-                  channels={outputs}
-                  type="OUTPUT"
-                  cols={settings.grid.output.cols}
-                  flexClass={inputs.length > 0 ? 'flex-[1]' : 'flex-grow flex-1'}
-                  settings={settings}
-                  subSnakes={subSnakes}
-                  selectedIds={selectedIds}
-                  isMultiEdit={isMultiEdit}
-                  onCellClick={handleCellClick}
-                  onCellDrop={handleCellDrop}
-                  onCellMouseDown={handleCellMouseDown}
-                  onCellMouseEnter={handleCellMouseEnter}
-                />
+                {stageboxes.map(box => {
+                  const boxInputs = inputs.filter(c => c.stageboxId === box.id);
+                  const boxOutputs = outputs.filter(c => c.stageboxId === box.id);
+
+                  if (boxInputs.length === 0 && boxOutputs.length === 0) return null;
+
+                  return (
+                    <div key={box.id} className="flex flex-col gap-3">
+                      <div className="flex items-center gap-3 border-b border-slate-200 pb-2 mb-1">
+                        <span className="font-bold text-slate-800 tracking-wide uppercase">{box.name}</span>
+                        <div className="flex gap-2">
+                          <span className="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-medium">
+                            {boxInputs.length} IN
+                          </span>
+                          <span className="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-medium">
+                            {boxOutputs.length} OUT
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 flex-1">
+                        {boxInputs.length > 0 ? (
+                          <PatchGridSection
+                            channels={boxInputs}
+                            type="INPUT"
+                            cols={box.grid.input.cols}
+                            flexClass={boxOutputs.length > 0 ? 'flex-[2]' : 'flex-grow flex-1'}
+                            settings={settings}
+                            subSnakes={subSnakes}
+                            selectedIds={selectedIds}
+                            isMultiEdit={isMultiEdit}
+                            onCellClick={handleCellClick}
+                            onCellDrop={handleCellDrop}
+                            onCellMouseDown={handleCellMouseDown}
+                            onCellMouseEnter={handleCellMouseEnter}
+                          />
+                        ) : (
+                          <div className="hidden lg:block flex-[2]" />
+                        )}
+                        {boxOutputs.length > 0 ? (
+                          <PatchGridSection
+                            channels={boxOutputs}
+                            type="OUTPUT"
+                            cols={box.grid.output.cols}
+                            flexClass={boxInputs.length > 0 ? 'flex-[1]' : 'flex-grow flex-1'}
+                            settings={settings}
+                            subSnakes={subSnakes}
+                            selectedIds={selectedIds}
+                            isMultiEdit={isMultiEdit}
+                            onCellClick={handleCellClick}
+                            onCellDrop={handleCellDrop}
+                            onCellMouseDown={handleCellMouseDown}
+                            onCellMouseEnter={handleCellMouseEnter}
+                          />
+                        ) : (
+                          <div className="hidden lg:block flex-[1]" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               <div 
@@ -400,6 +429,7 @@ function Editor() {
                   outputs={outputs}
                   settings={settings}
                   selectedSubSnakeId={activeView === 'main' ? 'all' : activeView}
+                  stageboxes={stageboxes}
                   isPrintMode={activeView === 'main'}
                   projectTitle={title}
                   projectNotes={notes}
@@ -415,6 +445,7 @@ function Editor() {
                   inputs={inputs}
                   outputs={outputs}
                   subSnakes={subSnakes}
+                  stageboxes={stageboxes}
                   settings={settings}
                   projectTitle={title}
                   projectNotes={notes}
@@ -431,48 +462,66 @@ function Editor() {
       {isPrinting && printOptions && (
         <div className="hidden print:flex flex-col w-full print-preview-container">
           {/* Main Input Grid */}
-          {printOptions.mainInput.printGrid && (
-            <div className="print-subsnake-page-break">
-              <div className="print-grid-container print-stacked">
-                <PatchGridSection
-                  channels={inputs}
-                  type="INPUT"
-                  cols={settings.grid.input.cols}
-                  flexClass=""
-                  settings={settings}
-                  subSnakes={subSnakes}
-                  selectedIds={[]}
-                  isMultiEdit={false}
-                  onCellClick={() => {}}
-                  onCellDrop={() => {}}
-                  onCellMouseDown={() => {}}
-                  onCellMouseEnter={() => {}}
-                />
-              </div>
-            </div>
-          )}
+          {printOptions.mainInput.printGrid &&
+            stageboxes.map(box => {
+              const boxInputs = inputs.filter(c => c.stageboxId === box.id);
+              if (boxInputs.length === 0) return null;
+              return (
+                <div key={`print-in-${box.id}`} className="print-subsnake-page-break print-avoid-break w-full mb-8">
+                  <div className="print-grid-container print-stacked flex-col gap-6 w-full">
+                    <div className="flex flex-col gap-2 w-full">
+                      <div className="font-bold text-lg border-b border-gray-400 pb-1">{box.name} - Inputs</div>
+                      <PatchGridSection
+                        channels={boxInputs}
+                        type="INPUT"
+                        cols={box.grid.input.cols}
+                        flexClass=""
+                        settings={settings}
+                        subSnakes={subSnakes}
+                        selectedIds={[]}
+                        isMultiEdit={false}
+                        onCellClick={() => {}}
+                        onCellDrop={() => {}}
+                        onCellMouseDown={() => {}}
+                        onCellMouseEnter={() => {}}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          }
 
           {/* Main Output Grid */}
-          {printOptions.mainOutput.printGrid && (
-            <div className="print-subsnake-page-break">
-              <div className="print-grid-container print-stacked">
-                <PatchGridSection
-                  channels={outputs}
-                  type="OUTPUT"
-                  cols={settings.grid.output.cols}
-                  flexClass=""
-                  settings={settings}
-                  subSnakes={subSnakes}
-                  selectedIds={[]}
-                  isMultiEdit={false}
-                  onCellClick={() => {}}
-                  onCellDrop={() => {}}
-                  onCellMouseDown={() => {}}
-                  onCellMouseEnter={() => {}}
-                />
-              </div>
-            </div>
-          )}
+          {printOptions.mainOutput.printGrid &&
+            stageboxes.map(box => {
+              const boxOutputs = outputs.filter(c => c.stageboxId === box.id);
+              if (boxOutputs.length === 0) return null;
+              return (
+                <div key={`print-out-${box.id}`} className="print-subsnake-page-break print-avoid-break w-full mb-8">
+                  <div className="print-grid-container print-stacked flex-col gap-6 w-full">
+                    <div className="flex flex-col gap-2 w-full">
+                      <div className="font-bold text-lg border-b border-gray-400 pb-1">{box.name} - Outputs</div>
+                      <PatchGridSection
+                        channels={boxOutputs}
+                        type="OUTPUT"
+                        cols={box.grid.output.cols}
+                        flexClass=""
+                        settings={settings}
+                        subSnakes={subSnakes}
+                        selectedIds={[]}
+                        isMultiEdit={false}
+                        onCellClick={() => {}}
+                        onCellDrop={() => {}}
+                        onCellMouseDown={() => {}}
+                        onCellMouseEnter={() => {}}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          }
 
           {/* Main Input Table */}
           {printOptions.mainInput.printTable && (
@@ -481,6 +530,7 @@ function Editor() {
                 inputs={inputs}
                 outputs={[]}
                 subSnakes={subSnakes}
+                stageboxes={stageboxes}
                 settings={settings}
                 projectTitle={title}
                 projectNotes={notes}
@@ -495,6 +545,7 @@ function Editor() {
                 inputs={[]}
                 outputs={outputs}
                 subSnakes={subSnakes}
+                stageboxes={stageboxes}
                 settings={settings}
                 projectTitle={title}
                 projectNotes={notes}
@@ -517,6 +568,7 @@ function Editor() {
                       outputs={outputs}
                       settings={settings}
                       selectedSubSnakeId={snake.id}
+                      stageboxes={stageboxes}
                       isPrintMode={true}
                       projectTitle={title}
                       projectNotes={notes}
@@ -532,6 +584,7 @@ function Editor() {
                       outputs={outputs}
                       settings={settings}
                       selectedSubSnakeId={snake.id}
+                      stageboxes={stageboxes}
                       isPrintMode={true}
                       projectTitle={title}
                       projectNotes={notes}
@@ -564,23 +617,23 @@ function Editor() {
           inputs={inputs} outputs={outputs}
           subSnakes={subSnakes} settings={settings} setSettings={setSettings}
           userSettings={userSettings} setUserSettings={setUserSettings}
-          isFastInputOpen={isFastInputOpen} setIsFastInputOpen={setIsFastInputOpen}
           isMultiGroupOpen={isMultiGroupOpen} setIsMultiGroupOpen={setIsMultiGroupOpen}
           isMultiColorOpen={isMultiColorOpen} setIsMultiColorOpen={setIsMultiColorOpen}
           isAssignSubSnakeOpen={isAssignSubSnakeOpen} setIsAssignSubSnakeOpen={setIsAssignSubSnakeOpen}
           isSubSnakesOpen={isSubSnakesOpen} setIsSubSnakesOpen={setIsSubSnakesOpen}
+          isStageboxesOpen={isStageboxesOpen} setIsStageboxesOpen={setIsStageboxesOpen}
           isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen}
           isNewProjectConfirmOpen={isNewProjectConfirmOpen} setIsNewProjectConfirmOpen={setIsNewProjectConfirmOpen}
-          isResizeGridOpen={isResizeGridOpen} setIsResizeGridOpen={setIsResizeGridOpen}
           isPrintModalOpen={isPrintModalOpen} setIsPrintModalOpen={setIsPrintModalOpen}
           isShareModalOpen={isShareModalOpen} setIsShareModalOpen={setIsShareModalOpen}
           shareUrl={shareUrl}
           selectedIds={selectedIds}
           
-          saveEdit={saveEdit} handleNavigateEdit={handleNavigateEdit} saveFastInput={saveFastInput}
+          saveEdit={saveEdit} handleNavigateEdit={handleNavigateEdit}
           handleMassAssignGroup={handleMassAssignGroup} handleMassAssignColor={handleMassAssignColor} handleMassAssignSubSnake={handleMassAssignSubSnake}
           addSubSnake={addSubSnake} updateSubSnake={updateSubSnake} deleteSubSnake={deleteSubSnake} clearSubSnakeAssignments={clearSubSnakeAssignments}
-          handleCreateNewProject={handleNewPatch} handleResizeGrid={handleResizeGrid}
+          handleCreateNewProject={handleNewPatch}
+          stageboxes={stageboxes} handleUpdateStageboxes={handleUpdateStageboxes}
           onConfirmPrint={handleConfirmPrint}
         />
       )}

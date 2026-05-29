@@ -6,7 +6,7 @@ This document serves as the central repository for planned features, refined ide
 
 ### BUGS
 
--
+- Map to Subsnake: 0 input subsnake selected -> maps to "input 1"
 
 ### 2. Snippets
 

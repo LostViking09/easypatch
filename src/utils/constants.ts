@@ -1,4 +1,4 @@
-import { Channel, SettingsConfig } from '../types';
+import { Channel, SettingsConfig, Stagebox } from '../types';
 
 const getDefaultPageSize = (): 'letter' | 'a4' => {
   try {
@@ -88,6 +88,18 @@ export const createEmptyOutputs = (count: number): Channel[] =>
 
 export const initialInputs: Channel[] = createEmptyInputs(24);
 export const initialOutputs: Channel[] = createEmptyOutputs(12);
+
+export const initialStageboxes: Stagebox[] = [
+  {
+    id: 'local-io',
+    name: 'Main IO',
+    order: 0,
+    grid: {
+      input: { rows: 3, cols: 8 },
+      output: { rows: 3, cols: 4 }
+    }
+  }
+];
 
 export interface SubSnakePreset {
   name: string;

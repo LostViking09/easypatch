@@ -13,7 +13,6 @@ The primary goal of EasyPatch is to streamline the setup process for live events
 - Digital Grid Layout: Create a visual map of your inputs and outputs that matches your physical hardware.
 - Color Coding: Apply industry-standard color palettes (such as Allen & Heath Qu or SQ series) to identify instrument groups at a glance.
 - Channel Grouping: Link related channels together to maintain visual consistency and organized workflows.
-- Bulk Entry: Use the Fast Input feature to name multiple channels simultaneously by simply typing a list.
 - Multi-Select Editing: Modify names, groups, and colors for multiple channels at once to save time.
 - Data Portability: Export your patch lists as .easypatch files to save them for future shows or share them with colleagues.
 - Print Optimization: Generate high-contrast, clean layouts specifically designed for physical use on stage or at the mixing console.

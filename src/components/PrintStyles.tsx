@@ -90,10 +90,7 @@ export const PrintStyles: React.FC<PrintStylesProps> = ({ isMultiPagePrint, sett
           page-break-inside: auto !important;
           break-inside: auto !important;
         }
-        .print-grid-container.print-stacked .print-section-wrapper:nth-child(2) {
-          page-break-before: always !important;
-          break-before: page !important;
-        }
+
         .print-grid-container.print-side-by-side {
           flex-direction: row !important;
           gap: 1.5rem !important;
@@ -112,6 +109,13 @@ export const PrintStyles: React.FC<PrintStylesProps> = ({ isMultiPagePrint, sett
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
+          page-break-after: avoid !important;
+          break-after: avoid !important;
+          break-after: avoid-page !important;
+        }
+        
+        /* Prevent page breaks after section headings and titles */
+        h2, h3, h4, h5, h6 {
           page-break-after: avoid !important;
           break-after: avoid !important;
           break-after: avoid-page !important;

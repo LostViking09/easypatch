@@ -44,14 +44,27 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
   const selectedInputs = inputs.filter(ch => selectedIds.includes(ch.id));
   const selectedOutputs = outputs.filter(ch => selectedIds.includes(ch.id));
 
-  // Auto-select first subsnake or default to creation if empty
+  // Auto-select first enabled subsnake or default to creation if empty
   useEffect(() => {
     if (subSnakes.length === 0) {
       setIsCreatingNew(true);
     } else if (!selectedSubSnakeId) {
-      setSelectedSubSnakeId(subSnakes[0].id);
+      const firstEnabled = subSnakes.find(s => {
+        if (!s.grid) return true;
+        const totalIn = s.grid.input.rows * s.grid.input.cols;
+        const totalOut = s.grid.output.rows * s.grid.output.cols;
+        return !(
+          (selectedInputs.length > 0 && totalIn === 0) ||
+          (selectedOutputs.length > 0 && totalOut === 0)
+        );
+      });
+      if (firstEnabled) {
+        setSelectedSubSnakeId(firstEnabled.id);
+      } else {
+        setIsCreatingNew(true);
+      }
     }
-  }, [subSnakes, selectedSubSnakeId]);
+  }, [subSnakes, selectedSubSnakeId, selectedInputs.length, selectedOutputs.length]);
 
   const activeSubSnake = subSnakes.find(s => s.id === selectedSubSnakeId);
 
@@ -418,20 +431,31 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
                 const isSelected = selectedSubSnakeId === s.id;
                 const totalIn = s.grid ? s.grid.input.rows * s.grid.input.cols : 0;
                 const totalOut = s.grid ? s.grid.output.rows * s.grid.output.cols : 0;
+                
+                const isDisabled = s.grid && (
+                  (selectedInputs.length > 0 && totalIn === 0) ||
+                  (selectedOutputs.length > 0 && totalOut === 0)
+                );
+
                 return (
                   <motion.button
                     key={s.id}
                     type="button"
+                    disabled={isDisabled}
                     onClick={() => {
-                      setSelectedSubSnakeId(s.id);
-                      setStartPort(1);
+                      if (!isDisabled) {
+                        setSelectedSubSnakeId(s.id);
+                        setStartPort(1);
+                      }
                     }}
-                    whileHover={{ scale: isSelected ? 1.01 : 1.02 }}
-                    whileTap={{ scale: 0.99 }}
+                    whileHover={{ scale: isDisabled ? 1 : (isSelected ? 1.01 : 1.02) }}
+                    whileTap={{ scale: isDisabled ? 1 : 0.99 }}
                     className={`p-3 rounded-xl border text-left flex items-center justify-between gap-3 transition-all ${
-                      isSelected
-                        ? 'border-indigo-600 bg-indigo-50/15 ring-2 ring-indigo-500/25 shadow-sm font-semibold'
-                        : 'border-slate-200 hover:border-slate-350 hover:shadow-xs bg-white text-slate-700'
+                      isDisabled 
+                        ? 'border-slate-200 bg-slate-50 text-slate-400 opacity-60 cursor-not-allowed'
+                        : isSelected
+                          ? 'border-indigo-600 bg-indigo-50/15 ring-2 ring-indigo-500/25 shadow-sm font-semibold'
+                          : 'border-slate-200 hover:border-slate-350 hover:shadow-xs bg-white text-slate-700'
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">

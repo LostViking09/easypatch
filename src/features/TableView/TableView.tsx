@@ -10,6 +10,7 @@ interface TableViewProps {
   inputs: Channel[];
   outputs: Channel[];
   subSnakes: SubSnake[];
+  stageboxes?: import('../../types').Stagebox[];
   settings: SettingsConfig;
   projectTitle?: string;
   projectNotes?: string;
@@ -26,15 +27,16 @@ interface ChannelTableProps {
   projectNotes?: string;
   onUpdateChannel?: (channel: Channel) => void;
   onEditChannel?: (channel: Channel) => void;
+  hasStageboxes?: boolean;
 }
 
 
 
-const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes, settings, projectTitle = '', projectNotes = '', onUpdateChannel, onEditChannel }) => {
+const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes, settings, projectTitle = '', projectNotes = '', onUpdateChannel, onEditChannel, hasStageboxes = false }) => {
   const [editingCell, setEditingCell] = useState<{ id: string, field: EditableField, rowIndex: number, colIndex: number } | null>(null);
 
   if (channels.length === 0) return null;
-  const ioLabel = title === 'Inputs' ? 'Input' : 'Output';
+  const ioLabel = hasStageboxes ? 'Port' : (title === 'Inputs' ? 'Input' : 'Output');
 
   const stripeOpacity = settings.tableStripeOpacity ?? 0.05;
   const headerOpacity = settings.tableHeaderOpacity ?? 0.08;
@@ -146,7 +148,18 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
               {/* Line 1 */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0 relative">
-                  <span className="font-extrabold font-mono text-slate-900 text-lg shrink-0 w-7">{ch.number}</span>
+                  <span className="font-extrabold font-mono text-slate-900 text-lg shrink-0 flex items-baseline gap-1 mr-1">
+                    {ch.stageboxPort ? (
+                      <>
+                        <span>{ch.stageboxPort}</span>
+                        {ch.stageboxPort !== ch.number && (
+                          <span className="text-slate-400 text-xs font-semibold">[{ch.number}]</span>
+                        )}
+                      </>
+                    ) : (
+                      <span>{ch.number}</span>
+                    )}
+                  </span>
                   {ch.name.trim() !== '' && (
                     <div 
                       className="w-4 h-4 rounded-sm border border-slate-300 shrink-0"
@@ -204,7 +217,7 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
             style={headerStyle}
           >
             <tr>
-              <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-16">{ioLabel}</th>
+              <th className={`px-4 py-2.5 print:px-3 print:py-1.5 ${hasStageboxes ? 'w-20' : 'w-16'}`}>{ioLabel}</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-32">SubSnake</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/4">Name</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/6">Mic/DI</th>
@@ -247,7 +260,16 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
                     {ch.stereoLink === 'prev' && (
                       <div className="absolute left-1 w-1.5 top-0 bottom-[30%] border-l-2 border-b-2 border-blue-400 print:border-black rounded-bl pointer-events-none" />
                     )}
-                    {ch.number}
+                    {ch.stageboxPort ? (
+                      <span className="flex items-baseline gap-1" title={`Physical Port: ${ch.stageboxPort}, Console Channel: ${ch.number}`}>
+                        <span>{ch.stageboxPort}</span>
+                        {ch.stageboxPort !== ch.number && (
+                          <span className="text-slate-400 text-xs font-medium">[{ch.number}]</span>
+                        )}
+                      </span>
+                    ) : (
+                      ch.number
+                    )}
                   </td>
                   <td 
                     className="px-4 py-2 print:px-3 print:py-0.5 cursor-pointer hover:bg-black/5 print:cursor-default print:hover:bg-transparent transition-colors"
@@ -320,11 +342,41 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
   );
 };
 
-export const TableView: React.FC<TableViewProps> = ({ inputs, outputs, subSnakes, settings, projectTitle = '', projectNotes = '', onUpdateChannel, onEditChannel }) => {
+export const TableView: React.FC<TableViewProps> = ({ inputs, outputs, subSnakes, stageboxes = [], settings, projectTitle = '', projectNotes = '', onUpdateChannel, onEditChannel }) => {
+  if (stageboxes.length === 0) {
+    return (
+      <div className="w-full max-w-7xl mx-auto bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none print:mt-4">
+        <ChannelTable title="Inputs" channels={inputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={false} />
+        <ChannelTable title="Outputs" channels={outputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={false} />
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full max-w-7xl mx-auto bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none print:mt-4">
-      <ChannelTable title="Inputs" channels={inputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} />
-      <ChannelTable title="Outputs" channels={outputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} />
+    <div className="w-full max-w-7xl mx-auto space-y-8 print:space-y-6">
+      {stageboxes.map((box, idx) => {
+        const boxInputs = inputs.filter(c => c.stageboxId === box.id);
+        const boxOutputs = outputs.filter(c => c.stageboxId === box.id);
+        
+        if (boxInputs.length === 0 && boxOutputs.length === 0) return null;
+
+        return (
+          <div 
+            key={box.id} 
+            className={`bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none print:mt-4 print-avoid-break ${idx > 0 ? 'print-subsnake-page-break' : ''}`}
+          >
+            <h2 className="text-xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-200 print:text-black print:border-black uppercase tracking-wide">
+              {box.name}
+            </h2>
+            {boxInputs.length > 0 && (
+              <ChannelTable title="Inputs" channels={boxInputs} subSnakes={subSnakes} settings={settings} projectTitle={idx === 0 ? projectTitle : undefined} projectNotes={idx === 0 ? projectNotes : undefined} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={true} />
+            )}
+            {boxOutputs.length > 0 && (
+              <ChannelTable title="Outputs" channels={boxOutputs} subSnakes={subSnakes} settings={settings} projectTitle={undefined} projectNotes={undefined} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={true} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };

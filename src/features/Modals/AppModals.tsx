@@ -4,14 +4,13 @@ import { Channel } from '../../types';
 import { PALETTES } from '../../utils/constants';
 
 import { EditModal } from '../../components/EditModal';
-import { FastInputModal } from '../../components/FastInputModal';
 import { MultiGroupModal } from '../../components/MultiGroupModal';
 import { MultiColorModal } from '../../components/MultiColorModal';
 import { AssignSubSnakeModal } from '../../components/AssignSubSnakeModal';
 import { SubSnakesModal } from '../../components/SubSnakesModal';
 import { SettingsModal } from '../../components/SettingsModal';
+import { StageboxesModal } from '../../components/StageboxesModal';
 import { NewProjectConfirmModal } from '../../components/NewProjectConfirmModal';
-import { ResizeGridModal } from '../../components/ResizeGridModal';
 import { PrintModal } from '../../components/PrintModal';
 import { ShareModal } from '../../components/ShareModal';
 import { PrintOptions } from '../../types';
@@ -26,8 +25,6 @@ interface AppModalsProps {
   setSettings: (val: any) => void;
   userSettings: any;
   setUserSettings: (val: any) => void;
-  isFastInputOpen: boolean;
-  setIsFastInputOpen: (val: boolean) => void;
   isMultiGroupOpen: boolean;
   setIsMultiGroupOpen: (val: boolean) => void;
   isMultiColorOpen: boolean;
@@ -38,10 +35,10 @@ interface AppModalsProps {
   setIsSubSnakesOpen: (val: boolean) => void;
   isSettingsOpen: boolean;
   setIsSettingsOpen: (val: boolean) => void;
+  isStageboxesOpen: boolean;
+  setIsStageboxesOpen: (val: boolean) => void;
   isNewProjectConfirmOpen: boolean;
   setIsNewProjectConfirmOpen: (val: boolean) => void;
-  isResizeGridOpen: boolean;
-  setIsResizeGridOpen: (val: boolean) => void;
   isPrintModalOpen: boolean;
   setIsPrintModalOpen: (val: boolean) => void;
   isShareModalOpen: boolean;
@@ -51,7 +48,6 @@ interface AppModalsProps {
   
   saveEdit: (updatedChannel: Channel) => { finalInputs: Channel[], finalOutputs: Channel[] };
   handleNavigateEdit: (updatedChannel: Channel, direction: 'prev' | 'next') => void;
-  saveFastInput: (ins: Channel[], outs: Channel[]) => void;
   handleMassAssignGroup: (group: string, colorMode: 'none' | 'uncolored' | 'all') => void;
   handleMassAssignColor: (color: string) => void;
   handleMassAssignSubSnake: (subSnakeId: string, startPort: number) => void;
@@ -60,7 +56,8 @@ interface AppModalsProps {
   deleteSubSnake: (id: string) => void;
   clearSubSnakeAssignments: (id: string) => void;
   handleCreateNewProject: () => void;
-  handleResizeGrid: (inputGrid: { rows: number; cols: number }, outputGrid: { rows: number; cols: number }) => void;
+  handleUpdateStageboxes: (newStageboxes: import('../../types').Stagebox[]) => void;
+  stageboxes: import('../../types').Stagebox[];
   onConfirmPrint: (options: PrintOptions) => void;
 }
 
@@ -69,23 +66,22 @@ export function AppModals({
   inputs, outputs,
   subSnakes, settings, setSettings,
   userSettings, setUserSettings,
-  isFastInputOpen, setIsFastInputOpen,
   isMultiGroupOpen, setIsMultiGroupOpen,
   isMultiColorOpen, setIsMultiColorOpen,
   isAssignSubSnakeOpen, setIsAssignSubSnakeOpen,
   isSubSnakesOpen, setIsSubSnakesOpen,
   isSettingsOpen, setIsSettingsOpen,
+  isStageboxesOpen, setIsStageboxesOpen,
   isNewProjectConfirmOpen, setIsNewProjectConfirmOpen,
-  isResizeGridOpen, setIsResizeGridOpen,
   isPrintModalOpen, setIsPrintModalOpen,
   isShareModalOpen, setIsShareModalOpen,
   shareUrl,
   selectedIds,
   
-  saveEdit, handleNavigateEdit, saveFastInput,
+  saveEdit, handleNavigateEdit,
   handleMassAssignGroup, handleMassAssignColor, handleMassAssignSubSnake,
   addSubSnake, updateSubSnake, deleteSubSnake, clearSubSnakeAssignments,
-  handleCreateNewProject, handleResizeGrid, onConfirmPrint
+  handleCreateNewProject, handleUpdateStageboxes, stageboxes, onConfirmPrint
 }: AppModalsProps) {
   return (
     <>
@@ -101,16 +97,6 @@ export function AppModals({
             onClose={() => setEditingChannel(null)}
             onSave={saveEdit}
             onNavigate={handleNavigateEdit}
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {isFastInputOpen && (
-          <FastInputModal
-            inputs={inputs}
-            outputs={outputs}
-            onClose={() => setIsFastInputOpen(false)}
-            onSave={saveFastInput}
           />
         )}
       </AnimatePresence>
@@ -176,25 +162,22 @@ export function AppModals({
         )}
       </AnimatePresence>
       <AnimatePresence>
+        {isStageboxesOpen && (
+          <StageboxesModal
+            stageboxes={stageboxes}
+            onClose={() => setIsStageboxesOpen(false)}
+            onUpdateStageboxes={handleUpdateStageboxes}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
         {isNewProjectConfirmOpen && (
           <NewProjectConfirmModal
             onClose={() => setIsNewProjectConfirmOpen(false)}
             onConfirm={() => {
               handleCreateNewProject();
               setIsNewProjectConfirmOpen(false);
-              setIsResizeGridOpen(true);
             }}
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {isResizeGridOpen && (
-          <ResizeGridModal
-            onClose={() => setIsResizeGridOpen(false)}
-            onConfirm={handleResizeGrid}
-            currentGrid={settings.grid}
-            inputs={inputs}
-            outputs={outputs}
           />
         )}
       </AnimatePresence>

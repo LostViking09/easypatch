@@ -217,14 +217,33 @@ export const ChannelCell: React.FC<ChannelCellProps> = ({
       )}
 
       <div 
-        className={`absolute top-1 left-2 right-2 flex items-center gap-1 font-mono font-bold tracking-tighter text-gray-550 group-hover:text-gray-800 ${pClass('print:text-black')} z-10 min-w-0`}
+        className={`absolute top-1 left-2 right-2 flex items-center justify-between gap-1 font-mono font-bold tracking-tighter text-gray-550 group-hover:text-gray-800 ${pClass('print:text-black')} z-10 min-w-0 flex-nowrap`}
         style={{ fontSize: `${0.875 * settings.fontSizes.number}rem` }}
       >
-        <span>{channel.number}</span>
+        {channel.stageboxPort ? (
+          <>
+            <span className="text-slate-800 text-base sm:text-lg mr-0.5" title={`Physical Port ${channel.stageboxPort}`}>
+              {channel.stageboxPort}
+            </span>
+            {channel.stageboxPort !== channel.number && (
+              <span 
+                className="flex items-center text-xxs px-1 py-0 rounded bg-slate-200/80 text-slate-600 font-bold font-mono"
+                title={`Console Channel ${channel.number}`}
+              >
+                [{channel.number}]
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="text-slate-800 text-base sm:text-lg mr-0.5" title={`Console Channel ${channel.number}`}>
+            {channel.number}
+          </span>
+        )}
+
         {subSnakeName && channel.subSnakeChannel && (
           <span 
             style={badgeStyle}
-            className={`flex items-center gap-px text-xxs ml-1 px-0.5 py-0 rounded border font-bold font-mono tracking-normal shadow-3xs select-none transition-all text-slate-550 group-hover:text-slate-700 min-w-0 ${
+            className={`flex items-center gap-px text-xxs px-0.5 py-0 rounded border font-bold font-mono tracking-normal shadow-3xs select-none transition-all text-slate-550 group-hover:text-slate-700 min-w-0 ${
               subSnakeColor && subSnakeColor !== '#ffffff'
                 ? ''
                 : 'border-slate-250 bg-slate-100/90 group-hover:bg-slate-200/90 group-hover:border-slate-355'
