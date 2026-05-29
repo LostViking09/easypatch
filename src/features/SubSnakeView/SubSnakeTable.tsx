@@ -120,10 +120,11 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
       <h3 className="text-lg print:text-base font-bold text-slate-800 mb-3 print:text-slate-900 print:mb-1.5 print:hidden">{title}</h3>
 
       {/* MOBILE TWO-LINE RESPONSIVE LIST */}
-      <div className="block md:hidden print:hidden rounded-lg border border-slate-200 overflow-hidden divide-y divide-slate-200 shadow-3xs mb-6">
+      <div className="block md:hidden print:hidden rounded-lg border border-slate-200 overflow-hidden shadow-3xs mb-6">
         {portChannels.map((ch, index) => {
           const portNum = index + 1;
           const isEven = index % 2 === 0;
+          const hideBorder = ch?.stereoLink === 'next' || index === portChannels.length - 1;
 
           const rowBgStyle = !isEven 
             ? ({
@@ -138,11 +139,17 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
             <div 
               key={`mobile-${portNum}`} 
               style={rowBgStyle}
-              className="flex flex-col gap-2 py-3 px-4"
+              className={`flex flex-col gap-2 py-3 px-4 relative ${hideBorder ? '' : 'border-b border-slate-200'}`}
             >
+              {ch?.stereoLink === 'next' && (
+                <div className="absolute left-1.5 w-1.5 top-4 bottom-0 border-l-2 border-t-2 border-blue-400 print:border-black rounded-tl pointer-events-none" />
+              )}
+              {ch?.stereoLink === 'prev' && (
+                <div className="absolute left-1.5 w-1.5 top-0 bottom-4 border-l-2 border-b-2 border-blue-400 print:border-black rounded-bl pointer-events-none" />
+              )}
               {/* Line 1 */}
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 relative">
                   <span className="font-extrabold font-mono text-slate-900 text-lg shrink-0 w-7">{portNum}</span>
                   {ch && ch.name.trim() !== '' && (
                     <div 
@@ -194,10 +201,11 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-24">Group</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="">
             {portChannels.map((ch, index) => {
               const portNum = index + 1;
               const isEven = index % 2 === 0;
+              const hideBorder = ch?.stereoLink === 'next' || index === portChannels.length - 1;
 
               const rowStyle = !isEven 
                 ? ({
@@ -212,9 +220,15 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
                 <tr 
                   key={`desktop-${portNum}`} 
                   style={rowStyle}
-                  className="print:border-b print:border-gray-250 group"
+                  className={`group ${hideBorder ? '' : 'border-b border-slate-200 print:border-gray-250'}`}
                 >
-                  <td className="px-4 py-2 print:px-3 print:py-0.5 font-bold font-mono text-slate-900">
+                  <td className="relative px-4 py-2 print:px-3 print:py-0.5 font-bold font-mono text-slate-900">
+                    {ch?.stereoLink === 'next' && (
+                      <div className="absolute left-1 w-1.5 top-[30%] bottom-0 border-l-2 border-t-2 border-blue-400 print:border-black rounded-tl pointer-events-none" />
+                    )}
+                    {ch?.stereoLink === 'prev' && (
+                      <div className="absolute left-1 w-1.5 top-0 bottom-[30%] border-l-2 border-b-2 border-blue-400 print:border-black rounded-bl pointer-events-none" />
+                    )}
                     {portNum}
                   </td>
                   <td 
