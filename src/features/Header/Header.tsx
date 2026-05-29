@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, File, ChevronDown, Plus, Upload, Download, ListOrdered, CheckSquare, Grid, Network, Palette, Printer } from 'lucide-react';
+import { Settings, File, ChevronDown, Plus, Upload, Download, ListOrdered, CheckSquare, Grid, Network, Palette, Printer, Share2 } from 'lucide-react';
 
 interface HeaderProps {
   handleExport: () => void;
+  handleShare: () => void;
   loadImportData: (data: any) => void;
   setIsNewProjectConfirmOpen: (val: boolean) => void;
   setIsFastInputOpen: (val: boolean) => void;
@@ -18,6 +19,7 @@ interface HeaderProps {
 
 export function Header({
   handleExport,
+  handleShare,
   loadImportData,
   setIsNewProjectConfirmOpen,
   setIsFastInputOpen,
@@ -121,6 +123,16 @@ export function Header({
                   className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-2"
                 >
                   <Download className="w-4 h-4" /> Export
+                </button>
+                <div className="h-px bg-slate-800 my-1 mx-2" />
+                <button
+                  onClick={() => {
+                    handleShare();
+                    setIsFileDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 font-medium transition-colors flex items-center gap-2"
+                >
+                  <Share2 className="w-4 h-4" /> Share Link
                 </button>
               </motion.div>
             )}

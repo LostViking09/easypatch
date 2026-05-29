@@ -16,6 +16,8 @@ import { MultiEditBar } from './features/MultiEditBar/MultiEditBar';
 import { AppModals } from './features/Modals/AppModals';
 import { SubSnakeView } from './features/SubSnakeView/SubSnakeView';
 import { TableView } from './features/TableView/TableView';
+import { UrlImportConfirmModal } from './components/UrlImportConfirmModal';
+import { compressData, decompressData } from './utils/urlSharing';
 
 export default function App() {
   const {
@@ -55,6 +57,8 @@ export default function App() {
   const [printOptions, setPrintOptions] = useState<PrintOptions | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const [printTrigger, setPrintTrigger] = useState(false);
+
+  const [sharedPatchData, setSharedPatchData] = useState<any>(null);
 
   const { toast, setToast } = useToast();
 
@@ -101,6 +105,40 @@ export default function App() {
     setIsPrintModalOpen(false);
     setIsPrinting(true);
     setPrintTrigger(true);
+  };
+
+  React.useEffect(() => {
+    const handleHash = async () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#import=')) {
+        try {
+          const base64Data = hash.replace('#import=', '');
+          const data = await decompressData(base64Data);
+          if (data && (data.inputs || data.outputs || data.settings)) {
+            setSharedPatchData(data);
+          }
+        } catch (e) {
+          console.error('Failed to import shared patch:', e);
+          setToast({ message: 'Invalid or corrupted shared link.', type: 'error' });
+        } finally {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      }
+    };
+    handleHash();
+  }, [setToast]);
+
+  const handleShare = async () => {
+    try {
+      const data = { title, notes, settings, inputs, outputs, subSnakes };
+      const base64 = await compressData(data);
+      const url = `${window.location.origin}${window.location.pathname}#import=${base64}`;
+      await navigator.clipboard.writeText(url);
+      setToast({ message: 'Share link copied to clipboard!', type: 'success' });
+    } catch (error) {
+      console.error(error);
+      setToast({ message: 'Failed to generate share link. Your browser may not support compression.', type: 'error' });
+    }
   };
 
   const handleCellClick = (ch: Channel, e: React.MouseEvent) => {
@@ -151,6 +189,7 @@ export default function App() {
       <div className={`main-content flex flex-col flex-1 h-full ${isPrinting ? 'print:hidden' : ''}`}>
         <Header
           handleExport={handleExport}
+          handleShare={handleShare}
           loadImportData={loadImportData}
           setIsNewProjectConfirmOpen={setIsNewProjectConfirmOpen}
           setIsFastInputOpen={setIsFastInputOpen}
@@ -416,6 +455,19 @@ export default function App() {
 
       {/* Toast Notification */}
       <ToastRenderer toast={toast} setToast={setToast} />
+
+      {sharedPatchData && (
+        <UrlImportConfirmModal
+          title={sharedPatchData.title}
+          notes={sharedPatchData.notes}
+          onConfirm={() => {
+            loadImportData(sharedPatchData);
+            setSharedPatchData(null);
+            setToast({ message: 'Shared patch loaded successfully.', type: 'success' });
+          }}
+          onCancel={() => setSharedPatchData(null)}
+        />
+      )}
     </div>
   );
 }
