@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown, Check } from 'lucide-react';
 import { Channel } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { ModalBase } from './ModalBase';
 
 interface MultiGroupModalProps {
   selectedCount: number;
@@ -45,16 +46,6 @@ export const MultiGroupModal: React.FC<MultiGroupModalProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isDropdownOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, isDropdownOpen]);
 
   const handleGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGroup(e.target.value);
@@ -110,163 +101,143 @@ export const MultiGroupModal: React.FC<MultiGroupModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     onSave(group.trim(), colorMode);
     onClose();
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.15 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 450, damping: 35 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col"
-      >
-        {/* Header */}
-        <div className="bg-slate-900 text-white px-5 py-3.5 flex justify-between items-center flex-shrink-0">
-          <h3 className="font-bold text-sm sm:text-base">Set Group for {selectedCount} channels</h3>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            type="button"
-            className="text-slate-300 hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </motion.button>
-        </div>
+    <ModalBase onClose={onClose} onSubmit={handleSubmit} maxWidthClass="max-w-sm">
+      {/* Header */}
+      <div className="bg-slate-900 text-white px-5 py-3.5 flex justify-between items-center flex-shrink-0">
+        <h3 className="font-bold text-sm sm:text-base">Set Group for {selectedCount} channels</h3>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={onClose}
+          type="button"
+          className="text-slate-300 hover:text-white transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </motion.button>
+      </div>
 
-        {/* Content & Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div ref={dropdownRef} className="relative">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Group Name (Link)</label>
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                value={group}
-                onChange={handleGroupChange}
-                onFocus={() => setIsDropdownOpen(true)}
-                onKeyDown={handleInputKeyDown}
-                placeholder="e.g. Drums, Keys, Vocals..."
-                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold pr-10 shadow-3xs"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setIsDropdownOpen(prev => !prev)}
-                className="absolute right-3 text-gray-400 hover:text-gray-600 focus:outline-none"
-              >
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-            </div>
-
-            <AnimatePresence>
-              {isDropdownOpen && filteredSuggestions.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                  transition={{ duration: 0.1 }}
-                  className="absolute left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto z-50 py-1"
-                >
-                  {filteredSuggestions.map((g, index) => {
-                    const isHighlighted = index === highlightedIndex;
-                    const groupColor = groupColors[g];
-
-                    return (
-                      <div
-                        key={g}
-                        onClick={() => selectGroup(g)}
-                        onMouseEnter={() => setHighlightedIndex(index)}
-                        className={`px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs font-semibold select-none ${
-                          isHighlighted ? 'bg-blue-600 text-white' : 'text-gray-900 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          {groupColor && (
-                            <span
-                              className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${
-                                isHighlighted ? 'border-white/50' : 'border-gray-300'
-                              }`}
-                              style={{ backgroundColor: groupColor }}
-                            />
-                          )}
-                          <span className="truncate">{g}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          {/* Group Color Assignment Option */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Assign Group Color to:
-            </label>
-            <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-              {(['none', 'uncolored', 'all'] as const).map((mode) => {
-                const isActive = colorMode === mode;
-                const labels = {
-                  none: 'None',
-                  uncolored: 'Uncolored',
-                  all: 'All'
-                };
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setColorMode(mode)}
-                    className={`py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/50 cursor-pointer'
-                        : 'text-slate-500 hover:text-slate-800 cursor-pointer'
-                    }`}
-                  >
-                    {labels[mode]}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <p className="text-xxs text-slate-500 leading-normal italic">
-            Channels sharing the same group name are linked. Setting an existing group name will automatically apply its color.
-          </p>
-
-          {/* Footer */}
-          <div className="flex justify-end gap-2.5 pt-4 border-t">
+      {/* Content & Form */}
+      <div className="p-6 space-y-4">
+        <div ref={dropdownRef} className="relative">
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Group Name (Link)</label>
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              value={group}
+              onChange={handleGroupChange}
+              onFocus={() => setIsDropdownOpen(true)}
+              onKeyDown={handleInputKeyDown}
+              placeholder="e.g. Drums, Keys, Vocals..."
+              className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold pr-10 shadow-3xs"
+              required
+            />
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              onClick={() => setIsDropdownOpen(prev => !prev)}
+              className="absolute right-3 text-gray-400 hover:text-gray-600 focus:outline-none"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 text-xs font-bold rounded-lg shadow-sm transition-colors"
-            >
-              <Check className="w-4 h-4" /> Apply Group
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
           </div>
-        </form>
-      </motion.div>
-    </motion.div>
+
+          <AnimatePresence>
+            {isDropdownOpen && filteredSuggestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ duration: 0.1 }}
+                className="absolute left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto z-50 py-1"
+              >
+                {filteredSuggestions.map((g, index) => {
+                  const isHighlighted = index === highlightedIndex;
+                  const groupColor = groupColors[g];
+
+                  return (
+                    <div
+                      key={g}
+                      onClick={() => selectGroup(g)}
+                      onMouseEnter={() => setHighlightedIndex(index)}
+                      className={`px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs font-semibold select-none ${
+                        isHighlighted ? 'bg-blue-600 text-white' : 'text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {groupColor && (
+                          <span
+                            className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${
+                              isHighlighted ? 'border-white/50' : 'border-gray-300'
+                            }`}
+                            style={{ backgroundColor: groupColor }}
+                          />
+                        )}
+                        <span className="truncate">{g}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        {/* Group Color Assignment Option */}
+        <div className="space-y-2">
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+            Assign Group Color to:
+          </label>
+          <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            {(['none', 'uncolored', 'all'] as const).map((mode) => {
+              const isActive = colorMode === mode;
+              const labels = {
+                none: 'None',
+                uncolored: 'Uncolored',
+                all: 'All'
+              };
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setColorMode(mode)}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/50 cursor-pointer'
+                      : 'text-slate-500 hover:text-slate-800 cursor-pointer'
+                  }`}
+                >
+                  {labels[mode]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="text-xxs text-slate-500 leading-normal italic">
+          Channels sharing the same group name are linked. Setting an existing group name will automatically apply its color.
+        </p>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-2.5 pt-4 border-t">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 text-xs font-bold rounded-lg shadow-sm transition-colors"
+          >
+            <Check className="w-4 h-4" /> Apply Group
+          </button>
+        </div>
+      </div>
+    </ModalBase>
   );
 };

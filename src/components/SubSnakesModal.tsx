@@ -4,6 +4,7 @@ import { Channel, SubSnake, SettingsConfig } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { PALETTES, SUB_SNAKE_PRESETS } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
+import { ModalBase } from './ModalBase';
 
 interface SubSnakesModalProps {
   subSnakes: SubSnake[];
@@ -53,16 +54,6 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
   const [editIsOutputEnabled, setEditIsOutputEnabled] = useState(false);
   const [editInputGrid, setEditInputGrid] = useState({ rows: 2, cols: 4 });
   const [editOutputGrid, setEditOutputGrid] = useState({ rows: 2, cols: 4 });
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   const handlePresetChange = (presetValue: string, isEdit: boolean) => {
     if (isEdit) setEditPreset(presetValue);
@@ -170,25 +161,8 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
 
   return (
     <>
-      <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.15 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 450, damping: 35 }}
-        className="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
-      >
+      <ModalBase onClose={onClose} maxWidthClass="max-w-4xl">
+        <div className="max-h-[90vh] flex flex-col w-full">
         {/* Header */}
         <div className="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -196,6 +170,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
             <h3 className="font-bold text-lg">Manage SubSnakes</h3>
           </div>
           <motion.button
+            type="button"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClose}
@@ -403,7 +378,13 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                       >
                         <div className="flex-1 min-w-0 w-full">
                           {isEditing ? (
-                            <div className="space-y-3 w-full">
+                            <form
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                saveEditing(snake.id);
+                              }}
+                              className="space-y-3 w-full"
+                            >
                               <div>
                                 <label className="block text-xxs font-bold text-slate-500 uppercase mb-1">Name</label>
                                 <input
@@ -523,23 +504,24 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
                               
                               <div className="flex justify-end gap-2 pt-2 border-t">
                                 <motion.button
+                                  type="button"
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
                                   onClick={() => setEditingId(null)}
-                                  className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md"
+                                  className="px-3 py-1.5 text-xs font-bold text-slate-655 bg-slate-100 hover:bg-slate-205 rounded-md"
                                 >
                                   Cancel
                                 </motion.button>
                                 <motion.button
+                                  type="submit"
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => saveEditing(snake.id)}
                                   className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-md"
                                 >
                                   <Check className="w-3 h-3" /> Save
                                 </motion.button>
                               </div>
-                            </div>
+                            </form>
                           ) : (
                             <div className="flex flex-col h-full justify-between">
                               <div className="font-bold text-slate-800 text-sm truncate flex items-center gap-2">
@@ -624,152 +606,134 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
             </span>
           </div>
           <motion.button
+            type="button"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onClose}
             className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-sm transition-colors shadow-sm self-end sm:self-auto"
           >
-            Close
-          </motion.button>
+          Close
+        </motion.button>
+      </div>
         </div>
-      </motion.div>
-    </motion.div>
-
-    {/* Delete Confirmation In-App Modal */}
+      </ModalBase>    {/* Delete Confirmation In-App Modal */}
     <AnimatePresence>
       {subSnakeToDelete && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[60] p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setSubSnakeToDelete(null);
+        <ModalBase
+          onClose={() => setSubSnakeToDelete(null)}
+          onSubmit={() => {
+            onDeleteSubSnake(subSnakeToDelete.id);
+            setSubSnakeToDelete(null);
           }}
+          maxWidthClass="max-w-md"
+          zIndexClass="z-[60]"
         >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 450, damping: 35 }}
-            className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-red-200"
-          >
-            {/* Header */}
-            <div className="bg-red-700 text-white px-5 py-3.5 flex justify-between items-center">
-              <h3 className="font-bold flex items-center gap-2 text-sm md:text-base">
-                <AlertTriangle className="w-5 h-5 text-red-100 animate-pulse" /> Delete SubSnake?
-              </h3>
-              <button
-                onClick={() => setSubSnakeToDelete(null)}
-                className="text-red-200 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+          {/* Header */}
+          <div className="bg-red-700 text-white px-5 py-3.5 flex justify-between items-center">
+            <h3 className="font-bold flex items-center gap-2 text-sm md:text-base">
+              <AlertTriangle className="w-5 h-5 text-red-100 animate-pulse" /> Delete SubSnake?
+            </h3>
+            <button
+              type="button"
+              onClick={() => setSubSnakeToDelete(null)}
+              className="text-red-205 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            {/* Content */}
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-slate-650 leading-relaxed">
-                Are you sure you want to delete SubSnake <strong className="text-slate-800">"{subSnakeToDelete.name}"</strong>?
-              </p>
-              <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-100 rounded-lg text-red-800 text-xs font-semibold leading-relaxed">
-                <Trash2 className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  This action is permanent! All <strong className="text-red-900">{getMappedCount(subSnakeToDelete.id)}</strong> mapped stage channels will lose their subsnake assignment.
-                </div>
+          {/* Content */}
+          <div className="p-5 space-y-4">
+            <p className="text-sm text-slate-655 leading-relaxed">
+              Are you sure you want to delete SubSnake <strong className="text-slate-800">"{subSnakeToDelete.name}"</strong>?
+            </p>
+            <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-100 rounded-lg text-red-800 text-xs font-semibold leading-relaxed">
+              <Trash2 className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                This action is permanent! All <strong className="text-red-900">{getMappedCount(subSnakeToDelete.id)}</strong> mapped stage channels will lose their subsnake assignment.
               </div>
             </div>
+          </div>
 
-            {/* Footer */}
-            <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
-              <button
-                onClick={() => setSubSnakeToDelete(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-md transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  onDeleteSubSnake(subSnakeToDelete.id);
-                  setSubSnakeToDelete(null);
-                }}
-                className="px-5 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-500 rounded-md shadow-sm transition-colors cursor-pointer"
-              >
-                Delete
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
+          {/* Footer */}
+          <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setSubSnakeToDelete(null)}
+              className="px-4 py-2 text-sm font-medium text-slate-705 hover:bg-slate-205 rounded-md transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-500 rounded-md shadow-sm transition-colors cursor-pointer"
+            >
+              Delete
+            </button>
+          </div>
+        </ModalBase>
       )}
     </AnimatePresence>
 
     {/* Clear Assignments Confirmation In-App Modal */}
     <AnimatePresence>
       {subSnakeToClear && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[60] p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setSubSnakeToClear(null);
+        <ModalBase
+          onClose={() => setSubSnakeToClear(null)}
+          onSubmit={() => {
+            onClearSubSnakeAssignments(subSnakeToClear.id);
+            setSubSnakeToClear(null);
           }}
+          maxWidthClass="max-w-md"
+          zIndexClass="z-[60]"
         >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 450, damping: 35 }}
-            className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-amber-200"
-          >
-            {/* Header */}
-            <div className="bg-amber-700 text-white px-5 py-3.5 flex justify-between items-center">
-              <h3 className="font-bold flex items-center gap-2 text-sm md:text-base">
-                <AlertTriangle className="w-5 h-5 text-amber-100 animate-pulse" /> Clear Assignments?
-              </h3>
-              <button
-                onClick={() => setSubSnakeToClear(null)}
-                className="text-amber-200 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+          {/* Header */}
+          <div className="bg-amber-700 text-white px-5 py-3.5 flex justify-between items-center">
+            <h3 className="font-bold flex items-center gap-2 text-sm md:text-base">
+              <AlertTriangle className="w-5 h-5 text-amber-100 animate-pulse" /> Clear Assignments?
+            </h3>
+            <button
+              type="button"
+              onClick={() => setSubSnakeToClear(null)}
+              className="text-amber-205 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            {/* Content */}
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-slate-655 leading-relaxed">
-                Are you sure you want to clear all channel assignments for SubSnake <strong className="text-slate-800">"{subSnakeToClear.name}"</strong>?
-              </p>
-              <div className="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-800 text-xs font-semibold leading-relaxed">
-                <Unlink className="w-4 h-4 text-amber-650 mt-0.5 flex-shrink-0" />
-                <div>
-                  This will clear all <strong className="text-amber-900">{getMappedCount(subSnakeToClear.id)}</strong> mapped port assignments. The subsnake itself will NOT be deleted.
-                </div>
+          {/* Content */}
+          <div className="p-5 space-y-4">
+            <p className="text-sm text-slate-655 leading-relaxed">
+              Are you sure you want to clear all channel assignments for SubSnake <strong className="text-slate-800">"{subSnakeToClear.name}"</strong>?
+            </p>
+            <div className="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-800 text-xs font-semibold leading-relaxed">
+              <Unlink className="w-4 h-4 text-amber-655 mt-0.5 flex-shrink-0" />
+              <div>
+                This will clear all <strong className="text-amber-900">{getMappedCount(subSnakeToClear.id)}</strong> mapped port assignments. The subsnake itself will NOT be deleted.
               </div>
             </div>
+          </div>
 
-            {/* Footer */}
-            <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
-              <button
-                onClick={() => setSubSnakeToClear(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-md transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  onClearSubSnakeAssignments(subSnakeToClear.id);
-                  setSubSnakeToClear(null);
-                }}
-                className="px-5 py-2 text-sm font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-md shadow-sm transition-colors cursor-pointer"
-              >
-                Clear Assignments
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
+          {/* Footer */}
+          <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setSubSnakeToClear(null)}
+              className="px-4 py-2 text-sm font-medium text-slate-705 hover:bg-slate-205 rounded-md transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-sm font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-md shadow-sm transition-colors cursor-pointer"
+            >
+              Clear Assignments
+            </button>
+          </div>
+        </ModalBase>
       )}
     </AnimatePresence>
     </>
   );
 };
+

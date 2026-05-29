@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Grid, X, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Channel } from '../types';
+import { ModalBase } from './ModalBase';
 
 interface ResizeGridModalProps {
   onClose: () => void;
@@ -47,16 +48,6 @@ export const ResizeGridModal: React.FC<ResizeGridModalProps> = ({
   });
 
   const [isLossConfirmed, setIsLossConfirmed] = useState(false);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   // Determine current preset selection
   const getPresetName = () => {
@@ -151,224 +142,207 @@ export const ResizeGridModal: React.FC<ResizeGridModalProps> = ({
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.15 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <motion.div 
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 450, damping: 35 }}
-        className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
-      >
-        <div className="bg-emerald-800 text-white px-4 py-3 flex justify-between items-center">
-          <h3 className="font-bold flex items-center gap-2">
-            <Grid className="w-5 h-5" /> Resize Grid
-          </h3>
-          <motion.button 
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose} 
-            className="text-emerald-200 hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </motion.button>
-        </div>
+    <ModalBase onClose={onClose} onSubmit={handleConfirm} maxWidthClass="max-w-lg">
+      <div className="bg-emerald-800 text-white px-4 py-3 flex justify-between items-center">
+        <h3 className="font-bold flex items-center gap-2">
+          <Grid className="w-5 h-5" /> Resize Grid
+        </h3>
+        <motion.button 
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={onClose} 
+          type="button"
+          className="text-emerald-200 hover:text-white transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </motion.button>
+      </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto flex-1">
-          <p className="text-sm text-gray-600 leading-relaxed">
-            Adjust the dimensions of your stage box. Active patch channels falling within the new boundaries will be safely mapped and preserved.
-          </p>
+      <div className="p-6 space-y-6 overflow-y-auto flex-1">
+        <p className="text-sm text-gray-600 leading-relaxed">
+          Adjust the dimensions of your stage box. Active patch channels falling within the new boundaries will be safely mapped and preserved.
+        </p>
 
-          <div className="space-y-4">
-            {/* Presets */}
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Grid Presets</label>
-              <select 
-                value={getPresetName()}
-                onChange={handlePresetChange} 
-                className="w-full px-3 py-2 border rounded-md font-medium bg-white shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-              >
-                {PRESETS.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
-                {getPresetName() === 'Custom' && <option value="Custom">Custom Layout</option>}
-              </select>
-            </div>
-
-            {/* INPUT Block */}
-            <div className={`p-4 rounded-lg border transition-all ${isInputEnabled ? 'bg-slate-50 border-slate-200 shadow-sm' : 'bg-gray-100 border-gray-200 opacity-60'}`}>
-              <div className="flex items-center justify-between mb-3">
-                <label className="flex items-center gap-2 font-bold text-xs text-slate-700 uppercase tracking-wider cursor-pointer select-none">
-                  <input 
-                    type="checkbox"
-                    checked={isInputEnabled}
-                    onChange={(e) => {
-                      setIsInputEnabled(e.target.checked);
-                      setIsLossConfirmed(false);
-                    }}
-                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
-                  />
-                  <span>Enable INPUT Section</span>
-                </label>
-              </div>
-
-              {isInputEnabled && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Columns</label>
-                      <input 
-                        type="number" min="1" max="32"
-                        value={inputGrid.cols}
-                        onChange={e => {
-                          setInputGrid({ ...inputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) });
-                          setIsLossConfirmed(false);
-                        }}
-                        className="w-full px-3 py-2 border rounded-md font-mono text-sm shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Rows</label>
-                      <input 
-                        type="number" min="1" max="32"
-                        value={inputGrid.rows}
-                        onChange={e => {
-                          setInputGrid({ ...inputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) });
-                          setIsLossConfirmed(false);
-                        }}
-                        className="w-full px-3 py-2 border rounded-md font-mono text-sm shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                      />
-                    </div>
-                  </div>
-                  <div className={`text-xs font-semibold ${isInputOverLimit ? 'text-red-600' : 'text-emerald-700'}`}>
-                    Total: {totalInputs} input channels {isInputOverLimit && '(Exceeds 128 max limit)'}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* OUTPUT Block */}
-            <div className={`p-4 rounded-lg border transition-all ${isOutputEnabled ? 'bg-slate-50 border-slate-200 shadow-sm' : 'bg-gray-100 border-gray-200 opacity-60'}`}>
-              <div className="flex items-center justify-between mb-3">
-                <label className="flex items-center gap-2 font-bold text-xs text-slate-700 uppercase tracking-wider cursor-pointer select-none">
-                  <input 
-                    type="checkbox"
-                    checked={isOutputEnabled}
-                    onChange={(e) => {
-                      setIsOutputEnabled(e.target.checked);
-                      setIsLossConfirmed(false);
-                    }}
-                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
-                  />
-                  <span>Enable OUTPUT Section</span>
-                </label>
-              </div>
-
-              {isOutputEnabled && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Columns</label>
-                      <input 
-                        type="number" min="1" max="32"
-                        value={outputGrid.cols}
-                        onChange={e => {
-                          setOutputGrid({ ...outputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) });
-                          setIsLossConfirmed(false);
-                        }}
-                        className="w-full px-3 py-2 border rounded-md font-mono text-sm shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Rows</label>
-                      <input 
-                        type="number" min="1" max="32"
-                        value={outputGrid.rows}
-                        onChange={e => {
-                          setOutputGrid({ ...outputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) });
-                          setIsLossConfirmed(false);
-                        }}
-                        className="w-full px-3 py-2 border rounded-md font-mono text-sm shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                      />
-                    </div>
-                  </div>
-                  <div className={`text-xs font-semibold ${isOutputOverLimit ? 'text-red-600' : 'text-emerald-700'}`}>
-                    Total: {totalOutputs} output channels {isOutputOverLimit && '(Exceeds 128 max limit)'}
-                  </div>
-                </div>
-              )}
-            </div>
+        <div className="space-y-4">
+          {/* Presets */}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Grid Presets</label>
+            <select 
+              value={getPresetName()}
+              onChange={handlePresetChange} 
+              className="w-full px-3 py-2 border rounded-md font-medium bg-white shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+            >
+              {PRESETS.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
+              {getPresetName() === 'Custom' && <option value="Custom">Custom Layout</option>}
+            </select>
           </div>
 
-          {/* Validation Warnings */}
-          {hasValidationError && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-medium space-y-1">
-              {isNoneEnabled && <div>• At least one section (INPUT or OUTPUT) must be enabled.</div>}
-              {isInputOverLimit && <div>• INPUT grid size cannot exceed 128 channels (currently {totalInputs}).</div>}
-              {isOutputOverLimit && <div>• OUTPUT grid size cannot exceed 128 channels (currently {totalOutputs}).</div>}
-              {hasZeroChannels && <div>• INPUT grid must contain at least 1 column and 1 row when enabled.</div>}
-              {hasZeroOutputs && <div>• OUTPUT grid must contain at least 1 column and 1 row when enabled.</div>}
-            </div>
-          )}
-
-          {/* Dynamic Data Loss Alert */}
-          {!hasValidationError && lossInfo.hasLoss && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 space-y-3 shadow-sm">
-              <div className="flex items-center gap-2 font-bold text-sm text-red-700">
-                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                <span>Warning: Potential Data Loss!</span>
-              </div>
-              <div className="text-xs space-y-1">
-                <p>Resizing the grid will truncate and delete channels that currently contain active patch details:</p>
-                <ul className="list-disc list-inside pl-1 font-semibold text-red-700">
-                  {lossInfo.lostInCount > 0 && <li>{lossInfo.lostInCount} input channel(s) will be permanently lost</li>}
-                  {lossInfo.lostOutCount > 0 && <li>{lossInfo.lostOutCount} output channel(s) will be permanently lost</li>}
-                </ul>
-              </div>
-              
-              <label className="flex items-start gap-2.5 p-2 bg-white rounded border border-red-200 cursor-pointer hover:bg-red-50/50 transition-colors select-none">
+          {/* INPUT Block */}
+          <div className={`p-4 rounded-lg border transition-all ${isInputEnabled ? 'bg-slate-50 border-slate-200 shadow-sm' : 'bg-gray-100 border-gray-200 opacity-60'}`}>
+            <div className="flex items-center justify-between mb-3">
+              <label className="flex items-center gap-2 font-bold text-xs text-slate-700 uppercase tracking-wider cursor-pointer select-none">
                 <input 
                   type="checkbox"
-                  checked={isLossConfirmed}
-                  onChange={(e) => setIsLossConfirmed(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 text-red-600 rounded focus:ring-red-500 border-gray-300"
+                  checked={isInputEnabled}
+                  onChange={(e) => {
+                    setIsInputEnabled(e.target.checked);
+                    setIsLossConfirmed(false);
+                  }}
+                  className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
                 />
-                <span className="text-xs font-semibold leading-snug text-red-700">
-                  I understand that reducing the grid size will permanently delete these channels and their data.
-                </span>
+                <span>Enable INPUT Section</span>
               </label>
             </div>
-          )}
+
+            {isInputEnabled && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Columns</label>
+                    <input 
+                      type="number" min="1" max="32"
+                      value={inputGrid.cols}
+                      onChange={e => {
+                        setInputGrid({ ...inputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) });
+                        setIsLossConfirmed(false);
+                      }}
+                      className="w-full px-3 py-2 border rounded-md font-mono text-sm shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Rows</label>
+                    <input 
+                      type="number" min="1" max="32"
+                      value={inputGrid.rows}
+                      onChange={e => {
+                        setInputGrid({ ...inputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) });
+                        setIsLossConfirmed(false);
+                      }}
+                      className="w-full px-3 py-2 border rounded-md font-mono text-sm shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+                <div className={`text-xs font-semibold ${isInputOverLimit ? 'text-red-600' : 'text-emerald-700'}`}>
+                  Total: {totalInputs} input channels {isInputOverLimit && '(Exceeds 128 max limit)'}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* OUTPUT Block */}
+          <div className={`p-4 rounded-lg border transition-all ${isOutputEnabled ? 'bg-slate-50 border-slate-200 shadow-sm' : 'bg-gray-100 border-gray-200 opacity-60'}`}>
+            <div className="flex items-center justify-between mb-3">
+              <label className="flex items-center gap-2 font-bold text-xs text-slate-700 uppercase tracking-wider cursor-pointer select-none">
+                <input 
+                  type="checkbox"
+                  checked={isOutputEnabled}
+                  onChange={(e) => {
+                    setIsOutputEnabled(e.target.checked);
+                    setIsLossConfirmed(false);
+                  }}
+                  className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
+                />
+                <span>Enable OUTPUT Section</span>
+              </label>
+            </div>
+
+            {isOutputEnabled && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Columns</label>
+                    <input 
+                      type="number" min="1" max="32"
+                      value={outputGrid.cols}
+                      onChange={e => {
+                        setOutputGrid({ ...outputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) });
+                        setIsLossConfirmed(false);
+                      }}
+                      className="w-full px-3 py-2 border rounded-md font-mono text-sm shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Rows</label>
+                    <input 
+                      type="number" min="1" max="32"
+                      value={outputGrid.rows}
+                      onChange={e => {
+                        setOutputGrid({ ...outputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) });
+                        setIsLossConfirmed(false);
+                      }}
+                      className="w-full px-3 py-2 border rounded-md font-mono text-sm shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+                <div className={`text-xs font-semibold ${isOutputOverLimit ? 'text-red-600' : 'text-emerald-700'}`}>
+                  Total: {totalOutputs} output channels {isOutputOverLimit && '(Exceeds 128 max limit)'}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="p-4 bg-gray-50 border-t flex justify-end gap-3 print:hidden">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
-          >
-            Cancel
-          </motion.button>
-          <motion.button
-            whileHover={!isConfirmDisabled ? { scale: 1.02 } : {}}
-            whileTap={!isConfirmDisabled ? { scale: 0.98 } : {}}
-            disabled={isConfirmDisabled}
-            onClick={handleConfirm}
-            className={`px-6 py-2 text-sm font-bold text-white rounded-md shadow-sm transition-all ${isConfirmDisabled ? 'bg-slate-300 cursor-not-allowed opacity-50' : 'bg-emerald-600 hover:bg-emerald-500'}`}
-          >
-            Confirm
-          </motion.button>
-        </div>
-      </motion.div>
-    </motion.div>
+        {/* Validation Warnings */}
+        {hasValidationError && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-medium space-y-1">
+            {isNoneEnabled && <div>• At least one section (INPUT or OUTPUT) must be enabled.</div>}
+            {isInputOverLimit && <div>• INPUT grid size cannot exceed 128 channels (currently {totalInputs}).</div>}
+            {isOutputOverLimit && <div>• OUTPUT grid size cannot exceed 128 channels (currently {totalOutputs}).</div>}
+            {hasZeroChannels && <div>• INPUT grid must contain at least 1 column and 1 row when enabled.</div>}
+            {hasZeroOutputs && <div>• OUTPUT grid must contain at least 1 column and 1 row when enabled.</div>}
+          </div>
+        )}
+
+        {/* Dynamic Data Loss Alert */}
+        {!hasValidationError && lossInfo.hasLoss && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 space-y-3 shadow-sm">
+            <div className="flex items-center gap-2 font-bold text-sm text-red-700">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              <span>Warning: Potential Data Loss!</span>
+            </div>
+            <div className="text-xs space-y-1">
+              <p>Resizing the grid will truncate and delete channels that currently contain active patch details:</p>
+              <ul className="list-disc list-inside pl-1 font-semibold text-red-700">
+                {lossInfo.lostInCount > 0 && <li>{lossInfo.lostInCount} input channel(s) will be permanently lost</li>}
+                {lossInfo.lostOutCount > 0 && <li>{lossInfo.lostOutCount} output channel(s) will be permanently lost</li>}
+              </ul>
+            </div>
+            
+            <label className="flex items-start gap-2.5 p-2 bg-white rounded border border-red-200 cursor-pointer hover:bg-red-50/50 transition-colors select-none">
+              <input 
+                type="checkbox"
+                checked={isLossConfirmed}
+                onChange={(e) => setIsLossConfirmed(e.target.checked)}
+                className="mt-0.5 w-4 h-4 text-red-600 rounded focus:ring-red-500 border-gray-300"
+              />
+              <span className="text-xs font-semibold leading-snug text-red-700">
+                I understand that reducing the grid size will permanently delete these channels and their data.
+              </span>
+            </label>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 bg-gray-50 border-t flex justify-end gap-3 print:hidden">
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
+        >
+          Cancel
+        </motion.button>
+        <motion.button
+          type="submit"
+          whileHover={!isConfirmDisabled ? { scale: 1.02 } : {}}
+          whileTap={!isConfirmDisabled ? { scale: 0.98 } : {}}
+          disabled={isConfirmDisabled}
+          className={`px-6 py-2 text-sm font-bold text-white rounded-md shadow-sm transition-all ${isConfirmDisabled ? 'bg-slate-300 cursor-not-allowed opacity-50' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+        >
+          Confirm
+        </motion.button>
+      </div>
+    </ModalBase>
   );
 };

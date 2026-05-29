@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Network, Plus, Check, AlertTriangle, Play, Pipette } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Network, Plus, Check, AlertTriangle, Pipette } from 'lucide-react';
 import { hexToRgba } from '../utils/colors';
 import { Channel, SubSnake, SettingsConfig } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { PALETTES, SUB_SNAKE_PRESETS } from '../utils/constants';
+import { ModalBase } from './ModalBase';
 
 interface AssignSubSnakeModalProps {
   selectedCount: number;
@@ -51,16 +52,6 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
       setSelectedSubSnakeId(subSnakes[0].id);
     }
   }, [subSnakes, selectedSubSnakeId]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   const activeSubSnake = subSnakes.find(s => s.id === selectedSubSnakeId);
 
@@ -245,7 +236,7 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
     }
 
     return (
-      <div className="space-y-2 mt-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+      <div className="space-y-2 mt-2 bg-slate-55 p-4 rounded-xl border border-slate-200">
         <div className="flex justify-between items-center mb-1">
           <span className="text-2xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
@@ -269,305 +260,287 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.15 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 450, damping: 35 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
-      >
-        {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <Network className="w-5 h-5 text-indigo-400" />
-            <h3 className="font-bold text-lg">Assign {selectedCount} channels to SubSnake</h3>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            type="button"
-            className="text-slate-300 hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </motion.button>
+    <ModalBase onClose={onClose} onSubmit={isCreatingNew ? undefined : handleSaveClick} maxWidthClass="max-w-2xl">
+      {/* Header */}
+      <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Network className="w-5 h-5 text-indigo-400" />
+          <h3 className="font-bold text-lg">Assign {selectedCount} channels to SubSnake</h3>
         </div>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={onClose}
+          type="button"
+          className="text-slate-300 hover:text-white transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </motion.button>
+      </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-5 overflow-y-auto flex-1">
-          {isCreatingNew ? (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4"
-            >
-              <h4 className="font-bold text-sm text-slate-800 border-b pb-2 flex justify-between items-center">
-                <span>Create New SubSnake</span>
+      {/* Content */}
+      <div className="p-6 space-y-5 overflow-y-auto flex-1">
+        {isCreatingNew ? (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4"
+          >
+            <h4 className="font-bold text-sm text-slate-800 border-b pb-2 flex justify-between items-center">
+              <span>Create New SubSnake</span>
+              {subSnakes.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingNew(false)}
+                  className="text-xs text-indigo-600 hover:underline font-bold"
+                >
+                  Select Existing
+                </button>
+              )}
+            </h4>
+
+            <form onSubmit={handleCreateNew} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">SubSnake Name</label>
+                  <input
+                    type="text"
+                    value={newSnakeName}
+                    onChange={e => setNewSnakeName(e.target.value)}
+                    maxLength={6}
+                    placeholder="e.g. Stage Right, Drums..."
+                    className="w-full px-3 py-1.5 border border-slate-350 bg-white rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-bold"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Grid Preset</label>
+                  <select
+                    value={newSnakePreset}
+                    onChange={e => setNewSnakePreset(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-slate-350 bg-white rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-medium"
+                  >
+                    {SUB_SNAKE_PRESETS.filter(p => p.value !== 'custom').map(p => (
+                      <option key={p.value} value={p.value}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Color Theme</label>
+                <div className="flex flex-wrap gap-1.5 items-center bg-white p-2 border border-slate-200 rounded-md">
+                  {PALETTES[settings.palette].map(color => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      onClick={() => setNewSnakeColor(color.value)}
+                      style={{
+                        backgroundColor: hexToRgba(color.value, 0.4),
+                        borderColor: color.value === '#ffffff' || color.value === '#000000' ? '#cbd5e1' : color.value
+                      }}
+                      className={`w-6 h-6 rounded-full border transition-all cursor-pointer ${
+                        newSnakeColor.toLowerCase() === color.value.toLowerCase()
+                          ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
+                          : 'hover:opacity-85'
+                      }`}
+                      title={color.label}
+                    />
+                  ))}
+
+                  {/* Custom color picker */}
+                  <div 
+                    className={`relative w-6 h-6 rounded-full border border-slate-200 overflow-hidden hover:opacity-85 transition-opacity flex items-center justify-center cursor-pointer ${
+                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                        ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
+                        : ''
+                    }`}
+                    style={{
+                      backgroundColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                        ? hexToRgba(newSnakeColor, 0.4)
+                        : '#f8fafc',
+                      borderColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                        ? newSnakeColor
+                        : '#cbd5e1'
+                    }}
+                    title="Custom color"
+                  >
+                    <Pipette className={`w-3.5 h-3.5 ${
+                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
+                        ? 'text-slate-750 font-bold'
+                        : 'text-slate-500'
+                    }`} />
+                    <input 
+                      type="color" 
+                      value={newSnakeColor}
+                      onChange={e => setNewSnakeColor(e.target.value)}
+                      className="absolute inset-[-5px] w-10 h-10 cursor-pointer opacity-0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t">
                 {subSnakes.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setIsCreatingNew(false)}
-                    className="text-xs text-indigo-600 hover:underline font-bold"
+                    className="px-4 py-1.5 text-xs font-medium text-slate-655 bg-white border rounded hover:bg-slate-50 transition-colors"
                   >
-                    Select Existing
+                    Cancel
                   </button>
                 )}
-              </h4>
-
-              <form onSubmit={handleCreateNew} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">SubSnake Name</label>
-                    <input
-                      type="text"
-                      value={newSnakeName}
-                      onChange={e => setNewSnakeName(e.target.value)}
-                      maxLength={6}
-                      placeholder="e.g. Stage Right, Drums..."
-                      className="w-full px-3 py-1.5 border border-slate-350 bg-white rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-bold"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Grid Preset</label>
-                    <select
-                      value={newSnakePreset}
-                      onChange={e => setNewSnakePreset(e.target.value)}
-                      className="w-full px-3 py-1.5 border border-slate-350 bg-white rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-medium"
-                    >
-                      {SUB_SNAKE_PRESETS.filter(p => p.value !== 'custom').map(p => (
-                        <option key={p.value} value={p.value}>{p.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Color Theme</label>
-                  <div className="flex flex-wrap gap-1.5 items-center bg-white p-2 border border-slate-200 rounded-md">
-                    {PALETTES[settings.palette].map(color => (
-                      <button
-                        key={color.value}
-                        type="button"
-                        onClick={() => setNewSnakeColor(color.value)}
-                        style={{
-                          backgroundColor: hexToRgba(color.value, 0.4),
-                          borderColor: color.value === '#ffffff' || color.value === '#000000' ? '#cbd5e1' : color.value
-                        }}
-                        className={`w-6 h-6 rounded-full border transition-all cursor-pointer ${
-                          newSnakeColor.toLowerCase() === color.value.toLowerCase()
-                            ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
-                            : 'hover:opacity-85'
-                        }`}
-                        title={color.label}
-                      />
-                    ))}
-
-                    {/* Custom color picker */}
-                    <div 
-                      className={`relative w-6 h-6 rounded-full border border-slate-200 overflow-hidden hover:opacity-85 transition-opacity flex items-center justify-center cursor-pointer ${
-                        !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                          ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
-                          : ''
-                      }`}
-                      style={{
-                        backgroundColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                          ? hexToRgba(newSnakeColor, 0.4)
-                          : '#f8fafc',
-                        borderColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                          ? newSnakeColor
-                          : '#cbd5e1'
-                      }}
-                      title="Custom color"
-                    >
-                      <Pipette className={`w-3.5 h-3.5 ${
-                        !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                          ? 'text-slate-700 font-bold'
-                          : 'text-slate-500'
-                      }`} />
-                      <input 
-                        type="color" 
-                        value={newSnakeColor}
-                        onChange={e => setNewSnakeColor(e.target.value)}
-                        className="absolute inset-[-5px] w-10 h-10 cursor-pointer opacity-0"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2 border-t">
-                  {subSnakes.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setIsCreatingNew(false)}
-                      className="px-4 py-1.5 text-xs font-medium text-slate-650 bg-white border rounded hover:bg-slate-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 text-xs font-bold rounded-md shadow-sm transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Create & Select
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          ) : (
-            <div className="space-y-4">
-              {/* Choose Existing SubSnake */}
-              <div className="flex justify-between items-end border-b pb-2">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Choose SubSnake</label>
                 <button
-                  type="button"
-                  onClick={() => setIsCreatingNew(true)}
-                  className="text-xs text-indigo-600 hover:underline font-bold flex items-center gap-1"
+                  type="submit"
+                  className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 text-xs font-bold rounded-md shadow-sm transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Create New
+                  <Plus className="w-3.5 h-3.5" /> Create & Select
                 </button>
               </div>
+            </form>
+          </motion.div>
+        ) : (
+          <div className="space-y-4">
+            {/* Choose Existing SubSnake */}
+            <div className="flex justify-between items-end border-b pb-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Choose SubSnake</label>
+              <button
+                type="button"
+                onClick={() => setIsCreatingNew(true)}
+                className="text-xs text-indigo-600 hover:underline font-bold flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" /> Create New
+              </button>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {subSnakes.map(s => {
-                  const isSelected = selectedSubSnakeId === s.id;
-                  const totalIn = s.grid ? s.grid.input.rows * s.grid.input.cols : 0;
-                  const totalOut = s.grid ? s.grid.output.rows * s.grid.output.cols : 0;
-                  return (
-                    <motion.button
-                      key={s.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedSubSnakeId(s.id);
-                        setStartPort(1);
-                      }}
-                      whileHover={{ scale: isSelected ? 1.01 : 1.02 }}
-                      whileTap={{ scale: 0.99 }}
-                      className={`p-3 rounded-xl border text-left flex items-center justify-between gap-3 transition-all ${
-                        isSelected
-                          ? 'border-indigo-600 bg-indigo-50/15 ring-2 ring-indigo-500/25 shadow-sm font-semibold'
-                          : 'border-slate-200 hover:border-slate-350 hover:shadow-xs bg-white text-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {s.color && s.color !== '#ffffff' && (
-                          <span
-                            className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
-                            style={{ backgroundColor: s.color }}
-                          />
-                        )}
-                        <span className="truncate text-sm font-bold">{s.name}</span>
-                      </div>
-                      <span className="text-xxs text-slate-500 font-mono flex-shrink-0">
-                        {s.grid ? `IN:${totalIn} | OUT:${totalOut}` : 'Dynamic'}
-                      </span>
-                    </motion.button>
-                  );
-                })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {subSnakes.map(s => {
+                const isSelected = selectedSubSnakeId === s.id;
+                const totalIn = s.grid ? s.grid.input.rows * s.grid.input.cols : 0;
+                const totalOut = s.grid ? s.grid.output.rows * s.grid.output.cols : 0;
+                return (
+                  <motion.button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSubSnakeId(s.id);
+                      setStartPort(1);
+                    }}
+                    whileHover={{ scale: isSelected ? 1.01 : 1.02 }}
+                    whileTap={{ scale: 0.99 }}
+                    className={`p-3 rounded-xl border text-left flex items-center justify-between gap-3 transition-all ${
+                      isSelected
+                        ? 'border-indigo-600 bg-indigo-50/15 ring-2 ring-indigo-500/25 shadow-sm font-semibold'
+                        : 'border-slate-200 hover:border-slate-350 hover:shadow-xs bg-white text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {s.color && s.color !== '#ffffff' && (
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
+                          style={{ backgroundColor: s.color }}
+                        />
+                      )}
+                      <span className="truncate text-sm font-bold">{s.name}</span>
+                    </div>
+                    <span className="text-xxs text-slate-500 font-mono flex-shrink-0">
+                      {s.grid ? `IN:${totalIn} | OUT:${totalOut}` : 'Dynamic'}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {activeSubSnake && !isCreatingNew && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-4 pt-1"
+          >
+            {/* Start port slider/input */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="space-y-0.5">
+                <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider">Start Port Selection</label>
+                <p className="text-xxs text-slate-500 leading-tight">
+                  Mapping will occupy ports <b>{startPort}</b> to <b>{startPort + Math.max(selectedInputs.length, selectedOutputs.length) - 1}</b>.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-250 rounded-lg shadow-3xs">
+                <span className="text-2xs font-bold text-slate-500 uppercase">Start Port:</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={startPort}
+                  onChange={e => setStartPort(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-14 px-1 text-center font-mono font-bold text-sm bg-transparent outline-none border-b border-transparent focus:border-indigo-500"
+                />
               </div>
             </div>
-          )}
 
-          {activeSubSnake && !isCreatingNew && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-4 pt-1"
-            >
-              {/* Start port slider/input */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div className="space-y-0.5">
-                  <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider">Start Port Selection</label>
-                  <p className="text-xxs text-slate-500 leading-tight">
-                    Mapping will occupy ports <b>{startPort}</b> to <b>{startPort + Math.max(selectedInputs.length, selectedOutputs.length) - 1}</b>.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-250 rounded-lg shadow-3xs">
-                  <span className="text-2xs font-bold text-slate-500 uppercase">Start Port:</span>
-                  <input
-                    type="number"
-                    min="1"
-                    value={startPort}
-                    onChange={e => setStartPort(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-14 px-1 text-center font-mono font-bold text-sm bg-transparent outline-none border-b border-transparent focus:border-indigo-500"
-                  />
-                </div>
-              </div>
+            {/* Visual port grids for inputs and outputs */}
+            {renderVisualGrid('in')}
+            {renderVisualGrid('out')}
 
-              {/* Visual port grids for inputs and outputs */}
-              {renderVisualGrid('in')}
-              {renderVisualGrid('out')}
+            {/* Conflict Warnings */}
+            <AnimatePresence>
+              {conflicts.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -10 }}
+                  className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 space-y-2 text-xs leading-relaxed overflow-hidden shadow-3xs"
+                >
+                  <div className="font-bold flex items-center gap-1.5 text-amber-900">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <span>Overwrite Mappings Warning ({conflicts.length} conflict{conflicts.length > 1 ? 's' : ''})</span>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-0.5 font-medium max-h-36 overflow-y-auto">
+                    {conflicts.map((c, idx) => (
+                      <li key={idx}>
+                        Port {c.port} on {c.type === 'in' ? 'INPUT' : 'OUTPUT'} is currently occupied by{' '}
+                        <span className="font-bold font-mono">
+                          {c.type === 'in' ? 'IN' : 'OUT'} {c.channelNumber} ("{c.channelName}")
+                        </span>
+                        . Confirming will displace this channel (its mapping will be cleared).
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </div>
 
-              {/* Conflict Warnings */}
-              <AnimatePresence>
-                {conflicts.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, y: -10 }}
-                    animate={{ opacity: 1, height: 'auto', y: 0 }}
-                    exit={{ opacity: 0, height: 0, y: -10 }}
-                    className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 space-y-2 text-xs leading-relaxed overflow-hidden shadow-3xs"
-                  >
-                    <div className="font-bold flex items-center gap-1.5 text-amber-900">
-                      <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                      <span>Overwrite Mappings Warning ({conflicts.length} conflict{conflicts.length > 1 ? 's' : ''})</span>
-                    </div>
-                    <ul className="list-disc pl-5 space-y-0.5 font-medium max-h-36 overflow-y-auto">
-                      {conflicts.map((c, idx) => (
-                        <li key={idx}>
-                          Port {c.port} on {c.type === 'in' ? 'INPUT' : 'OUTPUT'} is currently occupied by{' '}
-                          <span className="font-bold font-mono">
-                            {c.type === 'in' ? 'IN' : 'OUT'} {c.channelNumber} ("{c.channelName}")
-                          </span>
-                          . Confirming will displace this channel (its mapping will be cleared).
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t flex justify-end gap-3 bg-gray-50 flex-shrink-0">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onClose}
-            type="button"
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            Cancel
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleSaveClick}
-            type="button"
-            disabled={!selectedSubSnakeId || isCreatingNew}
-            className={`flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-md transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-              conflicts.length > 0
-                ? 'bg-amber-500 hover:bg-amber-600 border border-amber-600'
-                : 'bg-indigo-600 hover:bg-indigo-500'
-            }`}
-          >
-            <Check className="w-4 h-4" /> Save Assignment
-          </motion.button>
-        </div>
-      </motion.div>
-    </motion.div>
+      {/* Footer */}
+      <div className="p-4 border-t flex justify-end gap-3 bg-gray-50 flex-shrink-0">
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-medium text-gray-750 hover:bg-gray-100 rounded-md transition-colors"
+        >
+          Cancel
+        </motion.button>
+        <motion.button
+          type={isCreatingNew ? 'button' : 'submit'}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleSaveClick}
+          disabled={!selectedSubSnakeId || isCreatingNew}
+          className={`flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-md transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+            conflicts.length > 0
+              ? 'bg-amber-500 hover:bg-amber-600 border border-amber-600'
+              : 'bg-indigo-600 hover:bg-indigo-500'
+          }`}
+        >
+          <Check className="w-4 h-4" /> Save Assignment
+        </motion.button>
+      </div>
+    </ModalBase>
   );
 };
+

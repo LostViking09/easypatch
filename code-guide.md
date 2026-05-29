@@ -39,3 +39,5 @@ Please adhere to this structure when creating new files or moving existing ones:
   - Clicking outside of modals (the background/backdrop) should act as a cancel/close action.
   - Pressing `ESC` should act as a cancel/close action on all modals.
   - Pressing `ENTER` should act as an OK, SAVE, or default positive action for modals.
+  - **MANDATORY**: Always wrap all modal layouts with the shared `<ModalBase>` component (`src/components/ModalBase.tsx`). It automatically standardizes scroll locking, focus trapping, backdrop click-to-dismiss, and Escape/Enter key behaviors. Do not implement manual overlay backdrops, manual `overflow: hidden` scroll locking, or keyboard event listeners for modals in component code.
+

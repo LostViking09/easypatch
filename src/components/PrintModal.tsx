@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, Printer, LayoutGrid, Table, SlidersHorizontal, Network } from 'lucide-react';
 import { Channel, SubSnake, PrintOptions, PrintSourceOptions, SettingsConfig } from '../types';
+import { ModalBase } from './ModalBase';
 
 interface PrintModalProps {
   onClose: () => void;
@@ -110,176 +111,170 @@ export const PrintModal: React.FC<PrintModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
-        className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]"
-      >
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <Printer className="w-6 h-6 text-blue-500" />
-            Print Options
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+    <ModalBase onClose={onClose} onSubmit={() => onConfirm(options)} maxWidthClass="max-w-lg" zIndexClass="z-[100]">
+      <div className="flex items-center justify-between p-5 border-b border-slate-100">
+        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <Printer className="w-6 h-6 text-blue-500" />
+          Print Options
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
+
+      <div className="p-6 overflow-y-auto">
+        <p className="text-sm text-slate-500 mb-6">
+          Select the views you want to include in the printout. Each selected block will automatically start on a new page.
+        </p>
+        
+        <div className="space-y-1 bg-white border border-slate-200 rounded-xl p-2 shadow-sm">
+          <OptionRow 
+            icon={<SlidersHorizontal className="w-4 h-4 text-slate-550" />}
+            title="Main Inputs" 
+            optionsObj={options.mainInput} 
+            onToggle={(f) => toggleSource('mainInput', f)}
+            hasContent={inputs.length > 0}
+          />
+          <OptionRow 
+            icon={<SlidersHorizontal className="w-4 h-4 text-slate-550" />}
+            title="Main Outputs" 
+            optionsObj={options.mainOutput} 
+            onToggle={(f) => toggleSource('mainOutput', f)}
+            hasContent={outputs.length > 0}
+          />
+          
+          {subSnakes.map(snake => {
+            const hasContent = inputs.some(c => c.subSnakeId === snake.id) || outputs.some(c => c.subSnakeId === snake.id);
+            return (
+              <OptionRow 
+                key={snake.id}
+                icon={<Network className="w-4 h-4" style={{ color: snake.color && snake.color !== '#ffffff' ? snake.color : '#64748b' }} />}
+                title={`${snake.name}`} 
+                optionsObj={options.subSnakes[snake.id]} 
+                onToggle={(f) => toggleSource(snake.id, f)}
+                hasContent={hasContent}
+              />
+            );
+          })}
         </div>
 
-        <div className="p-6 overflow-y-auto">
-          <p className="text-sm text-slate-500 mb-6">
-            Select the views you want to include in the printout. Each selected block will automatically start on a new page.
-          </p>
+        {/* Page Setup Section */}
+        <div className="mt-6 space-y-4 border-t border-slate-100 pt-6">
+          <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-slate-500" />
+            Print Page Setup
+          </h4>
           
-          <div className="space-y-1 bg-white border border-slate-200 rounded-xl p-2 shadow-sm">
-            <OptionRow 
-              icon={<SlidersHorizontal className="w-4 h-4 text-slate-500" />}
-              title="Main Inputs" 
-              optionsObj={options.mainInput} 
-              onToggle={(f) => toggleSource('mainInput', f)}
-              hasContent={inputs.length > 0}
-            />
-            <OptionRow 
-              icon={<SlidersHorizontal className="w-4 h-4 text-slate-500" />}
-              title="Main Outputs" 
-              optionsObj={options.mainOutput} 
-              onToggle={(f) => toggleSource('mainOutput', f)}
-              hasContent={outputs.length > 0}
-            />
-            
-            {subSnakes.map(snake => {
-              const hasContent = inputs.some(c => c.subSnakeId === snake.id) || outputs.some(c => c.subSnakeId === snake.id);
-              return (
-                <OptionRow 
-                  key={snake.id}
-                  icon={<Network className="w-4 h-4" style={{ color: snake.color && snake.color !== '#ffffff' ? snake.color : '#64748b' }} />}
-                  title={`${snake.name}`} 
-                  optionsObj={options.subSnakes[snake.id]} 
-                  onToggle={(f) => toggleSource(snake.id, f)}
-                  hasContent={hasContent}
-                />
-              );
-            })}
-          </div>
-
-          {/* Page Setup Section */}
-          <div className="mt-6 space-y-4 border-t border-slate-100 pt-6">
-            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-slate-500" />
-              Print Page Setup
-            </h4>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Color Mode Toggle */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-slate-500">Color Mode</span>
-                <div className="flex bg-slate-100 p-1 rounded-lg">
-                  <button
-                    type="button"
-                    onClick={() => setSettings({ ...settings, printTheme: 'color' })}
-                    className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
-                      settings.printTheme !== 'bw'
-                        ? 'bg-white text-slate-800 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-800'
-                    }`}
-                  >
-                    Full Color
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSettings({ ...settings, printTheme: 'bw' })}
-                    className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
-                      settings.printTheme === 'bw'
-                        ? 'bg-white text-slate-800 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-800'
-                    }`}
-                  >
-                    Black & White
-                  </button>
-                </div>
-              </div>
-              
-              {/* Page Size Toggle */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-slate-500">Page Size</span>
-                <div className="flex bg-slate-100 p-1 rounded-lg">
-                  <button
-                    type="button"
-                    onClick={() => setSettings({ ...settings, printPageSize: 'a4' })}
-                    className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
-                      settings.printPageSize !== 'letter'
-                        ? 'bg-white text-slate-800 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-800'
-                    }`}
-                  >
-                    A4
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSettings({ ...settings, printPageSize: 'letter' })}
-                    className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
-                      settings.printPageSize === 'letter'
-                        ? 'bg-white text-slate-800 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-800'
-                    }`}
-                  >
-                    Letter
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Orientation Toggle */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Color Mode Toggle */}
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-slate-500">Orientation</span>
+              <span className="text-xs font-semibold text-slate-500">Color Mode</span>
               <div className="flex bg-slate-100 p-1 rounded-lg">
                 <button
                   type="button"
-                  onClick={() => setSettings({ ...settings, printOrientation: 'landscape' })}
+                  onClick={() => setSettings({ ...settings, printTheme: 'color' })}
                   className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
-                    settings.printOrientation !== 'portrait'
+                    settings.printTheme !== 'bw'
                       ? 'bg-white text-slate-800 shadow-xs'
                       : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
-                  Landscape (Default)
+                  Full Color
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSettings({ ...settings, printOrientation: 'portrait' })}
+                  onClick={() => setSettings({ ...settings, printTheme: 'bw' })}
                   className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
-                    settings.printOrientation === 'portrait'
+                    settings.printTheme === 'bw'
                       ? 'bg-white text-slate-800 shadow-xs'
                       : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
-                  Portrait
+                  Black & White
+                </button>
+              </div>
+            </div>
+            
+            {/* Page Size Toggle */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-slate-500">Page Size</span>
+              <div className="flex bg-slate-100 p-1 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setSettings({ ...settings, printPageSize: 'a4' })}
+                  className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                    settings.printPageSize !== 'letter'
+                      ? 'bg-white text-slate-800 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  A4
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettings({ ...settings, printPageSize: 'letter' })}
+                  className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                    settings.printPageSize === 'letter'
+                      ? 'bg-white text-slate-800 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  Letter
                 </button>
               </div>
             </div>
           </div>
+          
+          {/* Orientation Toggle */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-semibold text-slate-500">Orientation</span>
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setSettings({ ...settings, printOrientation: 'landscape' })}
+                className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                  settings.printOrientation !== 'portrait'
+                    ? 'bg-white text-slate-800 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                Landscape (Default)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettings({ ...settings, printOrientation: 'portrait' })}
+                className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                  settings.printOrientation === 'portrait'
+                    ? 'bg-white text-slate-800 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                Portrait
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div className="p-5 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-end gap-3 shrink-0">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onConfirm(options)}
-            className="px-4 py-2 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2"
-          >
-            <Printer className="w-4 h-4" /> Print
-          </button>
-        </div>
-      </motion.div>
-    </div>
+      <div className="p-5 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-end gap-3 shrink-0">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2"
+        >
+          <Printer className="w-4 h-4" /> Print
+        </button>
+      </div>
+    </ModalBase>
   );
 };
