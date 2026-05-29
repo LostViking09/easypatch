@@ -182,7 +182,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
   };
 
   return (
-    <div className="space-y-8 flex-1 flex flex-col min-h-0">
+    <div className={`space-y-8 flex-1 flex flex-col min-h-0 ${layoutMode === 'table' ? 'max-w-7xl mx-auto w-full' : ''}`}>
       {/* Top Banner and Controls */}
       <div className="flex flex-col gap-4 print:hidden">
         {!isPrintMode && showBanner && (
@@ -271,7 +271,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
               <div className="w-full">
                 {layoutMode === 'table' ? (
                   // TABLE VIEW
-                  <div className="w-full max-w-7xl bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none">
+                  <div className="w-full max-w-7xl mx-auto bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none">
                     {/* Inputs Table */}
                     {(isGridDefined ? snake.grid!.input.rows * snake.grid!.input.cols > 0 : hasInputs) && (
                       <SubSnakeTable

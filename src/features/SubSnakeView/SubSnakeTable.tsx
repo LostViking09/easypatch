@@ -162,8 +162,12 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
                   </span>
                 </div>
                 {ch && (
-                  <span className="text-xs px-2 py-0.5 rounded border font-bold font-mono tracking-normal shadow-3xs select-none text-slate-700 shrink-0 border-slate-250 bg-slate-100/90">
-                    Console CH {ch.number}
+                  <span className="flex items-center gap-px text-xs px-1.5 py-0.5 rounded border font-bold font-mono tracking-normal shadow-3xs select-none text-slate-700 shrink-0 border-slate-250 bg-slate-100/90">
+                    <span className="truncate max-w-[80px]">Main</span>
+                    <span className="flex-shrink-0">
+                      <span className="opacity-60 mr-px">#</span>
+                      <span className="font-extrabold">{ch.number}</span>
+                    </span>
                   </span>
                 )}
               </div>
@@ -185,7 +189,7 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
       </div>
 
       {/* DESKTOP & PRINT TABLE VIEW */}
-      <div className="hidden md:inline-block print:inline-block min-w-full print-table-wrapper overflow-x-auto rounded-lg border border-slate-200">
+      <div className="hidden md:inline-block print:inline-block min-w-full lg:min-w-[800px] print-table-wrapper overflow-x-auto rounded-lg border border-slate-200">
         <table className="w-full text-left text-sm print:text-xs text-slate-700">
           <thead 
             className="text-xs print:text-xxs uppercase font-bold text-slate-500 print:text-black print:border-b-2 print:border-black"
@@ -193,7 +197,7 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
           >
             <tr>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-16">Port</th>
-              <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-24">Console CH</th>
+              <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-32">Main I/O</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/4">Name</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/6">Mic/DI</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/6">Stand</th>
@@ -232,10 +236,20 @@ export const SubSnakeTable: React.FC<SubSnakeTableProps> = ({
                     {portNum}
                   </td>
                   <td 
-                    className={`px-4 py-2 print:px-3 print:py-0.5 ${ch ? 'cursor-pointer hover:bg-black/5 print:cursor-default print:hover:bg-transparent transition-colors font-bold font-mono text-slate-700' : 'text-slate-300'}`}
+                    className={`px-4 py-2 print:px-3 print:py-0.5 ${ch ? 'cursor-pointer hover:bg-black/5 print:cursor-default print:hover:bg-transparent transition-colors' : 'text-slate-300'}`}
                     onClick={() => ch && onEditChannel?.(ch)}
                   >
-                    {ch ? ch.number : '-'}
+                    {ch ? (
+                      <span className="flex items-center gap-px text-xs print:text-xxs px-1.5 py-0.5 print:py-px rounded border font-bold font-mono tracking-normal shadow-3xs select-none text-slate-700 border-slate-250 bg-slate-100/90 print:text-black inline-flex w-fit">
+                        <span className="truncate max-w-[120px] print:max-w-[50px]">Main</span>
+                        <span className="flex-shrink-0">
+                          <span className="opacity-60 mr-px">#</span>
+                          <span className="font-extrabold">{ch.number}</span>
+                        </span>
+                      </span>
+                    ) : (
+                      '-'
+                    )}
                   </td>
                   {renderEditableCell(ch, 'name', index, 0, (
                     <div className="flex items-center gap-2">
