@@ -124,20 +124,21 @@ export function Header({
                 >
                   <Download className="w-4 h-4" /> Export
                 </button>
-                <div className="h-px bg-slate-800 my-1 mx-2" />
-                <button
-                  onClick={() => {
-                    handleShare();
-                    setIsFileDropdownOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 font-medium transition-colors flex items-center gap-2"
-                >
-                  <Share2 className="w-4 h-4" /> Share Link
-                </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
+
+        {/* Share Link Button */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleShare}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium bg-slate-800 border border-slate-700/50 text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
+        >
+          <Share2 className="w-4 h-4 text-slate-400" />
+          <span>Share Link</span>
+        </motion.button>
 
         {/* Vertical Divider */}
         <div className="w-px h-5 bg-slate-800 self-center mx-1.5 hidden sm:block"></div>

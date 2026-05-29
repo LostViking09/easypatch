@@ -19,6 +19,20 @@ import { TableView } from './features/TableView/TableView';
 import { UrlImportConfirmModal } from './components/UrlImportConfirmModal';
 import { compressData, decompressData } from './utils/urlSharing';
 
+const getCleanPathname = () => {
+  let path = window.location.pathname;
+  if (path.includes('http://') || path.includes('https://')) {
+    const idx = path.indexOf('http://') !== -1 ? path.indexOf('http://') : path.indexOf('https://');
+    const absoluteUrl = path.substring(idx);
+    try {
+      path = new URL(absoluteUrl).pathname;
+    } catch (e) {
+      path = '/easypatch/';
+    }
+  }
+  return path;
+};
+
 export default function App() {
   const {
     title, setTitle,
@@ -58,6 +72,9 @@ export default function App() {
   const [isPrinting, setIsPrinting] = useState(false);
   const [printTrigger, setPrintTrigger] = useState(false);
 
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+
   const [sharedPatchData, setSharedPatchData] = useState<any>(null);
 
   const { toast, setToast } = useToast();
@@ -72,7 +89,8 @@ export default function App() {
     isAssignSubSnakeOpen ||
     isMultiGroupOpen ||
     isMultiColorOpen ||
-    isPrintModalOpen;
+    isPrintModalOpen ||
+    isShareModalOpen;
 
   const {
     isMultiEdit,
@@ -121,7 +139,8 @@ export default function App() {
           console.error('Failed to import shared patch:', e);
           setToast({ message: 'Invalid or corrupted shared link.', type: 'error' });
         } finally {
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          const cleanPath = getCleanPathname();
+          window.history.replaceState(null, '', cleanPath + window.location.search);
         }
       }
     };
@@ -132,9 +151,10 @@ export default function App() {
     try {
       const data = { title, notes, settings, inputs, outputs, subSnakes };
       const base64 = await compressData(data);
-      const url = `${window.location.origin}${window.location.pathname}#import=${base64}`;
-      await navigator.clipboard.writeText(url);
-      setToast({ message: 'Share link copied to clipboard!', type: 'success' });
+      const cleanPath = getCleanPathname();
+      const url = `${window.location.origin}${cleanPath}#import=${base64}`;
+      setShareUrl(url);
+      setIsShareModalOpen(true);
     } catch (error) {
       console.error(error);
       setToast({ message: 'Failed to generate share link. Your browser may not support compression.', type: 'error' });
@@ -444,6 +464,8 @@ export default function App() {
         isNewProjectConfirmOpen={isNewProjectConfirmOpen} setIsNewProjectConfirmOpen={setIsNewProjectConfirmOpen}
         isResizeGridOpen={isResizeGridOpen} setIsResizeGridOpen={setIsResizeGridOpen}
         isPrintModalOpen={isPrintModalOpen} setIsPrintModalOpen={setIsPrintModalOpen}
+        isShareModalOpen={isShareModalOpen} setIsShareModalOpen={setIsShareModalOpen}
+        shareUrl={shareUrl}
         selectedIds={selectedIds}
         
         saveEdit={saveEdit} handleNavigateEdit={handleNavigateEdit} saveFastInput={saveFastInput}

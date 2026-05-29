@@ -13,6 +13,7 @@ import { SettingsModal } from '../../components/SettingsModal';
 import { NewProjectConfirmModal } from '../../components/NewProjectConfirmModal';
 import { ResizeGridModal } from '../../components/ResizeGridModal';
 import { PrintModal } from '../../components/PrintModal';
+import { ShareModal } from '../../components/ShareModal';
 import { PrintOptions } from '../../types';
 
 interface AppModalsProps {
@@ -43,6 +44,9 @@ interface AppModalsProps {
   setIsResizeGridOpen: (val: boolean) => void;
   isPrintModalOpen: boolean;
   setIsPrintModalOpen: (val: boolean) => void;
+  isShareModalOpen: boolean;
+  setIsShareModalOpen: (val: boolean) => void;
+  shareUrl: string;
   selectedIds: string[];
   
   saveEdit: (updatedChannel: Channel) => { finalInputs: Channel[], finalOutputs: Channel[] };
@@ -74,6 +78,8 @@ export function AppModals({
   isNewProjectConfirmOpen, setIsNewProjectConfirmOpen,
   isResizeGridOpen, setIsResizeGridOpen,
   isPrintModalOpen, setIsPrintModalOpen,
+  isShareModalOpen, setIsShareModalOpen,
+  shareUrl,
   selectedIds,
   
   saveEdit, handleNavigateEdit, saveFastInput,
@@ -202,6 +208,14 @@ export function AppModals({
             subSnakes={subSnakes}
             settings={settings}
             setSettings={setSettings}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isShareModalOpen && (
+          <ShareModal
+            shareUrl={shareUrl}
+            onClose={() => setIsShareModalOpen(false)}
           />
         )}
       </AnimatePresence>
