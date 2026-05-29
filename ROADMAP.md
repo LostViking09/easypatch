@@ -8,13 +8,6 @@ This document serves as the central repository for planned features, refined ide
 
 -
 
-### 1. URL sharing
-
-- **Goal:** Allow users to share their patch data via a URL.
-- **Tasks:**
-  - Create a URL sharing system.
-  - Allow users to share their patch data via a URL.
-
 ### 2. Snippets
 
 - **Goal:** Quickly insert data, like 8 drum channels from a snippet list into the patch

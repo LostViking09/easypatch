@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { MotionGlobalConfig } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { MotionGlobalConfig, AnimatePresence } from 'motion/react';
+import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { Channel, PrintOptions } from './types';
 import { PrintStyles } from './components/PrintStyles';
 import { ToastRenderer } from './components/ToastRenderer';
@@ -18,6 +19,10 @@ import { SubSnakeView } from './features/SubSnakeView/SubSnakeView';
 import { TableView } from './features/TableView/TableView';
 import { UrlImportConfirmModal } from './components/UrlImportConfirmModal';
 import { compressData, decompressData } from './utils/urlSharing';
+import { DashboardModal } from './features/Dashboard/DashboardModal';
+import { db, Project } from './services/db';
+import { defaultSettings, createEmptyInputs, createEmptyOutputs } from './utils/constants';
+import { FileText, FolderOpen } from 'lucide-react';
 
 const getCleanPathname = () => {
   let path = window.location.pathname;
@@ -34,6 +39,18 @@ const getCleanPathname = () => {
 };
 
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Editor />} />
+      <Route path="/project/:id" element={<Editor />} />
+    </Routes>
+  );
+}
+
+function Editor() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
   const {
     title, setTitle,
     notes, setNotes,
@@ -42,18 +59,17 @@ export default function App() {
     settings, setSettings,
     userSettings, setUserSettings,
     subSnakes, setSubSnakes,
+    isLoaded, saveStatus,
     handleDrop,
     saveEdit,
     saveFastInput,
-    handleCreateNewProject,
     handleResizeGrid,
     handleExport,
-    loadImportData,
     addSubSnake,
     updateSubSnake,
     deleteSubSnake,
     clearSubSnakeAssignments
-  } = usePatchState();
+  } = usePatchState(id);
 
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -76,8 +92,18 @@ export default function App() {
   const [shareUrl, setShareUrl] = useState('');
 
   const [sharedPatchData, setSharedPatchData] = useState<any>(null);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(!id);
 
   const { toast, setToast } = useToast();
+
+  // If active project changes or dashboard opens, keep state in sync
+  useEffect(() => {
+    if (!id) {
+      setIsDashboardOpen(true);
+    } else {
+      setIsDashboardOpen(false);
+    }
+  }, [id]);
 
   const isAnyModalOpen =
     !!editingChannel ||
@@ -90,7 +116,8 @@ export default function App() {
     isMultiGroupOpen ||
     isMultiColorOpen ||
     isPrintModalOpen ||
-    isShareModalOpen;
+    isShareModalOpen ||
+    isDashboardOpen;
 
   const {
     isMultiEdit,
@@ -148,6 +175,7 @@ export default function App() {
   }, [setToast]);
 
   const handleShare = async () => {
+    if (!id) return;
     try {
       const data = { title, notes, settings, inputs, outputs, subSnakes };
       const base64 = await compressData(data);
@@ -186,6 +214,53 @@ export default function App() {
     }
   };
 
+  const handleNewPatch = async () => {
+    const newId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
+    const newProject: Project = {
+      id: newId,
+      title: 'New Patch List',
+      notes: '',
+      settings: defaultSettings,
+      inputs: createEmptyInputs(24),
+      outputs: createEmptyOutputs(12),
+      subSnakes: [],
+      updatedAt: Date.now()
+    };
+
+    try {
+      await db.projects.add(newProject);
+      setIsNewProjectConfirmOpen(false);
+      setToast({ message: 'New patch list created.', type: 'success' });
+      navigate(`/project/${newId}`);
+    } catch (err) {
+      console.error('Failed to create new patch:', err);
+      setToast({ message: 'Failed to create new patch list.', type: 'error' });
+    }
+  };
+
+  const handleImportPatchData = async (data: any) => {
+    const newId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
+    const newProject: Project = {
+      id: newId,
+      title: data.title || 'Imported Patch',
+      notes: data.notes || '',
+      settings: data.settings || defaultSettings,
+      inputs: data.inputs || createEmptyInputs(24),
+      outputs: data.outputs || createEmptyOutputs(12),
+      subSnakes: data.subSnakes || [],
+      updatedAt: Date.now()
+    };
+
+    try {
+      await db.projects.add(newProject);
+      setToast({ message: 'Patch list imported successfully.', type: 'success' });
+      navigate(`/project/${newId}`);
+    } catch (err) {
+      console.error('Failed to import patch:', err);
+      setToast({ message: 'Failed to import patch list file.', type: 'error' });
+    }
+  };
+
   const {
     handleMassAssignGroup,
     handleMassAssignColor,
@@ -206,12 +281,19 @@ export default function App() {
     <div className={`min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col print:bg-white ${pClass('print:bg-white')} ${settings.printTheme === 'bw' ? 'print-bw-mode' : ''}`}>
       <PrintStyles isMultiPagePrint={isMultiPagePrint} settings={settings} />
 
+      {/* Loading Overlay */}
+      {id && !isLoaded && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center transition-all duration-300">
+          <div className="bg-slate-900 border border-slate-800 text-white p-6 rounded-2xl shadow-2xl flex items-center gap-4 animate-in zoom-in-95 duration-200">
+            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <span className="font-semibold text-sm">Loading StagePatch...</span>
+          </div>
+        </div>
+      )}
+
       <div className={`main-content flex flex-col flex-1 h-full ${isPrinting ? 'print:hidden' : ''}`}>
         <Header
-          handleExport={handleExport}
           handleShare={handleShare}
-          loadImportData={loadImportData}
-          setIsNewProjectConfirmOpen={setIsNewProjectConfirmOpen}
           setIsFastInputOpen={setIsFastInputOpen}
           isMultiEdit={isMultiEdit}
           setIsMultiEdit={setIsMultiEdit}
@@ -220,105 +302,129 @@ export default function App() {
           setIsSubSnakesOpen={setIsSubSnakesOpen}
           setIsSettingsOpen={setIsSettingsOpen}
           setIsPrintModalOpen={setIsPrintModalOpen}
+          onOpenDashboard={() => setIsDashboardOpen(true)}
+          saveStatus={saveStatus}
         />
 
-        {/* Main Content - Grid Layout */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 flex flex-col print:p-0 print:m-0">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 flex-1 flex flex-col print:border-none print:shadow-none print:p-0">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 print:mb-0 print:gap-0">
-              <ProjectHeader
-                title={title}
-                setTitle={setTitle}
-                notes={notes}
-                setNotes={setNotes}
-              />
-
-              {/* View Switcher Segmented Control */}
-              <ViewSwitcher
-                subSnakes={subSnakes}
-                inputs={inputs}
-                outputs={outputs}
-                currentView={currentView}
-                setCurrentView={setCurrentView}
-                activeView={activeView}
-                layoutMode={layoutMode}
-                setLayoutMode={setLayoutMode}
-              />
+        {/* Blank state if no project ID is active */}
+        {!id ? (
+          <main className="flex-1 flex items-center justify-center p-6 bg-slate-50">
+            <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center space-y-4 animate-in fade-in duration-300">
+              <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mx-auto">
+                <FileText className="w-8 h-8" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">Welcome to EasyPatch</h2>
+              <p className="text-slate-500 text-sm">
+                A clean, efficient StagePatch manager for audio engineers. Open your project manager or import an existing patch to start editing.
+              </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => setIsDashboardOpen(true)}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <FolderOpen className="w-4 h-4" /> Open Project Manager
+                </button>
+              </div>
             </div>
+          </main>
+        ) : (
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 flex flex-col print:p-0 print:m-0">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 flex-1 flex flex-col print:border-none print:shadow-none print:p-0">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 print:mb-0 print:gap-0">
+                <ProjectHeader
+                  title={title}
+                  setTitle={setTitle}
+                  notes={notes}
+                  setNotes={setNotes}
+                />
 
-            {/* Main Patch Grid */}
-            <div 
-              className={`print-grid-container flex-col lg:flex-row gap-6 lg:gap-8 flex-1 ${
-                shouldStackPrint ? 'print-stacked' : 'print-side-by-side'
-              } ${activeView === 'main' && layoutMode === 'grid' ? 'flex print:flex' : 'hidden print:hidden'}`}
-            >
-              <PatchGridSection
-                channels={inputs}
-                type="INPUT"
-                cols={settings.grid.input.cols}
-                flexClass={outputs.length > 0 ? 'flex-[2]' : 'flex-grow flex-1'}
-                settings={settings}
-                subSnakes={subSnakes}
-                selectedIds={selectedIds}
-                isMultiEdit={isMultiEdit}
-                onCellClick={handleCellClick}
-                onCellDrop={handleCellDrop}
-                onCellMouseDown={handleCellMouseDown}
-                onCellMouseEnter={handleCellMouseEnter}
-              />
-              <PatchGridSection
-                channels={outputs}
-                type="OUTPUT"
-                cols={settings.grid.output.cols}
-                flexClass={inputs.length > 0 ? 'flex-[1]' : 'flex-grow flex-1'}
-                settings={settings}
-                subSnakes={subSnakes}
-                selectedIds={selectedIds}
-                isMultiEdit={isMultiEdit}
-                onCellClick={handleCellClick}
-                onCellDrop={handleCellDrop}
-                onCellMouseDown={handleCellMouseDown}
-                onCellMouseEnter={handleCellMouseEnter}
-              />
-            </div>
+                {/* View Switcher Segmented Control */}
+                <ViewSwitcher
+                  subSnakes={subSnakes}
+                  inputs={inputs}
+                  outputs={outputs}
+                  currentView={currentView}
+                  setCurrentView={setCurrentView}
+                  activeView={activeView}
+                  layoutMode={layoutMode}
+                  setLayoutMode={setLayoutMode}
+                />
+              </div>
 
-            <div 
-              className={`${
-                activeView !== 'main'
-                  ? 'block print:block' 
-                  : `hidden ${(settings.includeSubSnakesInPrint && subSnakes.length > 0) ? 'print:block print-subsnake-page-break' : 'print:hidden'}`
-              }`}
-            >
-              <SubSnakeView
-                subSnakes={subSnakes}
-                inputs={inputs}
-                outputs={outputs}
-                settings={settings}
-                selectedSubSnakeId={activeView === 'main' ? 'all' : activeView}
-                isPrintMode={activeView === 'main'}
-                projectTitle={title}
-                projectNotes={notes}
-                onUpdateChannel={saveEdit}
-                onEditChannel={(ch) => setEditingChannel(ch)}
-                layoutMode={layoutMode}
-              />
-            </div>
+              {/* Main Patch Grid */}
+              <div 
+                className={`print-grid-container flex-col lg:flex-row gap-6 lg:gap-8 flex-1 ${
+                  shouldStackPrint ? 'print-stacked' : 'print-side-by-side'
+                } ${activeView === 'main' && layoutMode === 'grid' ? 'flex print:flex' : 'hidden print:hidden'}`}
+              >
+                <PatchGridSection
+                  channels={inputs}
+                  type="INPUT"
+                  cols={settings.grid.input.cols}
+                  flexClass={outputs.length > 0 ? 'flex-[2]' : 'flex-grow flex-1'}
+                  settings={settings}
+                  subSnakes={subSnakes}
+                  selectedIds={selectedIds}
+                  isMultiEdit={isMultiEdit}
+                  onCellClick={handleCellClick}
+                  onCellDrop={handleCellDrop}
+                  onCellMouseDown={handleCellMouseDown}
+                  onCellMouseEnter={handleCellMouseEnter}
+                />
+                <PatchGridSection
+                  channels={outputs}
+                  type="OUTPUT"
+                  cols={settings.grid.output.cols}
+                  flexClass={inputs.length > 0 ? 'flex-[1]' : 'flex-grow flex-1'}
+                  settings={settings}
+                  subSnakes={subSnakes}
+                  selectedIds={selectedIds}
+                  isMultiEdit={isMultiEdit}
+                  onCellClick={handleCellClick}
+                  onCellDrop={handleCellDrop}
+                  onCellMouseDown={handleCellMouseDown}
+                  onCellMouseEnter={handleCellMouseEnter}
+                />
+              </div>
 
-            {/* Table View */}
-            <div className={`${activeView === 'main' && layoutMode === 'table' ? 'block print:block' : 'hidden print:hidden'} flex-1`}>
-              <TableView
-                inputs={inputs}
-                outputs={outputs}
-                subSnakes={subSnakes}
-                settings={settings}
-                projectTitle={title}
-                projectNotes={notes}
-                onUpdateChannel={saveEdit}
-                onEditChannel={(ch) => setEditingChannel(ch)}
-              />
+              <div 
+                className={`${
+                  activeView !== 'main'
+                    ? 'block print:block' 
+                    : `hidden ${(settings.includeSubSnakesInPrint && subSnakes.length > 0) ? 'print:block print-subsnake-page-break' : 'print:hidden'}`
+                }`}
+              >
+                <SubSnakeView
+                  subSnakes={subSnakes}
+                  inputs={inputs}
+                  outputs={outputs}
+                  settings={settings}
+                  selectedSubSnakeId={activeView === 'main' ? 'all' : activeView}
+                  isPrintMode={activeView === 'main'}
+                  projectTitle={title}
+                  projectNotes={notes}
+                  onUpdateChannel={saveEdit}
+                  onEditChannel={(ch) => setEditingChannel(ch)}
+                  layoutMode={layoutMode}
+                />
+              </div>
+
+              {/* Table View */}
+              <div className={`${activeView === 'main' && layoutMode === 'table' ? 'block print:block' : 'hidden print:hidden'} flex-1`}>
+                <TableView
+                  inputs={inputs}
+                  outputs={outputs}
+                  subSnakes={subSnakes}
+                  settings={settings}
+                  projectTitle={title}
+                  projectNotes={notes}
+                  onUpdateChannel={saveEdit}
+                  onEditChannel={(ch) => setEditingChannel(ch)}
+                />
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        )}
       </div>
 
       {/* Print View Renderer */}
@@ -439,41 +545,64 @@ export default function App() {
         </div>
       )}
 
-      <MultiEditBar
-        isMultiEdit={isMultiEdit}
-        selectedIds={selectedIds}
-        setIsAssignSubSnakeOpen={setIsAssignSubSnakeOpen}
-        setIsMultiGroupOpen={setIsMultiGroupOpen}
-        setIsMultiColorOpen={setIsMultiColorOpen}
-        handleMultiEditClear={handleMultiEditClear}
-        setSelectedIds={setSelectedIds}
-        setIsMultiEdit={setIsMultiEdit}
-      />
+      {id && (
+        <MultiEditBar
+          isMultiEdit={isMultiEdit}
+          selectedIds={selectedIds}
+          setIsAssignSubSnakeOpen={setIsAssignSubSnakeOpen}
+          setIsMultiGroupOpen={setIsMultiGroupOpen}
+          setIsMultiColorOpen={setIsMultiColorOpen}
+          handleMultiEditClear={handleMultiEditClear}
+          setSelectedIds={setSelectedIds}
+          setIsMultiEdit={setIsMultiEdit}
+        />
+      )}
 
-      <AppModals
-        editingChannel={editingChannel} setEditingChannel={setEditingChannel}
-        inputs={inputs} outputs={outputs}
-        subSnakes={subSnakes} settings={settings} setSettings={setSettings}
-        userSettings={userSettings} setUserSettings={setUserSettings}
-        isFastInputOpen={isFastInputOpen} setIsFastInputOpen={setIsFastInputOpen}
-        isMultiGroupOpen={isMultiGroupOpen} setIsMultiGroupOpen={setIsMultiGroupOpen}
-        isMultiColorOpen={isMultiColorOpen} setIsMultiColorOpen={setIsMultiColorOpen}
-        isAssignSubSnakeOpen={isAssignSubSnakeOpen} setIsAssignSubSnakeOpen={setIsAssignSubSnakeOpen}
-        isSubSnakesOpen={isSubSnakesOpen} setIsSubSnakesOpen={setIsSubSnakesOpen}
-        isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen}
-        isNewProjectConfirmOpen={isNewProjectConfirmOpen} setIsNewProjectConfirmOpen={setIsNewProjectConfirmOpen}
-        isResizeGridOpen={isResizeGridOpen} setIsResizeGridOpen={setIsResizeGridOpen}
-        isPrintModalOpen={isPrintModalOpen} setIsPrintModalOpen={setIsPrintModalOpen}
-        isShareModalOpen={isShareModalOpen} setIsShareModalOpen={setIsShareModalOpen}
-        shareUrl={shareUrl}
-        selectedIds={selectedIds}
-        
-        saveEdit={saveEdit} handleNavigateEdit={handleNavigateEdit} saveFastInput={saveFastInput}
-        handleMassAssignGroup={handleMassAssignGroup} handleMassAssignColor={handleMassAssignColor} handleMassAssignSubSnake={handleMassAssignSubSnake}
-        addSubSnake={addSubSnake} updateSubSnake={updateSubSnake} deleteSubSnake={deleteSubSnake} clearSubSnakeAssignments={clearSubSnakeAssignments}
-        handleCreateNewProject={handleCreateNewProject} handleResizeGrid={handleResizeGrid}
-        onConfirmPrint={handleConfirmPrint}
-      />
+      {id && (
+        <AppModals
+          editingChannel={editingChannel} setEditingChannel={setEditingChannel}
+          inputs={inputs} outputs={outputs}
+          subSnakes={subSnakes} settings={settings} setSettings={setSettings}
+          userSettings={userSettings} setUserSettings={setUserSettings}
+          isFastInputOpen={isFastInputOpen} setIsFastInputOpen={setIsFastInputOpen}
+          isMultiGroupOpen={isMultiGroupOpen} setIsMultiGroupOpen={setIsMultiGroupOpen}
+          isMultiColorOpen={isMultiColorOpen} setIsMultiColorOpen={setIsMultiColorOpen}
+          isAssignSubSnakeOpen={isAssignSubSnakeOpen} setIsAssignSubSnakeOpen={setIsAssignSubSnakeOpen}
+          isSubSnakesOpen={isSubSnakesOpen} setIsSubSnakesOpen={setIsSubSnakesOpen}
+          isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen}
+          isNewProjectConfirmOpen={isNewProjectConfirmOpen} setIsNewProjectConfirmOpen={setIsNewProjectConfirmOpen}
+          isResizeGridOpen={isResizeGridOpen} setIsResizeGridOpen={setIsResizeGridOpen}
+          isPrintModalOpen={isPrintModalOpen} setIsPrintModalOpen={setIsPrintModalOpen}
+          isShareModalOpen={isShareModalOpen} setIsShareModalOpen={setIsShareModalOpen}
+          shareUrl={shareUrl}
+          selectedIds={selectedIds}
+          
+          saveEdit={saveEdit} handleNavigateEdit={handleNavigateEdit} saveFastInput={saveFastInput}
+          handleMassAssignGroup={handleMassAssignGroup} handleMassAssignColor={handleMassAssignColor} handleMassAssignSubSnake={handleMassAssignSubSnake}
+          addSubSnake={addSubSnake} updateSubSnake={updateSubSnake} deleteSubSnake={deleteSubSnake} clearSubSnakeAssignments={clearSubSnakeAssignments}
+          handleCreateNewProject={handleNewPatch} handleResizeGrid={handleResizeGrid}
+          onConfirmPrint={handleConfirmPrint}
+        />
+      )}
+
+      {/* Project Manager / Dashboard Modal */}
+      <AnimatePresence>
+        {isDashboardOpen && (
+          <DashboardModal
+            onClose={() => {
+              if (id) setIsDashboardOpen(false);
+            }}
+            onSelectProject={(selectedId) => {
+              if (selectedId) {
+                navigate(`/project/${selectedId}`);
+              } else {
+                navigate('/');
+              }
+            }}
+            activeProjectId={id}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Toast Notification */}
       <ToastRenderer toast={toast} setToast={setToast} />
@@ -483,9 +612,8 @@ export default function App() {
           title={sharedPatchData.title}
           notes={sharedPatchData.notes}
           onConfirm={() => {
-            loadImportData(sharedPatchData);
+            handleImportPatchData(sharedPatchData);
             setSharedPatchData(null);
-            setToast({ message: 'Shared patch loaded successfully.', type: 'success' });
           }}
           onCancel={() => setSharedPatchData(null)}
         />

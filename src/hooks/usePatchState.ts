@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import debounce from 'lodash.debounce';
 import { Channel, SettingsConfig, SubSnake, UserSettings } from '../types';
 import { defaultSettings, initialInputs, initialOutputs, PALETTES, defaultUserSettings, createEmptyInputs, createEmptyOutputs } from '../utils/constants';
+import { db } from '../services/db';
 
-export function usePatchState() {
+export function usePatchState(projectId?: string) {
   const [title, setTitle] = useState('EasyPatch');
   const [notes, setNotes] = useState('');
   const [inputs, setInputs] = useState<Channel[]>(initialInputs);
@@ -10,76 +12,93 @@ export function usePatchState() {
   const [settings, setSettings] = useState<SettingsConfig>(defaultSettings);
   const [userSettings, setUserSettings] = useState<UserSettings>(defaultUserSettings);
   const [subSnakes, setSubSnakes] = useState<SubSnake[]>([]);
+  
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     document.title = title.trim() !== '' ? title : 'EasyPatch';
   }, [title]);
 
-  // Load from localStorage on mount
+  // Load user settings from localStorage (cross-project preferences)
   useEffect(() => {
-    const savedTitle = localStorage.getItem('ar2412-title');
-    const savedNotes = localStorage.getItem('ar2412-notes');
-    const savedInputs = localStorage.getItem('ar2412-inputs');
-    const savedOutputs = localStorage.getItem('ar2412-outputs');
-    const savedSettings = localStorage.getItem('ar2412-settings');
     const savedUserSettings = localStorage.getItem('ar2412-user-settings');
-    const savedSubSnakes = localStorage.getItem('ar2412-subsnakes');
-    
-    if (savedTitle) setTitle(savedTitle);
-    if (savedNotes) setNotes(savedNotes);
-    
     if (savedUserSettings) {
       try { setUserSettings({ ...defaultUserSettings, ...JSON.parse(savedUserSettings) }); } catch (e) { console.error(e); }
     }
-
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        setSettings({
-          ...defaultSettings,
-          ...parsed,
-          fontSizes: {
-            ...defaultSettings.fontSizes,
-            ...(parsed.fontSizes || {})
-          },
-          grid: {
-            ...defaultSettings.grid,
-            ...(parsed.grid || {})
-          }
-        });
-      } catch (e) { console.error(e); }
-    } else {
-      // Migrate old palette setting if exists
-      const oldPalette = localStorage.getItem('ar2412-palette');
-      if (oldPalette) setSettings(s => ({ ...s, palette: oldPalette as 'qu5' | 'sq' }));
-    }
-
-    if (savedInputs) {
-      try { setInputs(JSON.parse(savedInputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }))); } catch (e) { console.error(e); }
-    }
-    if (savedOutputs) {
-      try { setOutputs(JSON.parse(savedOutputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }))); } catch (e) { console.error(e); }
-    }
-    if (savedSubSnakes) {
-      try { 
-        const parsed = JSON.parse(savedSubSnakes);
-        if (Array.isArray(parsed)) {
-          setSubSnakes(parsed.map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) })));
-        }
-      } catch (e) { console.error(e); }
-    }
   }, []);
 
-  // Save to localStorage on change
+  // Save user settings to localStorage
   useEffect(() => {
-    localStorage.setItem('ar2412-title', title);
-    localStorage.setItem('ar2412-notes', notes);
-    localStorage.setItem('ar2412-settings', JSON.stringify(settings));
     localStorage.setItem('ar2412-user-settings', JSON.stringify(userSettings));
-    localStorage.setItem('ar2412-inputs', JSON.stringify(inputs));
-    localStorage.setItem('ar2412-outputs', JSON.stringify(outputs));
-    localStorage.setItem('ar2412-subsnakes', JSON.stringify(subSnakes));
-  }, [title, notes, settings, userSettings, inputs, outputs, subSnakes]);
+  }, [userSettings]);
+
+  // Load project from IndexedDB
+  useEffect(() => {
+    if (!projectId) {
+      setIsLoaded(true);
+      hasLoadedRef.current = true;
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoaded(false);
+
+    db.projects.get(projectId).then(project => {
+      if (!isMounted) return;
+      if (project) {
+        setTitle(project.title || 'EasyPatch');
+        setNotes(project.notes || '');
+        setSettings({ ...defaultSettings, ...project.settings });
+        
+        // Ensure properties like mic/stand are initialized to empty strings if missing
+        setInputs((project.inputs || initialInputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
+        setOutputs((project.outputs || initialOutputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
+        
+        setSubSnakes((project.subSnakes || []).map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) })));
+      }
+      setIsLoaded(true);
+      hasLoadedRef.current = true;
+    }).catch(err => {
+      console.error("Failed to load project", err);
+      if (isMounted) {
+        setIsLoaded(true);
+        hasLoadedRef.current = true;
+      }
+    });
+
+    return () => { isMounted = false; };
+  }, [projectId]);
+
+  // Debounced save to IndexedDB
+  const debouncedSave = useCallback(
+    debounce(async (id: string, data: any) => {
+      try {
+        await db.projects.put({ ...data, id, updatedAt: Date.now() });
+        setSaveStatus('saved');
+      } catch (err) {
+        console.error("Failed to save project", err);
+        setSaveStatus('error');
+      }
+    }, 1000),
+    []
+  );
+
+  useEffect(() => {
+    if (!hasLoadedRef.current || !projectId) return;
+
+    setSaveStatus('saving');
+    debouncedSave(projectId, {
+      title,
+      notes,
+      settings,
+      inputs,
+      outputs,
+      subSnakes
+    });
+  }, [title, notes, settings, inputs, outputs, subSnakes, projectId, debouncedSave]);
 
   const sanitizeStereoLinks = (channels: Channel[]): Channel[] => {
     const list = channels.map(c => ({ ...c }));
@@ -579,6 +598,7 @@ export function usePatchState() {
     settings, setSettings,
     userSettings, setUserSettings,
     subSnakes, setSubSnakes,
+    isLoaded, saveStatus,
     handleDrop,
     saveEdit,
     saveFastInput,
