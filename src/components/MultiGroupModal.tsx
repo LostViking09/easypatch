@@ -123,7 +123,7 @@ export const MultiGroupModal: React.FC<MultiGroupModalProps> = ({
       </div>
 
       {/* Content & Form */}
-      <div className="p-6 space-y-4">
+      <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
         <div ref={dropdownRef} className="relative">
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Group Name (Link)</label>
           <div className="relative flex items-center">

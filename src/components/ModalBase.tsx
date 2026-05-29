@@ -132,14 +132,14 @@ export const ModalBase: React.FC<ModalBaseProps> = ({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-        className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidthClass} overflow-hidden flex flex-col`}
+        className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidthClass} max-h-full overflow-hidden flex flex-col`}
       >
         {onSubmit ? (
-          <form onSubmit={handleFormSubmit} className="flex flex-col h-full w-full">
+          <form onSubmit={handleFormSubmit} className="flex flex-col h-full w-full min-h-0">
             {children}
           </form>
         ) : (
-          <div className="flex flex-col h-full w-full">
+          <div className="flex flex-col h-full w-full min-h-0">
             {children}
           </div>
         )}

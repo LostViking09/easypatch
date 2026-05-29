@@ -28,7 +28,7 @@ export const NewProjectConfirmModal: React.FC<NewProjectConfirmModalProps> = ({ 
       </div>
 
       {/* Content */}
-      <div className="p-6 space-y-4">
+      <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
         <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-red-800">
           <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
           <div className="text-xs font-semibold leading-relaxed">

@@ -292,7 +292,7 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
       </div>
 
       {/* Content */}
-      <div className="p-6 space-y-5 overflow-y-auto flex-1">
+      <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
         {isCreatingNew ? (
           <motion.div
             initial={{ opacity: 0, y: -10 }}

@@ -209,7 +209,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
             </motion.button>
           </div>
 
-          <div className="p-6 overflow-y-auto space-y-6 flex-1 flex flex-col md:flex-row gap-6">
+          <div className="p-6 overflow-y-auto space-y-6 flex-1 min-h-0 flex flex-col md:flex-row gap-6">
             {/* Left Panel: Form */}
             <div className={`md:w-5/12 p-4 rounded-xl border transition-all duration-300 h-fit space-y-4 shadow-3xs ${
               editingBoxId 

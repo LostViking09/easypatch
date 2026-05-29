@@ -41,7 +41,7 @@ export const MultiColorModal: React.FC<MultiColorModalProps> = ({
       </div>
 
       {/* Content & Swatches */}
-      <div className="p-6 space-y-5">
+      <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
         <div>
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Select Color Theme</label>
           <div className="grid grid-cols-4 gap-2 bg-slate-55 p-2 rounded-xl border border-slate-200">

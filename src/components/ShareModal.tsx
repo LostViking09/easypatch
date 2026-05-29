@@ -63,7 +63,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ shareUrl, onClose }) => 
         </motion.button>
       </div>
 
-      <div className="p-6 flex flex-col items-center gap-6 overflow-y-auto">
+      <div className="p-6 flex flex-col items-center gap-6 overflow-y-auto flex-1 min-h-0">
         <p className="text-sm text-gray-600 text-center leading-relaxed">
           Anyone with this link can view and import a complete copy of your current patch configuration.
         </p>

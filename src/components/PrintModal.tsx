@@ -126,7 +126,7 @@ export const PrintModal: React.FC<PrintModalProps> = ({
         </button>
       </div>
 
-      <div className="p-6 overflow-y-auto">
+      <div className="p-6 overflow-y-auto flex-1 min-h-0">
         <p className="text-sm text-slate-500 mb-6">
           Select the views you want to include in the printout. Each selected block will automatically start on a new page.
         </p>

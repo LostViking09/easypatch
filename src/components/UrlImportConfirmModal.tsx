@@ -19,7 +19,7 @@ export const UrlImportConfirmModal: React.FC<UrlImportConfirmModalProps> = ({ on
         </h3>
       </div>
       
-      <div className="p-6 space-y-4">
+      <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
         <p className="text-gray-700">
           You are about to load a shared patch from the URL. 
           <span className="font-bold text-red-600 ml-1">This will overwrite your current unsaved data.</span>

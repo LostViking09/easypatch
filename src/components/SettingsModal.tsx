@@ -39,7 +39,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
         </motion.button>
       </div>
       
-      <div className="p-6 space-y-8 overflow-y-auto">
+      <div className="p-6 space-y-8 overflow-y-auto flex-1 min-h-0">
         {/* Palette */}
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-3">Default Color Palette</label>
