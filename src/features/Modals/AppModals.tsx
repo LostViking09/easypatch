@@ -194,6 +194,8 @@ export function AppModals({
             inputs={inputs}
             outputs={outputs}
             subSnakes={subSnakes}
+            settings={settings}
+            setSettings={setSettings}
           />
         )}
       </AnimatePresence>

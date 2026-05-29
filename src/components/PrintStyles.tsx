@@ -7,12 +7,20 @@ interface PrintStylesProps {
 }
 
 export const PrintStyles: React.FC<PrintStylesProps> = ({ isMultiPagePrint, settings }) => {
+  const pageSize = settings.printPageSize || 'a4';
+  const orientation = settings.printOrientation || 'landscape';
+
   return (
     <style>{`
       .grid-row-wrapper {
         display: contents;
       }
       @media print {
+        @page {
+          size: ${pageSize} ${orientation};
+          margin: 10mm;
+        }
+        
         body, html, #root {
           background: white !important;
           ${isMultiPagePrint

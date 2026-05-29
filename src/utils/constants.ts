@@ -1,5 +1,15 @@
 import { Channel, SettingsConfig } from '../types';
 
+const getDefaultPageSize = (): 'letter' | 'a4' => {
+  try {
+    const locale = (typeof navigator !== 'undefined' && navigator.language || '').toLowerCase();
+    if (locale === 'en-us' || locale.endsWith('-us') || locale.endsWith('-ca') || locale.endsWith('-ph') || locale.endsWith('-co') || locale.endsWith('-cl')) {
+      return 'letter';
+    }
+  } catch (e) {}
+  return 'a4';
+};
+
 export const defaultSettings: SettingsConfig = {
   palette: 'qu5',
   fontSizes: { number: 1, name: 1, metadata: 1, group: 1, subSnakeBadge: 1 },
@@ -15,6 +25,9 @@ export const defaultSettings: SettingsConfig = {
   includeSubSnakesInPrint: true,
   tableStripeOpacity: 0.05,
   tableHeaderOpacity: 0.08,
+  printTheme: 'color',
+  printPageSize: getDefaultPageSize(),
+  printOrientation: 'landscape',
   grid: {
     input: { rows: 3, cols: 8 },
     output: { rows: 3, cols: 4 },

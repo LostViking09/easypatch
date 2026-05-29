@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, Printer, LayoutGrid, Table, SlidersHorizontal, Network } from 'lucide-react';
-import { Channel, SubSnake, PrintOptions, PrintSourceOptions } from '../types';
+import { Channel, SubSnake, PrintOptions, PrintSourceOptions, SettingsConfig } from '../types';
 
 interface PrintModalProps {
   onClose: () => void;
@@ -9,6 +9,8 @@ interface PrintModalProps {
   inputs: Channel[];
   outputs: Channel[];
   subSnakes: SubSnake[];
+  settings: SettingsConfig;
+  setSettings: (s: SettingsConfig) => void;
 }
 
 export const PrintModal: React.FC<PrintModalProps> = ({
@@ -16,7 +18,9 @@ export const PrintModal: React.FC<PrintModalProps> = ({
   onConfirm,
   inputs,
   outputs,
-  subSnakes
+  subSnakes,
+  settings,
+  setSettings
 }) => {
   const [options, setOptions] = useState<PrintOptions | null>(null);
 
@@ -161,6 +165,103 @@ export const PrintModal: React.FC<PrintModalProps> = ({
                 />
               );
             })}
+          </div>
+
+          {/* Page Setup Section */}
+          <div className="mt-6 space-y-4 border-t border-slate-100 pt-6">
+            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <SlidersHorizontal className="w-4 h-4 text-slate-500" />
+              Print Page Setup
+            </h4>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Color Mode Toggle */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-slate-500">Color Mode</span>
+                <div className="flex bg-slate-100 p-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, printTheme: 'color' })}
+                    className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                      settings.printTheme !== 'bw'
+                        ? 'bg-white text-slate-800 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-800'
+                    }`}
+                  >
+                    Full Color
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, printTheme: 'bw' })}
+                    className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                      settings.printTheme === 'bw'
+                        ? 'bg-white text-slate-800 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-800'
+                    }`}
+                  >
+                    Black & White
+                  </button>
+                </div>
+              </div>
+              
+              {/* Page Size Toggle */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-slate-500">Page Size</span>
+                <div className="flex bg-slate-100 p-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, printPageSize: 'a4' })}
+                    className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                      settings.printPageSize !== 'letter'
+                        ? 'bg-white text-slate-800 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-800'
+                    }`}
+                  >
+                    A4
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, printPageSize: 'letter' })}
+                    className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                      settings.printPageSize === 'letter'
+                        ? 'bg-white text-slate-800 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-800'
+                    }`}
+                  >
+                    Letter
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Orientation Toggle */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-slate-500">Orientation</span>
+              <div className="flex bg-slate-100 p-1 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setSettings({ ...settings, printOrientation: 'landscape' })}
+                  className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                    settings.printOrientation !== 'portrait'
+                      ? 'bg-white text-slate-800 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  Landscape (Default)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettings({ ...settings, printOrientation: 'portrait' })}
+                  className={`flex-1 text-xs py-1.5 font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                    settings.printOrientation === 'portrait'
+                      ? 'bg-white text-slate-800 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  Portrait
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 

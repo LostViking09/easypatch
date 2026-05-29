@@ -170,6 +170,66 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
                 <div className="text-xs text-gray-500">Black & White mode strips backgrounds and uses dark borders.</div>
               </div>
 
+              {/* Print Page Size Setting */}
+              <div className="space-y-2 pb-3 border-b border-gray-200">
+                <label className="text-sm font-medium">Print Page Size</label>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="printPageSize" 
+                      value="a4" 
+                      checked={settings.printPageSize !== 'letter'} 
+                      onChange={() => setSettings({...settings, printPageSize: 'a4'})}
+                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    A4
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="printPageSize" 
+                      value="letter" 
+                      checked={settings.printPageSize === 'letter'} 
+                      onChange={() => setSettings({...settings, printPageSize: 'letter'})} 
+                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    Letter
+                  </label>
+                </div>
+                <div className="text-xs text-gray-500">Select standard A4 or US Letter page size.</div>
+              </div>
+
+              {/* Print Page Orientation Setting */}
+              <div className="space-y-2 pb-3 border-b border-gray-200">
+                <label className="text-sm font-medium">Print Page Orientation</label>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="printOrientation" 
+                      value="landscape" 
+                      checked={settings.printOrientation !== 'portrait'} 
+                      onChange={() => setSettings({...settings, printOrientation: 'landscape'})}
+                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    Landscape (Default)
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="printOrientation" 
+                      value="portrait" 
+                      checked={settings.printOrientation === 'portrait'} 
+                      onChange={() => setSettings({...settings, printOrientation: 'portrait'})} 
+                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    Portrait
+                  </label>
+                </div>
+                <div className="text-xs text-gray-500">Select page orientation for your print output.</div>
+              </div>
+
               <label className="flex items-center gap-3 cursor-pointer">
                 <input 
                   type="checkbox" 

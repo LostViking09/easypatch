@@ -42,7 +42,9 @@ export type SettingsConfig = {
   showGroupNameOnEveryCell?: boolean;
   alwaysDrawCellBorders?: boolean;
   includeSubSnakesInPrint?: boolean;
-  printTheme?: 'color' | 'bw';
+  printTheme: 'color' | 'bw';
+  printPageSize: 'letter' | 'a4';
+  printOrientation: 'landscape' | 'portrait';
   tableStripeOpacity?: number;
   tableHeaderOpacity?: number;
   grid: {
