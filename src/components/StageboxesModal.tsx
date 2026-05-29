@@ -519,7 +519,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
                 Are you sure you want to remove <strong className="text-slate-900">"{boxToDelete.name}"</strong> from the device chain? 
               </p>
               <div className="text-xs text-red-700 bg-red-50 border border-red-100 p-3 rounded-lg font-semibold">
-                This will shrink the global console capacity and you may lose patches mapped to absolute channels beyond the new limits!
+                Danger: Removing this stagebox will permanently delete <span className="underline">all inputs and outputs</span> associated with it, along with their patch data!
               </div>
             </div>
             <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
