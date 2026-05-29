@@ -10,6 +10,11 @@ const getDefaultPageSize = (): 'letter' | 'a4' => {
   return 'a4';
 };
 
+export const defaultUserSettings: import('../types').UserSettings = {
+  confirmSubsnakeOverwrite: true,
+  animationsEnabled: true,
+};
+
 export const defaultSettings: SettingsConfig = {
   palette: 'qu5',
   fontSizes: { number: 1, name: 1, metadata: 1, group: 1, subSnakeBadge: 1 },
@@ -18,8 +23,6 @@ export const defaultSettings: SettingsConfig = {
   colorOpacity: 0.25,
   xlrOpacity: 0.03,
   groupBorderOpacity: 1,
-  confirmSubsnakeOverwrite: true,
-  animationsEnabled: true,
   showGroupNameOnEveryCell: false,
   alwaysDrawCellBorders: true,
   includeSubSnakesInPrint: true,
@@ -57,29 +60,34 @@ export const PALETTES = {
   ]
 };
 
-export const initialInputs: Channel[] = Array.from({ length: 24 }, (_, i) => ({
-  id: `in-${i + 1}`,
-  type: 'in',
-  number: i + 1,
-  name: '',
-  mic: '',
-  stand: '',
-  notes: '',
-  color: '#ffffff',
-  group: '',
-}));
+export const createEmptyInputs = (count: number): Channel[] => 
+  Array.from({ length: count }, (_, i) => ({
+    id: `in-${i + 1}`,
+    type: 'in',
+    number: i + 1,
+    name: '',
+    mic: '',
+    stand: '',
+    notes: '',
+    color: '#ffffff',
+    group: '',
+  }));
 
-export const initialOutputs: Channel[] = Array.from({ length: 12 }, (_, i) => ({
-  id: `out-${i + 1}`,
-  type: 'out',
-  number: i + 1,
-  name: '',
-  mic: '',
-  stand: '',
-  notes: '',
-  color: '#ffffff',
-  group: '',
-}));
+export const createEmptyOutputs = (count: number): Channel[] => 
+  Array.from({ length: count }, (_, i) => ({
+    id: `out-${i + 1}`,
+    type: 'out',
+    number: i + 1,
+    name: '',
+    mic: '',
+    stand: '',
+    notes: '',
+    color: '#ffffff',
+    group: '',
+  }));
+
+export const initialInputs: Channel[] = createEmptyInputs(24);
+export const initialOutputs: Channel[] = createEmptyOutputs(12);
 
 export interface SubSnakePreset {
   name: string;

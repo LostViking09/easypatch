@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Channel, SettingsConfig, SubSnake } from '../types';
-import { defaultSettings, initialInputs, initialOutputs, PALETTES } from '../utils/constants';
+import { Channel, SettingsConfig, SubSnake, UserSettings } from '../types';
+import { defaultSettings, initialInputs, initialOutputs, PALETTES, defaultUserSettings, createEmptyInputs, createEmptyOutputs } from '../utils/constants';
 
 export function usePatchState() {
   const [title, setTitle] = useState('EasyPatch');
@@ -8,6 +8,7 @@ export function usePatchState() {
   const [inputs, setInputs] = useState<Channel[]>(initialInputs);
   const [outputs, setOutputs] = useState<Channel[]>(initialOutputs);
   const [settings, setSettings] = useState<SettingsConfig>(defaultSettings);
+  const [userSettings, setUserSettings] = useState<UserSettings>(defaultUserSettings);
   const [subSnakes, setSubSnakes] = useState<SubSnake[]>([]);
 
   useEffect(() => {
@@ -21,10 +22,16 @@ export function usePatchState() {
     const savedInputs = localStorage.getItem('ar2412-inputs');
     const savedOutputs = localStorage.getItem('ar2412-outputs');
     const savedSettings = localStorage.getItem('ar2412-settings');
+    const savedUserSettings = localStorage.getItem('ar2412-user-settings');
     const savedSubSnakes = localStorage.getItem('ar2412-subsnakes');
     
     if (savedTitle) setTitle(savedTitle);
     if (savedNotes) setNotes(savedNotes);
+    
+    if (savedUserSettings) {
+      try { setUserSettings({ ...defaultUserSettings, ...JSON.parse(savedUserSettings) }); } catch (e) { console.error(e); }
+    }
+
     if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings);
@@ -68,10 +75,11 @@ export function usePatchState() {
     localStorage.setItem('ar2412-title', title);
     localStorage.setItem('ar2412-notes', notes);
     localStorage.setItem('ar2412-settings', JSON.stringify(settings));
+    localStorage.setItem('ar2412-user-settings', JSON.stringify(userSettings));
     localStorage.setItem('ar2412-inputs', JSON.stringify(inputs));
     localStorage.setItem('ar2412-outputs', JSON.stringify(outputs));
     localStorage.setItem('ar2412-subsnakes', JSON.stringify(subSnakes));
-  }, [title, notes, settings, inputs, outputs, subSnakes]);
+  }, [title, notes, settings, userSettings, inputs, outputs, subSnakes]);
 
   const sanitizeStereoLinks = (channels: Channel[]): Channel[] => {
     const list = channels.map(c => ({ ...c }));
@@ -520,9 +528,42 @@ export function usePatchState() {
   const loadImportData = (data: any) => {
     if (data.title) setTitle(data.title);
     if (data.notes !== undefined) setNotes(data.notes);
-    if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
-    if (data.inputs && Array.isArray(data.inputs)) setInputs(data.inputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
-    if (data.outputs && Array.isArray(data.outputs)) setOutputs(data.outputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
+    
+    if (data.settings) {
+      const importedSettings = { ...defaultSettings, ...data.settings };
+      delete importedSettings.animationsEnabled;
+      delete importedSettings.confirmSubsnakeOverwrite;
+      setSettings(importedSettings);
+      
+      const inputCount = (importedSettings.grid?.input?.rows || 3) * (importedSettings.grid?.input?.cols || 8);
+      const outputCount = (importedSettings.grid?.output?.rows || 3) * (importedSettings.grid?.output?.cols || 4);
+      
+      const newInputs = createEmptyInputs(inputCount);
+      const newOutputs = createEmptyOutputs(outputCount);
+      
+      if (data.inputs && Array.isArray(data.inputs)) {
+        data.inputs.forEach((importedCh: any) => {
+          const idx = newInputs.findIndex(ch => ch.id === importedCh.id || ch.number === importedCh.number);
+          if (idx !== -1) {
+            newInputs[idx] = { ...newInputs[idx], ...importedCh, mic: importedCh.mic || '', stand: importedCh.stand || '', notes: importedCh.notes || '' };
+          }
+        });
+      }
+      if (data.outputs && Array.isArray(data.outputs)) {
+        data.outputs.forEach((importedCh: any) => {
+          const idx = newOutputs.findIndex(ch => ch.id === importedCh.id || ch.number === importedCh.number);
+          if (idx !== -1) {
+            newOutputs[idx] = { ...newOutputs[idx], ...importedCh, mic: importedCh.mic || '', stand: importedCh.stand || '', notes: importedCh.notes || '' };
+          }
+        });
+      }
+      setInputs(newInputs);
+      setOutputs(newOutputs);
+    } else {
+      if (data.inputs && Array.isArray(data.inputs)) setInputs(data.inputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
+      if (data.outputs && Array.isArray(data.outputs)) setOutputs(data.outputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
+    }
+
     if (data.subSnakes && Array.isArray(data.subSnakes)) {
       setSubSnakes(data.subSnakes.map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) })));
     } else {
@@ -536,6 +577,7 @@ export function usePatchState() {
     inputs, setInputs,
     outputs, setOutputs,
     settings, setSettings,
+    userSettings, setUserSettings,
     subSnakes, setSubSnakes,
     handleDrop,
     saveEdit,

@@ -24,6 +24,7 @@ export default function App() {
     inputs, setInputs,
     outputs, setOutputs,
     settings, setSettings,
+    userSettings, setUserSettings,
     subSnakes, setSubSnakes,
     handleDrop,
     saveEdit,
@@ -81,8 +82,8 @@ export default function App() {
   } = useMultiSelect(inputs, setInputs, outputs, setOutputs, isAnyModalOpen);
 
   React.useEffect(() => {
-    MotionGlobalConfig.skipAnimations = settings.animationsEnabled === false;
-  }, [settings.animationsEnabled]);
+    MotionGlobalConfig.skipAnimations = userSettings.animationsEnabled === false;
+  }, [userSettings.animationsEnabled]);
 
   React.useEffect(() => {
     if (printTrigger) {
@@ -394,6 +395,7 @@ export default function App() {
         editingChannel={editingChannel} setEditingChannel={setEditingChannel}
         inputs={inputs} outputs={outputs}
         subSnakes={subSnakes} settings={settings} setSettings={setSettings}
+        userSettings={userSettings} setUserSettings={setUserSettings}
         isFastInputOpen={isFastInputOpen} setIsFastInputOpen={setIsFastInputOpen}
         isMultiGroupOpen={isMultiGroupOpen} setIsMultiGroupOpen={setIsMultiGroupOpen}
         isMultiColorOpen={isMultiColorOpen} setIsMultiColorOpen={setIsMultiColorOpen}

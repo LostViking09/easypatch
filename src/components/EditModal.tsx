@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Pipette, ChevronDown, AlertCircle, Link2, Network } from 'lucide-react';
-import { Channel, SettingsConfig, SubSnake } from '../types';
+import { Channel, SettingsConfig, SubSnake, UserSettings } from '../types';
 import { PALETTES } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,12 +10,13 @@ interface EditModalProps {
   allChannels: Channel[];
   subSnakes: SubSnake[];
   settings: SettingsConfig;
+  userSettings: UserSettings;
   onClose: () => void;
   onSave: (ch: Channel) => void;
   onNavigate?: (ch: Channel, direction: 'prev' | 'next') => void;
 }
 
-export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subSnakes, settings, onClose, onSave, onNavigate }) => {
+export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subSnakes, settings, userSettings, onClose, onSave, onNavigate }) => {
   const [formData, setFormData] = useState<Channel>({ ...channel });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<'prev' | 'next' | null>(null);
@@ -29,7 +30,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
     if (!onNavigate) return;
     if (direction === 'next' && !hasNext) {
       // Just save and close if no next channel
-      if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+      if (isOverwriting && userSettings.confirmSubsnakeOverwrite !== false && currentOccupant) {
         setShowConfirmModal(true);
       } else {
         onSave(formData);
@@ -37,14 +38,14 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
       }
     } else if (direction === 'prev' && !hasPrev) {
       // Just save and close if no prev channel
-      if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+      if (isOverwriting && userSettings.confirmSubsnakeOverwrite !== false && currentOccupant) {
         setShowConfirmModal(true);
       } else {
         onSave(formData);
         onClose();
       }
     } else {
-      if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+      if (isOverwriting && userSettings.confirmSubsnakeOverwrite !== false && currentOccupant) {
         setPendingNavigation(direction);
         setShowConfirmModal(true);
       } else {
@@ -209,7 +210,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
 
         e.preventDefault();
         
-        if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+        if (isOverwriting && userSettings.confirmSubsnakeOverwrite !== false && currentOccupant) {
           setShowConfirmModal(true);
         } else {
           onSave(formData);
@@ -219,7 +220,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, showConfirmModal, formData, isDropdownOpen, isOverwriting, settings.confirmSubsnakeOverwrite, currentOccupant, onSave, onNavigate, pendingNavigation]);
+  }, [onClose, showConfirmModal, formData, isDropdownOpen, isOverwriting, userSettings.confirmSubsnakeOverwrite, currentOccupant, onSave, onNavigate, pendingNavigation]);
 
   const handleGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newGroup = e.target.value;
@@ -292,7 +293,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isOverwriting && settings.confirmSubsnakeOverwrite !== false && currentOccupant) {
+    if (isOverwriting && userSettings.confirmSubsnakeOverwrite !== false && currentOccupant) {
       if (showConfirmModal) {
         onSave(formData);
         onClose();

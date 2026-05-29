@@ -23,7 +23,12 @@ export type SubSnake = {
   };
 };
 
-export type SettingsConfig = {
+export type UserSettings = {
+  confirmSubsnakeOverwrite?: boolean;
+  animationsEnabled?: boolean;
+};
+
+export type ProjectSettings = {
   palette: 'qu5' | 'sq';
   fontSizes: {
     number: number;
@@ -37,8 +42,6 @@ export type SettingsConfig = {
   colorOpacity: number;
   xlrOpacity: number;
   groupBorderOpacity: number;
-  confirmSubsnakeOverwrite?: boolean;
-  animationsEnabled?: boolean;
   showGroupNameOnEveryCell?: boolean;
   alwaysDrawCellBorders?: boolean;
   includeSubSnakesInPrint?: boolean;
@@ -52,6 +55,8 @@ export type SettingsConfig = {
     output: { rows: number; cols: number };
   };
 };
+
+export type SettingsConfig = ProjectSettings;
 
 export interface PrintSourceOptions {
   printGrid: boolean;

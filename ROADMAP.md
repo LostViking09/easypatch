@@ -8,19 +8,19 @@ This document serves as the central repository for planned features, refined ide
 
 -
 
-### 1. Snippets
-
-- **Goal:** Quickly insert data, like 8 drum channels from a snippet list into the patch
-
-### 3. URL sharing
+### 1. URL sharing
 
 - **Goal:** Allow users to share their patch data via a URL.
 - **Tasks:**
   - Create a URL sharing system.
   - Allow users to share their patch data via a URL.
 
-### 4. Monitor level template
+### 2. Snippets
+
+- **Goal:** Quickly insert data, like 8 drum channels from a snippet list into the patch
+
+### 3. Monitor level template
 
 - **Goal:** Allow users to set a monitor levels for each channel per monitor send.
 
-### 5. Multiple top-level IO boxes
+### 4. Multiple top-level IO boxes

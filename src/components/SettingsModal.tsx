@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-import { SettingsConfig } from '../types';
+import { SettingsConfig, UserSettings } from '../types';
 import { motion } from 'motion/react';
 
 interface SettingsModalProps {
   settings: SettingsConfig;
   setSettings: (s: SettingsConfig) => void;
+  userSettings: UserSettings;
+  setUserSettings: (s: UserSettings) => void;
   onClose: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSettings, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSettings, userSettings, setUserSettings, onClose }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -259,26 +261,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
               <label className="flex items-center gap-3 cursor-pointer border-t pt-3 border-gray-200">
                 <input 
                   type="checkbox" 
-                  checked={settings.confirmSubsnakeOverwrite !== false}
-                  onChange={(e) => setSettings({ ...settings, confirmSubsnakeOverwrite: e.target.checked })}
+                  checked={userSettings.confirmSubsnakeOverwrite !== false}
+                  onChange={(e) => setUserSettings({ ...userSettings, confirmSubsnakeOverwrite: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
                 <div>
                   <div className="font-medium text-sm">Confirm SubSnake port displacement</div>
-                  <div className="text-xs text-gray-500">Show a confirmation popup when mapping a channel to an occupied SubSnake port.</div>
+                  <div className="text-xs text-gray-500">Show a confirmation popup when mapping a channel to an occupied SubSnake port. (Local Preference)</div>
                 </div>
               </label>
 
               <label className="flex items-center gap-3 cursor-pointer border-t pt-3 border-gray-200">
                 <input 
                   type="checkbox" 
-                  checked={settings.animationsEnabled !== false}
-                  onChange={(e) => setSettings({ ...settings, animationsEnabled: e.target.checked })}
+                  checked={userSettings.animationsEnabled !== false}
+                  onChange={(e) => setUserSettings({ ...userSettings, animationsEnabled: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
                 <div>
                   <div className="font-medium text-sm">Enable Animations</div>
-                  <div className="text-xs text-gray-500">Toggle UI animations and transitions across the app.</div>
+                  <div className="text-xs text-gray-500">Toggle UI animations and transitions across the app. (Local Preference)</div>
                 </div>
               </label>
 

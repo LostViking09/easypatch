@@ -23,6 +23,8 @@ interface AppModalsProps {
   subSnakes: any[];
   settings: any;
   setSettings: (val: any) => void;
+  userSettings: any;
+  setUserSettings: (val: any) => void;
   isFastInputOpen: boolean;
   setIsFastInputOpen: (val: boolean) => void;
   isMultiGroupOpen: boolean;
@@ -62,6 +64,7 @@ export function AppModals({
   editingChannel, setEditingChannel,
   inputs, outputs,
   subSnakes, settings, setSettings,
+  userSettings, setUserSettings,
   isFastInputOpen, setIsFastInputOpen,
   isMultiGroupOpen, setIsMultiGroupOpen,
   isMultiColorOpen, setIsMultiColorOpen,
@@ -88,6 +91,7 @@ export function AppModals({
             allChannels={[...inputs, ...outputs]}
             subSnakes={subSnakes}
             settings={settings}
+            userSettings={userSettings}
             onClose={() => setEditingChannel(null)}
             onSave={saveEdit}
             onNavigate={handleNavigateEdit}
@@ -159,6 +163,8 @@ export function AppModals({
           <SettingsModal
             settings={settings}
             setSettings={setSettings}
+            userSettings={userSettings}
+            setUserSettings={setUserSettings}
             onClose={() => setIsSettingsOpen(false)}
           />
         )}
