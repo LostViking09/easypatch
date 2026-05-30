@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Server, ArrowUp, ArrowDown, Edit2, AlertTriangle, Layers, Check } from 'lucide-react';
 import { Stagebox } from '../types';
+import { STAGEBOX_PRESETS } from '../utils/constants';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModalBase } from './ModalBase';
 
@@ -10,14 +11,7 @@ interface StageboxesModalProps {
   onUpdateStageboxes: (newStageboxes: Stagebox[]) => void;
 }
 
-const PRESETS = [
-  { id: 'custom', name: 'Custom' },
-  { id: '8x0', name: '8×0 (8 Inputs)', inRows: 1, inCols: 8, outRows: 0, outCols: 0, inEnabled: true, outEnabled: false },
-  { id: '16x0', name: '16×0 (16 Inputs)', inRows: 2, inCols: 8, outRows: 0, outCols: 0, inEnabled: true, outEnabled: false },
-  { id: '16x8', name: '16×8 (16 In / 8 Out)', inRows: 2, inCols: 8, outRows: 2, outCols: 4, inEnabled: true, outEnabled: true },
-  { id: '24x12', name: '24×12 (24 In / 12 Out)', inRows: 3, inCols: 8, outRows: 3, outCols: 4, inEnabled: true, outEnabled: true },
-  { id: '32x16', name: '32×16 (32 In / 16 Out)', inRows: 4, inCols: 8, outRows: 4, outCols: 4, inEnabled: true, outEnabled: true }
-];
+const allPresets = STAGEBOX_PRESETS.flatMap(g => g.presets);
 
 export const StageboxesModal: React.FC<StageboxesModalProps> = ({
   stageboxes,
@@ -73,7 +67,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
     const activeOutRows = outEnabled ? outputRows : 0;
     const activeOutCols = outEnabled ? outputCols : 0;
 
-    const matched = PRESETS.find(p => 
+    const matched = allPresets.find(p => 
       p.id !== 'custom' &&
       p.inRows === activeInRows &&
       p.inCols === activeInCols &&
@@ -94,7 +88,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
     setPreset(presetId);
     if (presetId === 'custom') return;
 
-    const p = PRESETS.find(pr => pr.id === presetId);
+    const p = allPresets.find(pr => pr.id === presetId);
     if (p) {
       setInEnabled(p.inEnabled);
       if (p.inEnabled) {
@@ -256,8 +250,12 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
                     onChange={e => handlePresetChange(e.target.value)}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm text-slate-700"
                   >
-                    {PRESETS.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                    {STAGEBOX_PRESETS.map((group, gIdx) => (
+                      <optgroup key={gIdx} label={group.groupName}>
+                        {group.presets.map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>
