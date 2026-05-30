@@ -5,27 +5,8 @@ import { defaultSettings, initialInputs, initialOutputs, PALETTES, defaultUserSe
 import { db } from '../services/db';
 import { useHistory } from './useHistory';
 
-export const recalculateHardwareMapping = (channels: Channel[], stageboxes: Stagebox[], isInput: boolean): Channel[] => {
-  let currentIndex = 0;
-  const list = [...channels];
-  for (const box of stageboxes) {
-    const capacity = isInput ? box.grid.input.rows * box.grid.input.cols : box.grid.output.rows * box.grid.output.cols;
-    for (let i = 0; i < capacity; i++) {
-      if (currentIndex < list.length) {
-        list[currentIndex] = {
-          ...list[currentIndex],
-          stageboxId: box.id,
-          stageboxPort: i + 1
-        };
-        currentIndex++;
-      }
-    }
-  }
-  for (let i = currentIndex; i < list.length; i++) {
-     list[i] = { ...list[i], stageboxId: undefined, stageboxPort: undefined };
-  }
-  return list;
-};
+import { recalculateHardwareMapping, migrateChannelsToNewStageboxes } from '../utils/stageboxOperations';
+import { sanitizeStereoLinks, handleDropLogic, saveEditLogic } from '../utils/channelOperations';
 
 export function usePatchState(projectId?: string) {
   const [title, setTitle] = useState('EasyPatch');
@@ -179,308 +160,25 @@ export function usePatchState(projectId?: string) {
     });
   }, [title, notes, settings, inputs, outputs, subSnakes, stageboxes, projectId, debouncedSave]);
 
-  const sanitizeStereoLinks = (channels: Channel[]): Channel[] => {
-    const list = channels.map(c => ({ ...c }));
-    for (let i = 0; i < list.length; i++) {
-      const ch = list[i];
-      if (ch.stereoLink === 'next') {
-        const nextCh = list[i + 1];
-        if (!nextCh || nextCh.stereoLink !== 'prev') {
-          ch.stereoLink = undefined;
-        }
-      } else if (ch.stereoLink === 'prev') {
-        const prevCh = list[i - 1];
-        if (!prevCh || prevCh.stereoLink !== 'next') {
-          ch.stereoLink = undefined;
-        }
-      }
-    }
-    return list;
-  };
+
 
   const handleDrop = (sourceId: string, targetId: string): string | null => {
-    if (sourceId === targetId) return null;
-    const sourceIsInput = sourceId.startsWith('in-');
-    const targetIsInput = targetId.startsWith('in-');
-    if (sourceIsInput !== targetIsInput) return null;
-
-    const list = sourceIsInput ? [...inputs] : [...outputs];
-    const sourceIdx = list.findIndex(c => c.id === sourceId);
-    const targetIdx = list.findIndex(c => c.id === targetId);
-    if (sourceIdx === -1 || targetIdx === -1) return null;
-
-    const sourceChannel = list[sourceIdx];
-    let warning: string | null = null;
-
-    // Check if the source channel is stereo linked
-    if (sourceChannel.stereoLink) {
-      const isNext = sourceChannel.stereoLink === 'next';
-      const srcFirst = isNext ? sourceIdx : sourceIdx - 1;
-      const srcSecond = srcFirst + 1;
-
-      if (srcFirst < 0 || srcSecond >= list.length) return null;
-
-      // Determine the target range
-      let tgtFirst = isNext ? targetIdx : targetIdx - 1;
-      tgtFirst = Math.max(0, Math.min(tgtFirst, list.length - 2));
-      const tgtSecond = tgtFirst + 1;
-
-      // If source and target pairs are the same, do nothing
-      if (srcFirst === tgtFirst) return null;
-
-      // Perform pair swap
-      const tempFirst = list[srcFirst];
-      const tempSecond = list[srcSecond];
-
-      list[srcFirst] = { ...list[tgtFirst], number: srcFirst + 1 };
-      list[srcSecond] = { ...list[tgtSecond], number: srcSecond + 1 };
-      list[tgtFirst] = { ...tempFirst, number: tgtFirst + 1 };
-      list[tgtSecond] = { ...tempSecond, number: tgtSecond + 1 };
-
-      // Check odd-even pairing mismatch in the new target position (1-based index)
-      if ((tgtFirst + 1) % 2 === 0) {
-        warning = `Consoles usually require odd+even pairings (e.g., 1-2). Moving here forms Ch ${tgtFirst + 1}-${tgtFirst + 2} (${sourceIsInput ? 'Input' : 'Output'}).`;
-      }
-
-      // Sanitize stereo links to ensure robustness
-      let sanitized = sanitizeStereoLinks(list);
-      sanitized = recalculateHardwareMapping(sanitized, stageboxes, sourceIsInput);
-      if (sourceIsInput) setInputs(sanitized);
-      else setOutputs(sanitized);
-
-      return warning;
-    } else {
-      // Normal single channel swap
-      const temp = list[sourceIdx];
-      list[sourceIdx] = { ...list[targetIdx], number: sourceIdx + 1 };
-      list[targetIdx] = { ...temp, number: targetIdx + 1 };
-
-      // Sanitize stereo links to ensure robustness
-      let sanitized = sanitizeStereoLinks(list);
-      sanitized = recalculateHardwareMapping(sanitized, stageboxes, sourceIsInput);
-      if (sourceIsInput) setInputs(sanitized);
-      else setOutputs(sanitized);
-
-      return null;
-    }
+    const { newInputs, newOutputs, warning } = handleDropLogic(sourceId, targetId, inputs, outputs, stageboxes);
+    
+    if (newInputs) setInputs(newInputs);
+    if (newOutputs) setOutputs(newOutputs);
+    
+    return warning;
   };
 
   const saveEdit = (updatedChannel: Channel) => {
-    const isInput = updatedChannel.type === 'in';
-    const list = isInput ? [...inputs] : [...outputs];
+    const { finalInputs, finalOutputs } = saveEditLogic(updatedChannel, inputs, outputs);
     
-    // Find the original channel to see if the stereoLink status changed
-    const originalIdx = list.findIndex(c => c.id === updatedChannel.id);
-    if (originalIdx === -1) return;
-    const originalChannel = list[originalIdx];
-    
-    // We will build a map of updates
-    const updates: Record<string, Partial<Channel>> = {};
-    
-    // Helper to format stereo names
-    const formatStereoName = (name: string, suffix: ' L' | ' R'): string => {
-      const trimmed = name.trim();
-      if (!trimmed) return '';
-      const base = trimmed.replace(/\s+[LRlr]$/, '');
-      return `${base}${suffix}`;
-    };
-    
-    // 1. Handle breaking old links first
-    if (originalChannel.stereoLink === 'next') {
-      const partnerIdx = originalIdx + 1;
-      if (partnerIdx < list.length && list[partnerIdx].stereoLink === 'prev') {
-        updates[list[partnerIdx].id] = { stereoLink: undefined };
-      }
-    } else if (originalChannel.stereoLink === 'prev') {
-      const partnerIdx = originalIdx - 1;
-      if (partnerIdx >= 0 && list[partnerIdx].stereoLink === 'next') {
-        updates[list[partnerIdx].id] = { stereoLink: undefined };
-      }
-    }
-    
-    // Start with the basic updated channel parameters
-    let finalSourceChannel = { ...updatedChannel };
-    
-    // 2. Handle establishing new links & synchronizing group/color
-    if (updatedChannel.stereoLink === 'next') {
-      const partnerIdx = originalIdx + 1;
-      if (partnerIdx < list.length) {
-        const partner = list[partnerIdx];
-        
-        // If partner was previously linked to someone else (e.g. partner+1), break that link too
-        if (partner.stereoLink === 'next') {
-          const partnersPartnerIdx = partnerIdx + 1;
-          if (partnersPartnerIdx < list.length && list[partnersPartnerIdx].stereoLink === 'prev') {
-            updates[list[partnersPartnerIdx].id] = { stereoLink: undefined };
-          }
-        }
-        
-        const isNewLink = originalChannel.stereoLink !== 'next';
-        const partnerHasNoData = partner.name.trim() === '';
-        
-        if (isNewLink && partnerHasNoData) {
-          // Copy data, and format both names with L/R
-          const sName = formatStereoName(updatedChannel.name, ' L');
-          const pName = formatStereoName(updatedChannel.name, ' R');
-          
-          finalSourceChannel.name = sName;
-          updates[partner.id] = {
-            stereoLink: 'prev',
-            name: pName,
-            mic: updatedChannel.mic,
-            stand: updatedChannel.stand,
-            notes: updatedChannel.notes,
-            group: updatedChannel.group,
-            color: updatedChannel.color
-          };
-        } else {
-          // Standard link creation (partner already has data)
-          updates[partner.id] = {
-            stereoLink: 'prev',
-            group: updatedChannel.group,
-            color: updatedChannel.color
-          };
-        }
-      }
-    } else if (updatedChannel.stereoLink === 'prev') {
-      const partnerIdx = originalIdx - 1;
-      if (partnerIdx >= 0) {
-        const partner = list[partnerIdx];
-        
-        // If partner was previously linked to someone else (e.g. partner-1), break that link too
-        if (partner.stereoLink === 'prev') {
-          const partnersPartnerIdx = partnerIdx - 1;
-          if (partnersPartnerIdx >= 0 && list[partnersPartnerIdx].stereoLink === 'next') {
-            updates[list[partnersPartnerIdx].id] = { stereoLink: undefined };
-          }
-        }
-        
-        const isNewLink = originalChannel.stereoLink !== 'prev';
-        const partnerHasNoData = partner.name.trim() === '';
-        
-        if (isNewLink && partnerHasNoData) {
-          // Copy data, and format both names with L/R
-          const sName = formatStereoName(updatedChannel.name, ' R');
-          const pName = formatStereoName(updatedChannel.name, ' L');
-          
-          finalSourceChannel.name = sName;
-          updates[partner.id] = {
-            stereoLink: 'next',
-            name: pName,
-            mic: updatedChannel.mic,
-            stand: updatedChannel.stand,
-            notes: updatedChannel.notes,
-            group: updatedChannel.group,
-            color: updatedChannel.color
-          };
-        } else {
-          // Standard link creation (partner already has data)
-          updates[partner.id] = {
-            stereoLink: 'next',
-            group: updatedChannel.group,
-            color: updatedChannel.color
-          };
-        }
-      }
-    }
-    
-    // Write source updates
-    updates[finalSourceChannel.id] = {
-      name: finalSourceChannel.name,
-      mic: finalSourceChannel.mic,
-      stand: finalSourceChannel.stand,
-      notes: finalSourceChannel.notes,
-      group: finalSourceChannel.group,
-      color: finalSourceChannel.color,
-      stereoLink: finalSourceChannel.stereoLink,
-      subSnakeId: finalSourceChannel.subSnakeId,
-      subSnakeChannel: finalSourceChannel.subSnakeChannel
-    };
-    
-    // 3. If the channel is already linked, propagate editing changes (names, mic, stand, notes, group, color)
-    if (updatedChannel.stereoLink === originalChannel.stereoLink && updatedChannel.stereoLink) {
-      const partnerIdx = updatedChannel.stereoLink === 'next' ? originalIdx + 1 : originalIdx - 1;
-      if (partnerIdx >= 0 && partnerIdx < list.length) {
-        const partner = list[partnerIdx];
-        
-        let nameUpdate = {};
-        if (updatedChannel.name !== originalChannel.name) {
-          if (updatedChannel.stereoLink === 'next') {
-            // Edited channel is Left, partner is Right
-            const sName = formatStereoName(updatedChannel.name, ' L');
-            const pName = formatStereoName(updatedChannel.name, ' R');
-            
-            updates[updatedChannel.id] = { ...updates[updatedChannel.id], name: sName };
-            nameUpdate = { name: pName };
-          } else {
-            // Edited channel is Right, partner is Left
-            const sName = formatStereoName(updatedChannel.name, ' R');
-            const pName = formatStereoName(updatedChannel.name, ' L');
-            
-            updates[updatedChannel.id] = { ...updates[updatedChannel.id], name: sName };
-            nameUpdate = { name: pName };
-          }
-        }
-        
-        updates[partner.id] = {
-          ...updates[partner.id],
-          ...nameUpdate,
-          mic: updatedChannel.mic,
-          stand: updatedChannel.stand,
-          notes: updatedChannel.notes,
-          group: updatedChannel.group,
-          color: updatedChannel.color
-        };
-      }
-    }
-    
-    // Apply all updates to the list
-    const newList = list.map(ch => {
-      if (updates[ch.id]) {
-        return { ...ch, ...updates[ch.id] };
-      }
-      return ch;
-    });
-    
-    // Strict port uniqueness: clear the same subsnake/channel combination if mapped elsewhere
-    const sId = updatedChannel.subSnakeId;
-    const sChan = updatedChannel.subSnakeChannel;
-
-    let finalInputs = inputs;
-    let finalOutputs = outputs;
-
-    if (sId && sChan) {
-      finalInputs = (isInput ? newList : inputs).map(ch => {
-        if (ch.id !== updatedChannel.id && ch.subSnakeId === sId && ch.subSnakeChannel === sChan) {
-          return { ...ch, subSnakeId: undefined, subSnakeChannel: undefined };
-        }
-        return ch;
-      });
-      
-      finalOutputs = (!isInput ? newList : outputs).map(ch => {
-        if (ch.id !== updatedChannel.id && ch.subSnakeId === sId && ch.subSnakeChannel === sChan) {
-          return { ...ch, subSnakeId: undefined, subSnakeChannel: undefined };
-        }
-        return ch;
-      });
-
-      setPatchData(prev => ({
-        ...prev,
-        inputs: finalInputs,
-        outputs: finalOutputs
-      }));
-    } else {
-      if (isInput) {
-        finalInputs = newList;
-      } else {
-        finalOutputs = newList;
-      }
-      setPatchData(prev => ({
-        ...prev,
-        inputs: finalInputs,
-        outputs: finalOutputs
-      }));
-    }
+    setPatchData(prev => ({
+      ...prev,
+      inputs: finalInputs,
+      outputs: finalOutputs
+    }));
 
     return { finalInputs, finalOutputs };
   };
@@ -645,57 +343,8 @@ export function usePatchState(projectId?: string) {
   };
 
   const handleUpdateStageboxes = (newStageboxes: Stagebox[]) => {
-    const migrateChannels = (oldChannels: Channel[], isInput: boolean): Channel[] => {
-      const oldChannelsMap: Record<string, Channel> = {};
-      oldChannels.forEach(ch => {
-        if (ch.stageboxId && ch.stageboxPort) {
-          oldChannelsMap[`${ch.stageboxId}-${ch.stageboxPort}`] = ch;
-        }
-      });
-
-      const newChannels: Channel[] = [];
-      let absoluteNumber = 1;
-
-      newStageboxes.forEach(box => {
-        const cols = isInput ? box.grid.input.cols : box.grid.output.cols;
-        const rows = isInput ? box.grid.input.rows : box.grid.output.rows;
-        const capacity = cols * rows;
-
-        for (let port = 1; port <= capacity; port++) {
-          const key = `${box.id}-${port}`;
-          const oldCh = oldChannelsMap[key];
-
-          if (oldCh) {
-            newChannels.push({
-              ...oldCh,
-              number: absoluteNumber,
-              stageboxId: box.id,
-              stageboxPort: port
-            });
-          } else {
-            newChannels.push({
-              id: `${isInput ? 'in' : 'out'}-${box.id}-${port}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-              type: isInput ? 'in' : 'out',
-              number: absoluteNumber,
-              name: '',
-              mic: '',
-              stand: '',
-              notes: '',
-              color: '#ffffff',
-              group: '',
-              stageboxId: box.id,
-              stageboxPort: port
-            });
-          }
-          absoluteNumber++;
-        }
-      });
-
-      return newChannels;
-    };
-
-    let newInputs = migrateChannels(inputs, true);
-    let newOutputs = migrateChannels(outputs, false);
+    let newInputs = migrateChannelsToNewStageboxes(inputs, newStageboxes, true);
+    let newOutputs = migrateChannelsToNewStageboxes(outputs, newStageboxes, false);
 
     // Sanitize stereo links
     let sanitizedInputs = sanitizeStereoLinks(newInputs);
