@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Edit2, Check, Network, HelpCircle, Grid, AlertTriangle, Unlink, Pipette } from 'lucide-react';
 import { Channel, SubSnake, SettingsConfig } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { PALETTES, SUB_SNAKE_PRESETS } from '../utils/constants';
-import { hexToRgba } from '../utils/colors';
 import { ModalBase } from './ModalBase';
-import { ColorPicker } from './ColorPicker';
+import { CreateSubSnakeForm } from './SubSnakes/CreateSubSnakeForm';
+import { SubSnakeList } from './SubSnakes/SubSnakeList';
+import { DeleteSubSnakeConfirm, ClearSubSnakeConfirm } from './SubSnakes/DeleteSubSnakeConfirm';
 
 interface SubSnakesModalProps {
   subSnakes: SubSnake[];
@@ -19,9 +19,6 @@ interface SubSnakesModalProps {
   onClearSubSnakeAssignments: (id: string) => void;
 }
 
-const PRESETS = SUB_SNAKE_PRESETS;
-
-
 export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
   subSnakes,
   inputs,
@@ -33,130 +30,11 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
   onDeleteSubSnake,
   onClearSubSnakeAssignments,
 }) => {
-  const [newSnakeName, setNewSnakeName] = useState('');
-  const [newSnakePreset, setNewSnakePreset] = useState('dynamic');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [subSnakeToDelete, setSubSnakeToDelete] = useState<SubSnake | null>(null);
   const [subSnakeToClear, setSubSnakeToClear] = useState<SubSnake | null>(null);
-  const defaultColor = PALETTES[settings.palette][0]?.value || '#017fba';
-  const [newSnakeColor, setNewSnakeColor] = useState(defaultColor);
-  const [editingColor, setEditingColor] = useState(defaultColor);
-  
-  // Custom grid sizes for creation
-  const [isInputEnabled, setIsInputEnabled] = useState(false);
-  const [isOutputEnabled, setIsOutputEnabled] = useState(false);
-  const [inputGrid, setInputGrid] = useState({ rows: 2, cols: 4 });
-  const [outputGrid, setOutputGrid] = useState({ rows: 2, cols: 4 });
 
-  // Editing state for existing subsnakes
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
-  const [editPreset, setEditPreset] = useState('dynamic');
-  const [editIsInputEnabled, setEditIsInputEnabled] = useState(false);
-  const [editIsOutputEnabled, setEditIsOutputEnabled] = useState(false);
-  const [editInputGrid, setEditInputGrid] = useState({ rows: 2, cols: 4 });
-  const [editOutputGrid, setEditOutputGrid] = useState({ rows: 2, cols: 4 });
-
-  const handlePresetChange = (presetValue: string, isEdit: boolean) => {
-    if (isEdit) setEditPreset(presetValue);
-    else setNewSnakePreset(presetValue);
-
-    const preset = PRESETS.find(p => p.value === presetValue);
-    if (preset && preset.value !== 'dynamic' && preset.value !== 'custom') {
-      const hasIn = preset.in && (preset.in.rows > 0 && preset.in.cols > 0);
-      const hasOut = preset.out && (preset.out.rows > 0 && preset.out.cols > 0);
-      
-      if (isEdit) {
-        setEditIsInputEnabled(!!hasIn);
-        if (hasIn) setEditInputGrid(preset.in!);
-        setEditIsOutputEnabled(!!hasOut);
-        if (hasOut) setEditOutputGrid(preset.out!);
-      } else {
-        setIsInputEnabled(!!hasIn);
-        if (hasIn) setInputGrid(preset.in!);
-        setIsOutputEnabled(!!hasOut);
-        if (hasOut) setOutputGrid(preset.out!);
-      }
-    } else if (preset && preset.value === 'dynamic') {
-      if (isEdit) {
-        setEditIsInputEnabled(false);
-        setEditIsOutputEnabled(false);
-      } else {
-        setIsInputEnabled(false);
-        setIsOutputEnabled(false);
-      }
-    } else if (preset && preset.value === 'custom') {
-      if (isEdit) {
-        setEditIsInputEnabled(true);
-        setEditIsOutputEnabled(true);
-      } else {
-        setIsInputEnabled(true);
-        setIsOutputEnabled(true);
-      }
-    }
-  };
-
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSnakeName.trim()) return;
-
-    let grid = undefined;
-    if (newSnakePreset !== 'dynamic') {
-      grid = {
-        input: isInputEnabled ? inputGrid : { rows: 0, cols: 0 },
-        output: isOutputEnabled ? outputGrid : { rows: 0, cols: 0 },
-      };
-    }
-
-    onAddSubSnake(newSnakeName.trim(), newSnakeColor, grid);
-    setNewSnakeName('');
-    setNewSnakePreset('dynamic');
-    setNewSnakeColor(defaultColor);
-    setIsInputEnabled(false);
-    setIsOutputEnabled(false);
-  };
-
-  const startEditing = (snake: SubSnake) => {
-    setEditingId(snake.id);
-    setEditingName(snake.name);
-    setEditingColor(snake.color || defaultColor);
-    
-    if (!snake.grid) {
-      setEditPreset('dynamic');
-      setEditIsInputEnabled(false);
-      setEditIsOutputEnabled(false);
-    } else {
-      const { input, output } = snake.grid;
-      const match = PRESETS.find(
-        p => p.value !== 'dynamic' && p.value !== 'custom' &&
-             p.in?.rows === input.rows && p.in?.cols === input.cols &&
-             p.out?.rows === output.rows && p.out?.cols === output.cols
-      );
-      setEditPreset(match ? match.value : 'custom');
-      setEditIsInputEnabled(input.rows > 0 && input.cols > 0);
-      setEditIsOutputEnabled(output.rows > 0 && output.cols > 0);
-      setEditInputGrid(input.rows > 0 && input.cols > 0 ? input : { rows: 3, cols: 8 });
-      setEditOutputGrid(output.rows > 0 && output.cols > 0 ? output : { rows: 3, cols: 4 });
-    }
-  };
-
-  const saveEditing = (id: string) => {
-    if (!editingName.trim()) return;
-    
-    let grid = undefined;
-    if (editPreset !== 'dynamic') {
-      grid = {
-        input: editIsInputEnabled ? editInputGrid : { rows: 0, cols: 0 },
-        output: editIsOutputEnabled ? editOutputGrid : { rows: 0, cols: 0 },
-      };
-    }
-
-    onUpdateSubSnake(id, editingName.trim(), editingColor, grid);
-    setEditingId(null);
-  };
-
-  const getMappedCount = (snakeId: string, type?: 'in' | 'out') => {
-    if (type === 'in') return inputs.filter(c => c.subSnakeId === snakeId).length;
-    if (type === 'out') return outputs.filter(c => c.subSnakeId === snakeId).length;
+  const getMappedCount = (snakeId: string) => {
     return inputs.filter(c => c.subSnakeId === snakeId).length + outputs.filter(c => c.subSnakeId === snakeId).length;
   };
 
@@ -183,333 +61,21 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
 
         {/* Content Area */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1 min-h-0 flex flex-col md:flex-row gap-6">
-          {/* Left panel: Add new SubSnake */}
-          <div className="md:w-5/12 bg-slate-50 p-4 rounded-xl border border-slate-200 h-fit space-y-4">
-            <h4 className="font-bold text-slate-800 text-sm tracking-wide uppercase flex items-center gap-1.5 border-b pb-2">
-              <Plus className="w-4 h-4 text-indigo-600" /> Create SubSnake
-            </h4>
-            
-            <form onSubmit={handleAdd} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">SubSnake Name</label>
-                <input
-                  type="text"
-                  value={newSnakeName}
-                  onChange={e => setNewSnakeName(e.target.value)}
-                  maxLength={6}
-                  placeholder="e.g. Stage Left, Drums..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Color theme</label>
-                <ColorPicker
-                  value={newSnakeColor}
-                  onChange={setNewSnakeColor}
-                  palette={PALETTES[settings.palette]}
-                  size="md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex items-center gap-1">
-                  <Grid className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Port Layout Presets</span>
-                </label>
-                <select 
-                  value={newSnakePreset}
-                  onChange={(e) => handlePresetChange(e.target.value, false)}
-                  className="w-full px-3 py-2 border rounded-md font-medium bg-white shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
-                >
-                  {PRESETS.map(p => <option key={p.value} value={p.value}>{p.name}</option>)}
-                </select>
-              </div>
-
-              {newSnakePreset === 'custom' && (
-                <div className="space-y-3 pt-2 border-t border-slate-200">
-                  {/* INPUT */}
-                  <div className={`p-3 rounded-lg border transition-all ${isInputEnabled ? 'bg-white border-slate-300 shadow-sm' : 'bg-transparent border-slate-200 opacity-60'}`}>
-                    <label className="flex items-center gap-2 font-bold text-xxs text-slate-700 uppercase tracking-wider cursor-pointer select-none mb-2">
-                      <input 
-                        type="checkbox"
-                        checked={isInputEnabled}
-                        onChange={(e) => setIsInputEnabled(e.target.checked)}
-                        className="w-3.5 h-3.5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
-                      />
-                      <span>Enable INPUT</span>
-                    </label>
-                    {isInputEnabled && (
-                      <div className="space-y-1.5">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="block text-xxs text-gray-500 mb-0.5">Columns</label>
-                            <input type="number" min="1" max="32" value={inputGrid.cols} onChange={e => setInputGrid({ ...inputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) })} className="w-full px-2 py-1 border rounded text-xs" />
-                          </div>
-                          <div>
-                            <label className="block text-xxs text-gray-500 mb-0.5">Rows</label>
-                            <input type="number" min="1" max="32" value={inputGrid.rows} onChange={e => setInputGrid({ ...inputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) })} className="w-full px-2 py-1 border rounded text-xs" />
-                          </div>
-                        </div>
-                        <div className="text-xxs font-semibold text-indigo-700">
-                          Total: {inputGrid.cols * inputGrid.rows} channels
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* OUTPUT */}
-                  <div className={`p-3 rounded-lg border transition-all ${isOutputEnabled ? 'bg-white border-slate-300 shadow-sm' : 'bg-transparent border-slate-200 opacity-60'}`}>
-                    <label className="flex items-center gap-2 font-bold text-xxs text-slate-700 uppercase tracking-wider cursor-pointer select-none mb-2">
-                      <input 
-                        type="checkbox"
-                        checked={isOutputEnabled}
-                        onChange={(e) => setIsOutputEnabled(e.target.checked)}
-                        className="w-3.5 h-3.5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
-                      />
-                      <span>Enable OUTPUT</span>
-                    </label>
-                    {isOutputEnabled && (
-                      <div className="space-y-1.5">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="block text-xxs text-gray-500 mb-0.5">Columns</label>
-                            <input type="number" min="1" max="32" value={outputGrid.cols} onChange={e => setOutputGrid({ ...outputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) })} className="w-full px-2 py-1 border rounded text-xs" />
-                          </div>
-                          <div>
-                            <label className="block text-xxs text-gray-500 mb-0.5">Rows</label>
-                            <input type="number" min="1" max="32" value={outputGrid.rows} onChange={e => setOutputGrid({ ...outputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) })} className="w-full px-2 py-1 border rounded text-xs" />
-                          </div>
-                        </div>
-                        <div className="text-xxs font-semibold text-indigo-700">
-                          Total: {outputGrid.cols * outputGrid.rows} channels
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <motion.button
-                type="submit"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded font-bold text-sm transition-colors shadow-sm"
-              >
-                <Plus className="w-4 h-4" /> Add SubSnake
-              </motion.button>
-            </form>
-          </div>
-
-          {/* Right panel: SubSnake List */}
-          <div className="md:w-7/12 flex flex-col flex-1">
-            <h4 className="font-bold text-slate-800 text-sm tracking-wide uppercase border-b pb-2 mb-3">
-              Active SubSnakes ({subSnakes.length})
-            </h4>
-
-            {subSnakes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center p-8 bg-slate-50 rounded-xl border border-dashed border-slate-350 text-slate-500 flex-1">
-                <HelpCircle className="w-8 h-8 mb-2 text-slate-400" />
-                <p className="text-sm font-medium">No SubSnakes created yet.</p>
-                <p className="text-xs text-slate-400 mt-1 max-w-[12.5rem]">Create one on the left to map physical stage boxes.</p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[45vh] md:max-h-none overflow-y-auto pr-1">
-                <AnimatePresence initial={false}>
-                  {subSnakes.map(snake => {
-                    const isEditing = editingId === snake.id;
-                    const inMapped = getMappedCount(snake.id, 'in');
-                    const outMapped = getMappedCount(snake.id, 'out');
-                    
-                    return (
-                      <motion.div
-                        key={snake.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        className={`p-3 border rounded-xl flex items-start justify-between gap-4 transition-all ${
-                          isEditing 
-                            ? 'border-indigo-500 bg-indigo-50/10 ring-2 ring-indigo-500/20 shadow-md flex-col' 
-                            : 'border-slate-205 hover:border-slate-300 hover:shadow-xs bg-white'
-                        }`}
-                      >
-                        <div className="flex-1 min-w-0 w-full">
-                          {isEditing ? (
-                            <form
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                saveEditing(snake.id);
-                              }}
-                              className="space-y-3 w-full"
-                            >
-                              <div>
-                                <label className="block text-xxs font-bold text-slate-500 uppercase mb-1">Name</label>
-                                <input
-                                  type="text"
-                                  value={editingName}
-                                  onChange={e => setEditingName(e.target.value)}
-                                  maxLength={6}
-                                  className="w-full px-2 py-1 text-sm border rounded focus:outline-indigo-550 focus:ring-1 focus:ring-indigo-500 font-bold"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-xxs font-bold text-slate-505 uppercase mb-1">Color theme</label>
-                                <ColorPicker
-                                  value={editingColor}
-                                  onChange={setEditingColor}
-                                  palette={PALETTES[settings.palette]}
-                                  size="sm"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label className="block text-xxs font-bold text-slate-500 uppercase mb-1">Layout</label>
-                                <select 
-                                  value={editPreset}
-                                  onChange={(e) => handlePresetChange(e.target.value, true)}
-                                  className="w-full px-2 py-1 border rounded-md font-medium bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-xs"
-                                >
-                                  {PRESETS.map(p => <option key={p.value} value={p.value}>{p.name}</option>)}
-                                </select>
-                              </div>
-
-                              {editPreset === 'custom' && (
-                                <div className="grid grid-cols-2 gap-3 pt-1">
-                                  {/* Edit INPUT */}
-                                  <div className={`p-2 rounded border ${editIsInputEnabled ? 'bg-white border-slate-300' : 'bg-transparent border-slate-200 opacity-60'}`}>
-                                    <label className="flex items-center gap-1.5 font-bold text-tiny text-slate-700 uppercase tracking-wider cursor-pointer mb-1">
-                                      <input type="checkbox" checked={editIsInputEnabled} onChange={(e) => setEditIsInputEnabled(e.target.checked)} className="w-3 h-3 text-indigo-600 rounded focus:ring-indigo-500" />
-                                      <span>INPUT</span>
-                                    </label>
-                                    {editIsInputEnabled && (
-                                      <div className="space-y-1">
-                                        <div className="flex gap-2">
-                                          <input type="number" min="1" max="32" value={editInputGrid.cols} onChange={e => setEditInputGrid({ ...editInputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) })} className="w-1/2 px-1 py-0.5 border rounded text-xs" title="Cols" />
-                                          <input type="number" min="1" max="32" value={editInputGrid.rows} onChange={e => setEditInputGrid({ ...editInputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) })} className="w-1/2 px-1 py-0.5 border rounded text-xs" title="Rows" />
-                                        </div>
-                                        <div className="text-tiny font-semibold text-indigo-700">
-                                          Total: {editInputGrid.cols * editInputGrid.rows} ch
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Edit OUTPUT */}
-                                  <div className={`p-2 rounded border ${editIsOutputEnabled ? 'bg-white border-slate-300' : 'bg-transparent border-slate-200 opacity-60'}`}>
-                                    <label className="flex items-center gap-1.5 font-bold text-tiny text-slate-700 uppercase tracking-wider cursor-pointer mb-1">
-                                      <input type="checkbox" checked={editIsOutputEnabled} onChange={(e) => setEditIsOutputEnabled(e.target.checked)} className="w-3 h-3 text-indigo-600 rounded focus:ring-indigo-500" />
-                                      <span>OUTPUT</span>
-                                    </label>
-                                    {editIsOutputEnabled && (
-                                      <div className="space-y-1">
-                                        <div className="flex gap-2">
-                                          <input type="number" min="1" max="32" value={editOutputGrid.cols} onChange={e => setEditOutputGrid({ ...editOutputGrid, cols: Math.max(0, parseInt(e.target.value) || 0) })} className="w-1/2 px-1 py-0.5 border rounded text-xs" title="Cols" />
-                                          <input type="number" min="1" max="32" value={editOutputGrid.rows} onChange={e => setEditOutputGrid({ ...editOutputGrid, rows: Math.max(0, parseInt(e.target.value) || 0) })} className="w-1/2 px-1 py-0.5 border rounded text-xs" title="Rows" />
-                                        </div>
-                                        <div className="text-tiny font-semibold text-indigo-700">
-                                          Total: {editOutputGrid.cols * editOutputGrid.rows} ch
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              <div className="flex justify-end gap-2 pt-2 border-t">
-                                <motion.button
-                                  type="button"
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => setEditingId(null)}
-                                  className="px-3 py-1.5 text-xs font-bold text-slate-655 bg-slate-100 hover:bg-slate-205 rounded-md"
-                                >
-                                  Cancel
-                                </motion.button>
-                                <motion.button
-                                  type="submit"
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-md"
-                                >
-                                  <Check className="w-3 h-3" /> Save
-                                </motion.button>
-                              </div>
-                            </form>
-                          ) : (
-                            <div className="flex flex-col h-full justify-between">
-                              <div className="font-bold text-slate-800 text-sm truncate flex items-center gap-2">
-                                {snake.color && snake.color !== '#ffffff' && (
-                                  <span 
-                                    className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0"
-                                    style={{ backgroundColor: snake.color }}
-                                  />
-                                )}
-                                <span>{snake.name}</span>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                                <span className="text-xxs text-slate-500 font-medium">
-                                  {snake.grid ? (
-                                    <>
-                                      IN: {snake.grid.input.rows * snake.grid.input.cols > 0 ? `${snake.grid.input.cols}×${snake.grid.input.rows}` : '0'} 
-                                      <span className="mx-1 text-slate-300">|</span> 
-                                      OUT: {snake.grid.output.rows * snake.grid.output.cols > 0 ? `${snake.grid.output.cols}×${snake.grid.output.rows}` : '0'}
-                                    </>
-                                  ) : 'Dynamic (Auto-size)'}
-                                </span>
-                                <span className="w-1 h-1 bg-slate-300 rounded-full" />
-                                <div className="flex gap-1.5">
-                                  {inMapped > 0 && <span className="text-tiny font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">{inMapped} IN</span>}
-                                  {outMapped > 0 && <span className="text-tiny font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">{outMapped} OUT</span>}
-                                  {inMapped === 0 && outMapped === 0 && <span className="text-tiny font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">0 mapped</span>}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        {!isEditing && (
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => startEditing(snake)}
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-650 rounded-lg border border-slate-200 transition-colors"
-                              title="Edit SubSnake"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </motion.button>
-                            {(inMapped > 0 || outMapped > 0) && (
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => setSubSnakeToClear(snake)}
-                                className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-650 rounded-lg border border-amber-200 transition-colors"
-                                title="Clear Assignments"
-                              >
-                                <Unlink className="w-4 h-4" />
-                              </motion.button>
-                            )}
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => setSubSnakeToDelete(snake)}
-                              className="p-1.5 bg-red-50 hover:bg-red-100 text-red-650 rounded-lg border border-red-200 transition-colors"
-                              title="Delete SubSnake"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </motion.button>
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
-            )}
-          </div>
+          <CreateSubSnakeForm
+            settings={settings}
+            onAddSubSnake={onAddSubSnake}
+          />
+          <SubSnakeList
+            subSnakes={subSnakes}
+            settings={settings}
+            inputs={inputs}
+            outputs={outputs}
+            editingId={editingId}
+            setEditingId={setEditingId}
+            onUpdateSubSnake={onUpdateSubSnake}
+            onDeleteRequest={setSubSnakeToDelete}
+            onClearRequest={setSubSnakeToClear}
+          />
         </div>
 
         {/* Footer */}
@@ -531,123 +97,27 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
         </motion.button>
       </div>
         </div>
-      </ModalBase>    {/* Delete Confirmation In-App Modal */}
-    <AnimatePresence>
-      {subSnakeToDelete && (
-        <ModalBase
-          onClose={() => setSubSnakeToDelete(null)}
-          onSubmit={() => {
-            onDeleteSubSnake(subSnakeToDelete.id);
-            setSubSnakeToDelete(null);
-          }}
-          maxWidthClass="max-w-md"
-          zIndexClass="z-[60]"
-        >
-          {/* Header */}
-          <div className="bg-red-700 text-white px-5 py-3.5 flex justify-between items-center">
-            <h3 className="font-bold flex items-center gap-2 text-sm md:text-base">
-              <AlertTriangle className="w-5 h-5 text-red-100 animate-pulse" /> Delete SubSnake?
-            </h3>
-            <button
-              type="button"
-              onClick={() => setSubSnakeToDelete(null)}
-              className="text-red-205 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+      </ModalBase>      {/* Delete Confirmation In-App Modal */}
+      <DeleteSubSnakeConfirm
+        subSnake={subSnakeToDelete}
+        mappedCount={subSnakeToDelete ? getMappedCount(subSnakeToDelete.id) : 0}
+        onClose={() => setSubSnakeToDelete(null)}
+        onConfirm={(id) => {
+          onDeleteSubSnake(id);
+          setSubSnakeToDelete(null);
+        }}
+      />
 
-          {/* Content */}
-          <div className="p-5 space-y-4">
-            <p className="text-sm text-slate-655 leading-relaxed">
-              Are you sure you want to delete SubSnake <strong className="text-slate-800">"{subSnakeToDelete.name}"</strong>?
-            </p>
-            <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-100 rounded-lg text-red-800 text-xs font-semibold leading-relaxed">
-              <Trash2 className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-              <div>
-                This action is permanent! All <strong className="text-red-900">{getMappedCount(subSnakeToDelete.id)}</strong> mapped stage channels will lose their subsnake assignment.
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setSubSnakeToDelete(null)}
-              className="px-4 py-2 text-sm font-medium text-slate-705 hover:bg-slate-205 rounded-md transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-500 rounded-md shadow-sm transition-colors cursor-pointer"
-            >
-              Delete
-            </button>
-          </div>
-        </ModalBase>
-      )}
-    </AnimatePresence>
-
-    {/* Clear Assignments Confirmation In-App Modal */}
-    <AnimatePresence>
-      {subSnakeToClear && (
-        <ModalBase
-          onClose={() => setSubSnakeToClear(null)}
-          onSubmit={() => {
-            onClearSubSnakeAssignments(subSnakeToClear.id);
-            setSubSnakeToClear(null);
-          }}
-          maxWidthClass="max-w-md"
-          zIndexClass="z-[60]"
-        >
-          {/* Header */}
-          <div className="bg-amber-700 text-white px-5 py-3.5 flex justify-between items-center">
-            <h3 className="font-bold flex items-center gap-2 text-sm md:text-base">
-              <AlertTriangle className="w-5 h-5 text-amber-100 animate-pulse" /> Clear Assignments?
-            </h3>
-            <button
-              type="button"
-              onClick={() => setSubSnakeToClear(null)}
-              className="text-amber-205 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-5 space-y-4">
-            <p className="text-sm text-slate-655 leading-relaxed">
-              Are you sure you want to clear all channel assignments for SubSnake <strong className="text-slate-800">"{subSnakeToClear.name}"</strong>?
-            </p>
-            <div className="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-800 text-xs font-semibold leading-relaxed">
-              <Unlink className="w-4 h-4 text-amber-655 mt-0.5 flex-shrink-0" />
-              <div>
-                This will clear all <strong className="text-amber-900">{getMappedCount(subSnakeToClear.id)}</strong> mapped port assignments. The subsnake itself will NOT be deleted.
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setSubSnakeToClear(null)}
-              className="px-4 py-2 text-sm font-medium text-slate-705 hover:bg-slate-205 rounded-md transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 text-sm font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-md shadow-sm transition-colors cursor-pointer"
-            >
-              Clear Assignments
-            </button>
-          </div>
-        </ModalBase>
-      )}
-    </AnimatePresence>
+      {/* Clear Assignments Confirmation In-App Modal */}
+      <ClearSubSnakeConfirm
+        subSnake={subSnakeToClear}
+        mappedCount={subSnakeToClear ? getMappedCount(subSnakeToClear.id) : 0}
+        onClose={() => setSubSnakeToClear(null)}
+        onConfirm={(id) => {
+          onClearSubSnakeAssignments(id);
+          setSubSnakeToClear(null);
+        }}
+      />
     </>
   );
 };

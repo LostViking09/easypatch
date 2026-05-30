@@ -6,6 +6,8 @@ import { hexToRgba } from '../utils/colors';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModalBase } from './ModalBase';
 import { ColorPicker } from './ColorPicker';
+import { GroupComboBox } from './EditModal/GroupComboBox';
+import { SubSnakeGridSelector } from './EditModal/SubSnakeGridSelector';
 
 interface EditModalProps {
   channel: Channel;
@@ -71,58 +73,6 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
     : undefined;
   const isOverwriting = !!currentOccupant;
 
-  // Combobox State
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Extract unique groups and their colors for autocomplete & auto-color
-  const existingGroups = Array.from(new Set(allChannels.map(c => c.group).filter(Boolean))) as string[];
-  const groupColors = allChannels.reduce((acc, c) => {
-    if (c.group && c.color !== '#ffffff') acc[c.group] = c.color;
-    return acc;
-  }, {} as Record<string, string>);
-
-  // Neighbor groups detection and label mapping
-  const neighborChannels = allChannels.filter(c => 
-    c.type === channel.type && 
-    (c.number === channel.number - 1 || c.number === channel.number + 1)
-  );
-
-  const groupToNeighbors = neighborChannels.reduce((acc, c) => {
-    if (c.group && c.group.trim() !== '') {
-      const label = `${c.type === 'in' ? 'IN' : 'OUT'} ${c.number}`;
-      if (!acc[c.group]) {
-        acc[c.group] = [];
-      }
-      if (!acc[c.group].includes(label)) {
-        acc[c.group].push(label);
-      }
-    }
-    return acc;
-  }, {} as Record<string, string[]>);
-
-  const neighborGroups = Object.keys(groupToNeighbors);
-  const otherGroups = existingGroups.filter(g => !neighborGroups.includes(g));
-  const sortedGroupSuggestions = [...neighborGroups, ...otherGroups];
-
-  // Filter based on input value
-  const query = (formData.group || '').trim().toLowerCase();
-  const filteredSuggestions = sortedGroupSuggestions.filter(g =>
-    g.toLowerCase().includes(query)
-  );
-
-  // Click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     inputRef.current?.focus();
@@ -167,74 +117,6 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, showConfirmModal, formData, isOverwriting, userSettings.confirmSubsnakeOverwrite, currentOccupant, onSave, onNavigate, pendingNavigation]);
-
-  const handleGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newGroup = e.target.value;
-    setFormData(prev => {
-      const updates: Partial<Channel> = { group: newGroup };
-      // Auto-apply color if group exists and has a color
-      if (groupColors[newGroup]) {
-        updates.color = groupColors[newGroup];
-      }
-      return { ...prev, ...updates };
-    });
-    setHighlightedIndex(-1);
-    setIsDropdownOpen(true);
-  };
-
-  const selectGroup = (groupName: string) => {
-    setFormData(prev => {
-      const updates: Partial<Channel> = { group: groupName };
-      if (groupColors[groupName]) {
-        updates.color = groupColors[groupName];
-      }
-      return { ...prev, ...updates };
-    });
-    setIsDropdownOpen(false);
-  };
-
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isDropdownOpen) {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        setIsDropdownOpen(true);
-        e.preventDefault();
-      }
-      return;
-    }
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setHighlightedIndex(prev => 
-          prev < filteredSuggestions.length - 1 ? prev + 1 : 0
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setHighlightedIndex(prev => 
-          prev > 0 ? prev - 1 : filteredSuggestions.length - 1
-        );
-        break;
-      case 'Enter':
-        if (highlightedIndex >= 0 && highlightedIndex < filteredSuggestions.length) {
-          e.preventDefault(); // Don't submit the form
-          selectGroup(filteredSuggestions[highlightedIndex]);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDropdownOpen(false);
-        break;
-      case 'Tab':
-        if (highlightedIndex >= 0 && highlightedIndex < filteredSuggestions.length) {
-          selectGroup(filteredSuggestions[highlightedIndex]);
-        } else {
-          setIsDropdownOpen(false);
-        }
-        break;
-    }
-  };
 
   const handleSubmit = () => {
     if (isOverwriting && userSettings.confirmSubsnakeOverwrite !== false && currentOccupant) {
@@ -312,82 +194,18 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
           />
         </div>
 
-        <div ref={dropdownRef} className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Group (Link)</label>
-          <div className="relative flex items-center">
-            <input
-              type="text"
-              value={formData.group || ''}
-              onChange={handleGroupChange}
-              onFocus={() => setIsDropdownOpen(true)}
-              onKeyDown={handleInputKeyDown}
-              placeholder="e.g. Drums, Keys LR"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setIsDropdownOpen(prev => !prev)}
-              className="absolute right-2 text-gray-400 hover:text-gray-600 focus:outline-none"
-            >
-              <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
-
-          <AnimatePresence>
-            {isDropdownOpen && filteredSuggestions.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                transition={{ duration: 0.1 }}
-                className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto z-50 py-1"
-              >
-                {filteredSuggestions.map((g, index) => {
-                  const isNeighbor = neighborGroups.includes(g);
-                  const neighborLabels = groupToNeighbors[g];
-                  const isHighlighted = index === highlightedIndex;
-                  const groupColor = groupColors[g];
-
-                  return (
-                    <div
-                      key={g}
-                      onClick={() => selectGroup(g)}
-                      onMouseEnter={() => setHighlightedIndex(index)}
-                      className={`px-3 py-2 cursor-pointer flex items-center justify-between select-none ${
-                        isHighlighted ? 'bg-blue-600 text-white' : 'text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {groupColor && (
-                          <span
-                            className={`w-3 h-3 rounded-full border flex-shrink-0 ${
-                              isHighlighted ? 'border-white/50' : 'border-gray-300'
-                            }`}
-                            style={{ backgroundColor: groupColor }}
-                          />
-                        )}
-                        <span className="font-medium truncate">{g}</span>
-                      </div>
-                      
-                      {isNeighbor && neighborLabels && (
-                        <span
-                          className={`text-2xs font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                            isHighlighted 
-                              ? 'bg-blue-500 text-blue-100 border border-blue-400/30' 
-                              : 'bg-teal-50 text-teal-700 border border-teal-200'
-                          }`}
-                        >
-                          {neighborLabels.map(label => `[${label}]`).join(' ')}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <p className="text-xs text-gray-500 mt-1">Channels with the same group name are linked. Selecting an existing group applies its color.</p>
-        </div>
+        <GroupComboBox
+          channel={channel}
+          group={formData.group || ''}
+          onChange={(group, color) => {
+            setFormData(prev => ({
+              ...prev,
+              group,
+              ...(color ? { color } : {})
+            }));
+          }}
+          allChannels={allChannels}
+        />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
@@ -450,178 +268,13 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
           </AnimatePresence>
         </div>
 
-        {/* SubSnake Mapping Section */}
-        <div className="border-t border-gray-100 pt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5">
-            <Network className="w-4 h-4 text-indigo-500" />
-            <span>Map to SubSnake</span>
-          </label>
-          <div className="flex flex-wrap gap-2 mt-1.5">
-            <button
-              type="button"
-              onClick={() => setFormData({ 
-                ...formData, 
-                subSnakeId: undefined, 
-                subSnakeChannel: undefined 
-              })}
-              className={`py-1.5 px-3 text-xs font-bold rounded-md border transition-all flex items-center gap-1.5 cursor-pointer shadow-3xs ${
-                !formData.subSnakeId
-                  ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              None
-            </button>
-            {subSnakes.map(s => {
-              const isSelected = formData.subSnakeId === s.id;
-              const totalCh = s.grid 
-                ? (channel.type === 'in' ? s.grid.input.cols * s.grid.input.rows : s.grid.output.cols * s.grid.output.rows) 
-                : 'Dyn';
-              
-              const isDisabled = totalCh === 0;
-
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => setFormData({ 
-                    ...formData, 
-                    subSnakeId: s.id, 
-                    subSnakeChannel: formData.subSnakeId === s.id ? (formData.subSnakeChannel || 1) : 1 
-                  })}
-                  className={`py-1.5 px-3 text-xs font-bold rounded-md border transition-all flex items-center gap-2 cursor-pointer shadow-3xs ${
-                    isSelected
-                      ? 'bg-slate-800 text-white border-slate-800'
-                      : isDisabled
-                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {s.color && s.color !== '#ffffff' && (
-                    <span 
-                      className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0"
-                      style={{ backgroundColor: s.color }}
-                    />
-                  )}
-                  <span>{s.name} ({totalCh} ch)</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {(() => {
-            const selectedSubSnake = subSnakes.find(s => s.id === formData.subSnakeId);
-            if (!selectedSubSnake) return null;
-            
-            const isDynamicSubSnake = selectedSubSnake && !selectedSubSnake.grid;
-            
-            let totalPorts = 0;
-            let gridCols = 4;
-            if (selectedSubSnake.grid) {
-              const subGrid = channel.type === 'in' ? selectedSubSnake.grid.input : selectedSubSnake.grid.output;
-              totalPorts = subGrid.rows * subGrid.cols;
-              gridCols = subGrid.cols || 4;
-            } else {
-              const subSnakeChannels = allChannels.filter(c => c.subSnakeId === selectedSubSnake.id && c.type === channel.type);
-              const mappedPorts = subSnakeChannels.map(c => c.subSnakeChannel || 0);
-              const highestPort = Math.max(...mappedPorts, 0);
-              totalPorts = Math.max(12, Math.ceil((highestPort + 1) / 4) * 4);
-            }
-            
-            const ports = [];
-
-            for (let p = 1; p <= totalPorts; p++) {
-              const occupant = allChannels.find(
-                c => c.id !== formData.id && c.type === channel.type && c.subSnakeId === selectedSubSnake.id && c.subSnakeChannel === p
-              );
-              const isSelected = formData.subSnakeChannel === p;
-              
-              ports.push(
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, subSnakeChannel: p })}
-                  className={`h-9 relative rounded border font-mono font-bold text-xs flex flex-col items-center justify-center transition-all ${
-                    isSelected
-                      ? occupant
-                        ? 'bg-amber-500 border-amber-600 text-slate-950 shadow-xs z-10 scale-105 hover:bg-amber-600'
-                        : 'bg-blue-600 border-blue-600 text-white shadow-xs z-10 scale-105 hover:bg-blue-700'
-                      : occupant
-                      ? 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 hover:border-amber-400'
-                      : 'bg-white border-gray-250 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                  }`}
-                  title={
-                    isSelected
-                      ? occupant
-                        ? `Port ${p}: Selected. Occupied by ${occupant.type === 'in' ? 'IN' : 'OUT'} ${occupant.number} (${occupant.name || 'Unused'}). Saving will displace it.`
-                        : `Port ${p}: Currently selected`
-                      : occupant
-                      ? `Port ${p}: Occupied by ${occupant.type === 'in' ? 'IN' : 'OUT'} ${occupant.number} (${occupant.name || 'Unused'}). Clicking will select and displace it.`
-                      : `Port ${p}: Available`
-                  }
-                >
-                  <span>{p}</span>
-                  {occupant && (
-                    <span className={`text-micro truncate max-w-[90%] px-0.5 mt-0.5 leading-none ${isSelected ? 'text-amber-950 font-bold' : 'text-amber-600'}`}>
-                      {(() => {
-                        const nameLabel = occupant.name 
-                          ? `${occupant.number}: ${occupant.name}` 
-                          : `${occupant.type === 'in' ? 'IN' : 'OUT'}${occupant.number}`;
-                        return nameLabel.length > 9 ? nameLabel.slice(0, 8) + '..' : nameLabel;
-                      })()}
-                    </span>
-                  )}
-                </button>
-              );
-            }
-
-            return (
-              <div className="space-y-2 mt-2 bg-slate-55 p-3 rounded-lg border border-slate-200">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-2xs font-bold text-slate-500 tracking-wider">Select SubSnake Port</span>
-                  {isDynamicSubSnake && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xxs font-semibold text-slate-500">Custom Port:</span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={formData.subSnakeChannel || ''}
-                        onChange={e => setFormData({ ...formData, subSnakeChannel: Math.max(1, parseInt(e.target.value) || 1) })}
-                        className="w-14 px-1 py-0.5 text-xs border border-gray-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold"
-                      />
-                    </div>
-                  )}
-                </div>
-                <div 
-                  className="grid gap-1.5"
-                  style={{
-                    gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`
-                  }}
-                >
-                  {ports}
-                </div>
-                {formData.subSnakeChannel && (
-                  <div className="text-xxs text-gray-500 italic leading-tight">
-                    {(() => {
-                      const currentOccupant = allChannels.find(
-                        c => c.id !== formData.id && c.type === channel.type && c.subSnakeId === selectedSubSnake.id && c.subSnakeChannel === formData.subSnakeChannel
-                      );
-                      if (currentOccupant) {
-                        return (
-                          <span className="text-amber-700 font-medium">
-                            ⚠️ Port {formData.subSnakeChannel} is in use by "{currentOccupant.name || `${currentOccupant.type === 'in' ? 'IN' : 'OUT'} ${currentOccupant.number}`}". Saving will clear its mapping.
-                          </span>
-                        );
-                      }
-                      return `Selected Port: ${formData.subSnakeChannel} (available).`;
-                    })()}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </div>
+        <SubSnakeGridSelector
+          channel={channel}
+          formData={formData}
+          onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
+          subSnakes={subSnakes}
+          allChannels={allChannels}
+        />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
