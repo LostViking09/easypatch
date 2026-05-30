@@ -5,6 +5,7 @@ import { Channel, SubSnake, SettingsConfig } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { PALETTES, SUB_SNAKE_PRESETS } from '../utils/constants';
 import { ModalBase } from './ModalBase';
+import { ColorPicker } from './ColorPicker';
 
 interface AssignSubSnakeModalProps {
   selectedCount: number;
@@ -342,55 +343,12 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5">Color Theme</label>
-                <div className="flex flex-wrap gap-1.5 items-center bg-white p-2 border border-slate-200 rounded-md">
-                  {PALETTES[settings.palette].map(color => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() => setNewSnakeColor(color.value)}
-                      style={{
-                        backgroundColor: hexToRgba(color.value, 0.4),
-                        borderColor: color.value === '#ffffff' || color.value === '#000000' ? '#cbd5e1' : color.value
-                      }}
-                      className={`w-6 h-6 rounded-full border transition-all cursor-pointer ${
-                        newSnakeColor.toLowerCase() === color.value.toLowerCase()
-                          ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
-                          : 'hover:opacity-85'
-                      }`}
-                      title={color.label}
-                    />
-                  ))}
-
-                  {/* Custom color picker */}
-                  <div 
-                    className={`relative w-6 h-6 rounded-full border border-slate-200 overflow-hidden hover:opacity-85 transition-opacity flex items-center justify-center cursor-pointer ${
-                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                        ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
-                        : ''
-                    }`}
-                    style={{
-                      backgroundColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                        ? hexToRgba(newSnakeColor, 0.4)
-                        : '#f8fafc',
-                      borderColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                        ? newSnakeColor
-                        : '#cbd5e1'
-                    }}
-                    title="Custom color"
-                  >
-                    <Pipette className={`w-3.5 h-3.5 ${
-                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                        ? 'text-slate-750 font-bold'
-                        : 'text-slate-500'
-                    }`} />
-                    <input 
-                      type="color" 
-                      value={newSnakeColor}
-                      onChange={e => setNewSnakeColor(e.target.value)}
-                      className="absolute inset-[-5px] w-10 h-10 cursor-pointer opacity-0"
-                    />
-                  </div>
-                </div>
+                <ColorPicker
+                  value={newSnakeColor}
+                  onChange={setNewSnakeColor}
+                  palette={PALETTES[settings.palette]}
+                  size="md"
+                />
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t">

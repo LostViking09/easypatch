@@ -5,6 +5,7 @@ import { PALETTES } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModalBase } from './ModalBase';
+import { ColorPicker } from './ColorPicker';
 
 interface EditModalProps {
   channel: Channel;
@@ -624,42 +625,12 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
-          <div className="flex flex-wrap gap-2 items-center">
-            {activePalette.map(color => (
-              <motion.button
-                key={color.value}
-                type="button"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setFormData({ ...formData, color: color.value })}
-                style={{ 
-                  backgroundColor: hexToRgba(color.value, 0.4),
-                  borderColor: color.value === '#ffffff' || color.value === '#000000' ? '#d1d5db' : color.value
-                }}
-                className={`w-10 h-10 rounded-md border-2 transition-all ${
-                  formData.color.toLowerCase() === color.value.toLowerCase() 
-                    ? 'ring-2 ring-offset-1 ring-blue-500 shadow-sm scale-105' 
-                    : 'hover:opacity-80'
-                }`}
-                title={color.label}
-              />
-            ))}
-            
-            <motion.div 
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="relative w-10 h-10 rounded-md border-2 border-gray-300 overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center bg-gray-50" 
-              title="Custom color"
-            >
-              <Pipette className="w-5 h-5 text-gray-500" />
-              <input 
-                type="color" 
-                value={formData.color}
-                onChange={e => setFormData({ ...formData, color: e.target.value })}
-                className="absolute inset-[-10px] w-16 h-16 cursor-pointer opacity-0"
-              />
-            </motion.div>
-          </div>
+          <ColorPicker
+            value={formData.color}
+            onChange={(color) => setFormData({ ...formData, color })}
+            palette={activePalette}
+            size="lg"
+          />
         </div>
       </div>
 

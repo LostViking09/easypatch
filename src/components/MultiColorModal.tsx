@@ -3,6 +3,7 @@ import { X, Pipette, Check } from 'lucide-react';
 import { hexToRgba } from '../utils/colors';
 import { motion } from 'motion/react';
 import { ModalBase } from './ModalBase';
+import { ColorPicker } from './ColorPicker';
 
 interface MultiColorModalProps {
   selectedCount: number;
@@ -44,53 +45,13 @@ export const MultiColorModal: React.FC<MultiColorModalProps> = ({
       <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
         <div>
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Select Color Theme</label>
-          <div className="grid grid-cols-4 gap-2 bg-slate-55 p-2 rounded-xl border border-slate-200">
-            {activePalette.map(c => (
-              <motion.button
-                key={c.value}
-                type="button"
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setColor(c.value)}
-                style={{
-                  backgroundColor: hexToRgba(c.value, 0.4),
-                  borderColor: c.value === '#ffffff' || c.value === '#000000' ? '#e2e8f0' : c.value,
-                }}
-                className={`h-11 rounded-lg border-2 transition-all cursor-pointer ${
-                  color.toLowerCase() === c.value.toLowerCase()
-                    ? 'ring-2 ring-offset-1 ring-emerald-500 scale-105 shadow-sm'
-                    : 'hover:opacity-85'
-                }`}
-                title={c.label}
-              />
-            ))}
-
-            <div className="col-span-4 h-px bg-slate-200 my-1"></div>
-
-            {/* Custom Pipette Color Picker */}
-            <div className="col-span-4 flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-3xs">
-              <span className="text-xs font-semibold text-slate-650 flex items-center gap-1.5">
-                <Pipette className="w-4 h-4 text-slate-550" /> Custom color
-              </span>
-              
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  backgroundColor: hexToRgba(color, 0.4),
-                  borderColor: color === '#ffffff' || color === '#000000' ? '#e2e8f0' : color,
-                }}
-                className="relative w-8 h-8 rounded-full border-2 overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center cursor-pointer shadow-3xs"
-                title="Choose Custom Color"
-              >
-                <input
-                  type="color"
-                  value={color.startsWith('#') ? color : '#ffffff'}
-                  onChange={e => setColor(e.target.value)}
-                  className="absolute inset-[-10px] w-14 h-14 cursor-pointer opacity-0"
-                />
-              </motion.div>
-            </div>
+          <div className="bg-slate-55 p-3 rounded-xl border border-slate-200">
+            <ColorPicker
+              value={color}
+              onChange={setColor}
+              palette={activePalette}
+              size="lg"
+            />
           </div>
         </div>
 

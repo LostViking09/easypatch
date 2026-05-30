@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { PALETTES, SUB_SNAKE_PRESETS } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
 import { ModalBase } from './ModalBase';
+import { ColorPicker } from './ColorPicker';
 
 interface SubSnakesModalProps {
   subSnakes: SubSnake[];
@@ -204,55 +205,12 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5">Color theme</label>
-                <div className="flex flex-wrap gap-1.5 items-center bg-white p-2 border border-slate-250 rounded-md">
-                  {PALETTES[settings.palette].map(color => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() => setNewSnakeColor(color.value)}
-                      style={{ 
-                        backgroundColor: hexToRgba(color.value, 0.4),
-                        borderColor: color.value === '#ffffff' || color.value === '#000000' ? '#e2e8f0' : color.value
-                      }}
-                      className={`w-6 h-6 rounded-full border transition-all cursor-pointer ${
-                        newSnakeColor.toLowerCase() === color.value.toLowerCase() 
-                          ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs' 
-                          : 'hover:opacity-85'
-                      }`}
-                      title={color.label}
-                    />
-                  ))}
-                  
-                  {/* Custom color picker */}
-                  <div 
-                    className={`relative w-6 h-6 rounded-full border border-slate-250 overflow-hidden hover:opacity-85 transition-opacity flex items-center justify-center cursor-pointer ${
-                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                        ? 'ring-2 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
-                        : ''
-                    }`}
-                    style={{
-                      backgroundColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                        ? hexToRgba(newSnakeColor, 0.4)
-                        : '#f8fafc',
-                      borderColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                        ? newSnakeColor
-                        : '#cbd5e1'
-                    }}
-                    title="Custom color"
-                  >
-                    <Pipette className={`w-3.5 h-3.5 ${
-                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === newSnakeColor.toLowerCase())
-                        ? 'text-slate-700 font-bold'
-                        : 'text-slate-500'
-                    }`} />
-                    <input 
-                      type="color" 
-                      value={newSnakeColor}
-                      onChange={e => setNewSnakeColor(e.target.value)}
-                      className="absolute inset-[-5px] w-10 h-10 cursor-pointer opacity-0"
-                    />
-                  </div>
-                </div>
+                <ColorPicker
+                  value={newSnakeColor}
+                  onChange={setNewSnakeColor}
+                  palette={PALETTES[settings.palette]}
+                  size="md"
+                />
               </div>
 
               <div>
@@ -398,55 +356,12 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
 
                               <div>
                                 <label className="block text-xxs font-bold text-slate-505 uppercase mb-1">Color theme</label>
-                                <div className="flex flex-wrap gap-1 items-center bg-white p-1.5 border rounded">
-                                  {PALETTES[settings.palette].map(color => (
-                                    <button
-                                      key={color.value}
-                                      type="button"
-                                      onClick={() => setEditingColor(color.value)}
-                                      style={{ 
-                                        backgroundColor: hexToRgba(color.value, 0.4),
-                                        borderColor: color.value === '#ffffff' || color.value === '#000000' ? '#e2e8f0' : color.value
-                                      }}
-                                      className={`w-5 h-5 rounded-full border transition-all cursor-pointer ${
-                                        editingColor.toLowerCase() === color.value.toLowerCase() 
-                                          ? 'ring-1.5 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs' 
-                                          : 'hover:opacity-85'
-                                      }`}
-                                      title={color.label}
-                                    />
-                                  ))}
-
-                                  {/* Custom color picker */}
-                                  <div 
-                                    className={`relative w-5 h-5 rounded-full border border-slate-200 overflow-hidden hover:opacity-85 transition-opacity flex items-center justify-center cursor-pointer ${
-                                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === editingColor.toLowerCase())
-                                        ? 'ring-1.5 ring-offset-1 ring-indigo-500 scale-110 shadow-3xs'
-                                        : ''
-                                    }`}
-                                    style={{
-                                      backgroundColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === editingColor.toLowerCase())
-                                        ? hexToRgba(editingColor, 0.4)
-                                        : '#f8fafc',
-                                      borderColor: !PALETTES[settings.palette].some(c => c.value.toLowerCase() === editingColor.toLowerCase())
-                                        ? editingColor
-                                        : '#cbd5e1'
-                                    }}
-                                    title="Custom color"
-                                  >
-                                    <Pipette className={`w-3 h-3 ${
-                                      !PALETTES[settings.palette].some(c => c.value.toLowerCase() === editingColor.toLowerCase())
-                                        ? 'text-slate-700 font-bold'
-                                        : 'text-slate-500'
-                                    }`} />
-                                    <input 
-                                      type="color" 
-                                      value={editingColor}
-                                      onChange={e => setEditingColor(e.target.value)}
-                                      className="absolute inset-[-5px] w-8 h-8 cursor-pointer opacity-0"
-                                    />
-                                  </div>
-                                </div>
+                                <ColorPicker
+                                  value={editingColor}
+                                  onChange={setEditingColor}
+                                  palette={PALETTES[settings.palette]}
+                                  size="sm"
+                                />
                               </div>
                               
                               <div>
