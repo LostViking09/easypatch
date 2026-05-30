@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MotionGlobalConfig, AnimatePresence } from 'motion/react';
 import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
-import { Channel, PrintOptions } from './types';
+import { Channel } from './types';
 import { PrintStyles } from './components/PrintStyles';
 import { ToastRenderer } from './components/ToastRenderer';
 import { ViewSwitcher } from './features/ViewSwitcher/ViewSwitcher';
@@ -9,6 +9,10 @@ import { useMassAssignment } from './hooks/useMassAssignment';
 import { usePatchState } from './hooks/usePatchState';
 import { useMultiSelect } from './hooks/useMultiSelect';
 import { useToast } from './hooks/useToast';
+import { useModalState } from './hooks/useModalState';
+import { useShare } from './hooks/useShare';
+import { usePrint } from './hooks/usePrint';
+import { PrintRenderer } from './components/PrintRenderer';
 
 import { Header } from './features/Header/Header';
 import { ProjectHeader } from './features/ProjectHeader/ProjectHeader';
@@ -18,26 +22,10 @@ import { AppModals } from './features/Modals/AppModals';
 import { SubSnakeView } from './features/SubSnakeView/SubSnakeView';
 import { TableView } from './features/TableView/TableView';
 import { UrlImportConfirmModal } from './components/UrlImportConfirmModal';
-import { compressData, decompressData } from './utils/urlSharing';
 import { DashboardModal } from './features/Dashboard/DashboardModal';
 import { db, Project } from './services/db';
 import { defaultSettings, createEmptyInputs, createEmptyOutputs } from './utils/constants';
 import { FileText, FolderOpen } from 'lucide-react';
-
-const getCleanPathname = () => {
-  let path = window.location.pathname;
-  if (path.includes('http://') || path.includes('https://')) {
-    const idx = path.indexOf('http://') !== -1 ? path.indexOf('http://') : path.indexOf('https://');
-    const absoluteUrl = path.substring(idx);
-    try {
-      path = new URL(absoluteUrl).pathname;
-    } catch (e) {
-      path = '/easypatch/';
-    }
-  }
-  return path;
-};
-
 export default function App() {
   return (
     <Routes>
@@ -75,51 +63,40 @@ function Editor() {
     canRedo
   } = usePatchState(id);
 
-  const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isNewProjectConfirmOpen, setIsNewProjectConfirmOpen] = useState(false);
-  const [isMultiGroupOpen, setIsMultiGroupOpen] = useState(false);
-  const [isMultiColorOpen, setIsMultiColorOpen] = useState(false);
-  const [isAssignSubSnakeOpen, setIsAssignSubSnakeOpen] = useState(false);
-  const [isSubSnakesOpen, setIsSubSnakesOpen] = useState(false);
-  const [isStageboxesOpen, setIsStageboxesOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<string>('main');
-  const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
-  
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-  const [printOptions, setPrintOptions] = useState<PrintOptions | null>(null);
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [printTrigger, setPrintTrigger] = useState(false);
-
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [shareUrl, setShareUrl] = useState('');
-
-  const [sharedPatchData, setSharedPatchData] = useState<any>(null);
-  const [isDashboardOpen, setIsDashboardOpen] = useState(!id);
-
   const { toast, setToast } = useToast();
 
-  // If active project changes or dashboard opens, keep state in sync
-  useEffect(() => {
-    if (!id) {
-      setIsDashboardOpen(true);
-    } else {
-      setIsDashboardOpen(false);
-    }
-  }, [id]);
+  const {
+    editingChannel, setEditingChannel,
+    isSettingsOpen, setIsSettingsOpen,
+    isNewProjectConfirmOpen, setIsNewProjectConfirmOpen,
+    isMultiGroupOpen, setIsMultiGroupOpen,
+    isMultiColorOpen, setIsMultiColorOpen,
+    isAssignSubSnakeOpen, setIsAssignSubSnakeOpen,
+    isSubSnakesOpen, setIsSubSnakesOpen,
+    isStageboxesOpen, setIsStageboxesOpen,
+    isPrintModalOpen, setIsPrintModalOpen,
+    isShareModalOpen, setIsShareModalOpen,
+    isDashboardOpen, setIsDashboardOpen,
+    isAnyModalOpen
+  } = useModalState(id);
 
-  const isAnyModalOpen =
-    !!editingChannel ||
-    isSettingsOpen ||
-    isNewProjectConfirmOpen ||
-    isSubSnakesOpen ||
-    isAssignSubSnakeOpen ||
-    isStageboxesOpen ||
-    isMultiGroupOpen ||
-    isMultiColorOpen ||
-    isPrintModalOpen ||
-    isShareModalOpen ||
-    isDashboardOpen;
+  const {
+    printOptions,
+    isPrinting,
+    handleConfirmPrint
+  } = usePrint({ setIsPrintModalOpen });
+
+  const {
+    shareUrl,
+    sharedPatchData,
+    setSharedPatchData,
+    handleShare
+  } = useShare({
+    id, title, notes, settings, inputs, outputs, subSnakes, setToast, setIsShareModalOpen
+  });
+
+  const [currentView, setCurrentView] = useState<string>('main');
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
 
   const {
     isMultiEdit,
@@ -158,61 +135,6 @@ function Editor() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
-
-  React.useEffect(() => {
-    if (printTrigger) {
-      const timer = setTimeout(() => {
-        window.print();
-        setPrintTrigger(false);
-        setIsPrinting(false);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [printTrigger]);
-
-  const handleConfirmPrint = (options: PrintOptions) => {
-    setPrintOptions(options);
-    setIsPrintModalOpen(false);
-    setIsPrinting(true);
-    setPrintTrigger(true);
-  };
-
-  React.useEffect(() => {
-    const handleHash = async () => {
-      const hash = window.location.hash;
-      if (hash.startsWith('#import=')) {
-        try {
-          const base64Data = hash.replace('#import=', '');
-          const data = await decompressData(base64Data);
-          if (data && (data.inputs || data.outputs || data.settings)) {
-            setSharedPatchData(data);
-          }
-        } catch (e) {
-          console.error('Failed to import shared patch:', e);
-          setToast({ message: 'Invalid or corrupted shared link.', type: 'error' });
-        } finally {
-          const cleanPath = getCleanPathname();
-          window.history.replaceState(null, '', cleanPath + window.location.search);
-        }
-      }
-    };
-    handleHash();
-  }, [setToast]);
-
-  const handleShare = async () => {
-    if (!id) return;
-    try {
-      const data = { title, notes, settings, inputs, outputs, subSnakes };
-      const base64 = await compressData(data);
-      const cleanPath = getCleanPathname();
-      const url = `${window.location.origin}${cleanPath}#import=${base64}`;
-      setShareUrl(url);
-      setIsShareModalOpen(true);
-    } catch (error) {
-      console.error(error);
-      setToast({ message: 'Failed to generate share link. Your browser may not support compression.', type: 'error' });
-    }
-  };
 
   const handleCellClick = (ch: Channel, e: React.MouseEvent) => {
     if (!isMultiEdit) {
@@ -491,142 +413,16 @@ function Editor() {
 
       {/* Print View Renderer */}
       {isPrinting && printOptions && (
-        <div className="hidden print:flex flex-col w-full print-preview-container">
-          {/* Main Input Grid */}
-          {printOptions.mainInput.printGrid &&
-            stageboxes.map(box => {
-              const boxInputs = inputs.filter(c => c.stageboxId === box.id);
-              if (boxInputs.length === 0) return null;
-              return (
-                <div key={`print-in-${box.id}`} className="print-subsnake-page-break print-avoid-break w-full mb-8">
-                  <div className="print-grid-container print-stacked flex-col gap-6 w-full">
-                    <div className="flex flex-col gap-2 w-full">
-                      <div className="font-bold text-lg border-b border-gray-400 pb-1">{box.name} - Inputs</div>
-                      <PatchGridSection
-                        channels={boxInputs}
-                        type="INPUT"
-                        cols={box.grid.input.cols}
-                        flexClass=""
-                        settings={settings}
-                        subSnakes={subSnakes}
-                        selectedIds={[]}
-                        isMultiEdit={false}
-                        onCellClick={() => {}}
-                        onCellDrop={() => {}}
-                        onCellMouseDown={() => {}}
-                        onCellMouseEnter={() => {}}
-                      />
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          }
-
-          {/* Main Output Grid */}
-          {printOptions.mainOutput.printGrid &&
-            stageboxes.map(box => {
-              const boxOutputs = outputs.filter(c => c.stageboxId === box.id);
-              if (boxOutputs.length === 0) return null;
-              return (
-                <div key={`print-out-${box.id}`} className="print-subsnake-page-break print-avoid-break w-full mb-8">
-                  <div className="print-grid-container print-stacked flex-col gap-6 w-full">
-                    <div className="flex flex-col gap-2 w-full">
-                      <div className="font-bold text-lg border-b border-gray-400 pb-1">{box.name} - Outputs</div>
-                      <PatchGridSection
-                        channels={boxOutputs}
-                        type="OUTPUT"
-                        cols={box.grid.output.cols}
-                        flexClass=""
-                        settings={settings}
-                        subSnakes={subSnakes}
-                        selectedIds={[]}
-                        isMultiEdit={false}
-                        onCellClick={() => {}}
-                        onCellDrop={() => {}}
-                        onCellMouseDown={() => {}}
-                        onCellMouseEnter={() => {}}
-                      />
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          }
-
-          {/* Main Input Table */}
-          {printOptions.mainInput.printTable && (
-            <div className="print-subsnake-page-break w-full max-w-7xl mx-auto">
-              <TableView
-                inputs={inputs}
-                outputs={[]}
-                subSnakes={subSnakes}
-                stageboxes={stageboxes}
-                settings={settings}
-                projectTitle={title}
-                projectNotes={notes}
-              />
-            </div>
-          )}
-
-          {/* Main Output Table */}
-          {printOptions.mainOutput.printTable && (
-            <div className="print-subsnake-page-break w-full max-w-7xl mx-auto">
-              <TableView
-                inputs={[]}
-                outputs={outputs}
-                subSnakes={subSnakes}
-                stageboxes={stageboxes}
-                settings={settings}
-                projectTitle={title}
-                projectNotes={notes}
-              />
-            </div>
-          )}
-
-          {/* SubSnakes */}
-          {subSnakes.map(snake => {
-            const options = printOptions.subSnakes[snake.id];
-            if (!options) return null;
-
-            return (
-              <React.Fragment key={snake.id}>
-                {options.printGrid && (
-                  <div className="print-subsnake-page-break">
-                    <SubSnakeView
-                      subSnakes={[snake]}
-                      inputs={inputs}
-                      outputs={outputs}
-                      settings={settings}
-                      selectedSubSnakeId={snake.id}
-                      stageboxes={stageboxes}
-                      isPrintMode={true}
-                      projectTitle={title}
-                      projectNotes={notes}
-                      layoutMode="grid"
-                    />
-                  </div>
-                )}
-                {options.printTable && (
-                  <div className="print-subsnake-page-break">
-                    <SubSnakeView
-                      subSnakes={[snake]}
-                      inputs={inputs}
-                      outputs={outputs}
-                      settings={settings}
-                      selectedSubSnakeId={snake.id}
-                      stageboxes={stageboxes}
-                      isPrintMode={true}
-                      projectTitle={title}
-                      projectNotes={notes}
-                      layoutMode="table"
-                    />
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
+        <PrintRenderer
+          printOptions={printOptions}
+          stageboxes={stageboxes}
+          inputs={inputs}
+          outputs={outputs}
+          subSnakes={subSnakes}
+          settings={settings}
+          title={title}
+          notes={notes}
+        />
       )}
 
       {id && (
