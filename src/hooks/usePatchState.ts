@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, SetStateAction } from 'react';
 import debounce from 'lodash.debounce';
-import { Channel, SettingsConfig, SubSnake, UserSettings } from '../types';
+import { Channel, SettingsConfig, SubSnake, UserSettings, Stagebox } from '../types';
 import { defaultSettings, initialInputs, initialOutputs, PALETTES, defaultUserSettings, createEmptyInputs, createEmptyOutputs, initialStageboxes } from '../utils/constants';
 import { db } from '../services/db';
 import { useHistory } from './useHistory';
 
-export const recalculateHardwareMapping = (channels: Channel[], stageboxes: import('../types').Stagebox[], isInput: boolean): Channel[] => {
+export const recalculateHardwareMapping = (channels: Channel[], stageboxes: Stagebox[], isInput: boolean): Channel[] => {
   let currentIndex = 0;
   const list = [...channels];
   for (const box of stageboxes) {
@@ -43,7 +43,7 @@ export function usePatchState(projectId?: string) {
     inputs: initialInputs,
     outputs: initialOutputs,
     subSnakes: [] as SubSnake[],
-    stageboxes: initialStageboxes as import('../types').Stagebox[],
+    stageboxes: initialStageboxes as Stagebox[],
   });
 
   const inputs = patchData.inputs;
@@ -51,28 +51,28 @@ export function usePatchState(projectId?: string) {
   const subSnakes = patchData.subSnakes;
   const stageboxes = patchData.stageboxes;
 
-  const setInputs = useCallback((valOrFn: any) => {
+  const setInputs = useCallback((valOrFn: SetStateAction<Channel[]>) => {
     setPatchData(prev => ({
       ...prev,
       inputs: typeof valOrFn === 'function' ? valOrFn(prev.inputs) : valOrFn
     }));
   }, [setPatchData]);
 
-  const setOutputs = useCallback((valOrFn: any) => {
+  const setOutputs = useCallback((valOrFn: SetStateAction<Channel[]>) => {
     setPatchData(prev => ({
       ...prev,
       outputs: typeof valOrFn === 'function' ? valOrFn(prev.outputs) : valOrFn
     }));
   }, [setPatchData]);
 
-  const setSubSnakes = useCallback((valOrFn: any) => {
+  const setSubSnakes = useCallback((valOrFn: SetStateAction<SubSnake[]>) => {
     setPatchData(prev => ({
       ...prev,
       subSnakes: typeof valOrFn === 'function' ? valOrFn(prev.subSnakes) : valOrFn
     }));
   }, [setPatchData]);
 
-  const setStageboxes = useCallback((valOrFn: any) => {
+  const setStageboxes = useCallback((valOrFn: SetStateAction<Stagebox[]>) => {
     setPatchData(prev => ({
       ...prev,
       stageboxes: typeof valOrFn === 'function' ? valOrFn(prev.stageboxes) : valOrFn
@@ -122,14 +122,14 @@ export function usePatchState(projectId?: string) {
         setNotes(project.notes || '');
         setSettings({ ...defaultSettings, ...project.settings });
         
-        let loadedInputs = (project.inputs || initialInputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
-        let loadedOutputs = (project.outputs || initialOutputs).map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
+        let loadedInputs = (project.inputs || initialInputs).map((ch: Partial<Channel>) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
+        let loadedOutputs = (project.outputs || initialOutputs).map((ch: Partial<Channel>) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
         const loadedStageboxes = project.stageboxes || initialStageboxes;
 
-        loadedInputs = recalculateHardwareMapping(loadedInputs, loadedStageboxes, true);
-        loadedOutputs = recalculateHardwareMapping(loadedOutputs, loadedStageboxes, false);
+        loadedInputs = recalculateHardwareMapping(loadedInputs as Channel[], loadedStageboxes, true);
+        loadedOutputs = recalculateHardwareMapping(loadedOutputs as Channel[], loadedStageboxes, false);
 
-        const loadedSubSnakes = (project.subSnakes || []).map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) }));
+        const loadedSubSnakes = (project.subSnakes || []).map((s: Partial<SubSnake>) => ({ ...s, name: (s.name || '').slice(0, 6) }));
         resetPatchData({
           inputs: loadedInputs,
           outputs: loadedOutputs,
@@ -152,9 +152,9 @@ export function usePatchState(projectId?: string) {
 
   // Debounced save to IndexedDB
   const debouncedSave = useCallback(
-    debounce(async (id: string, data: any) => {
+    debounce(async (id: string, data: Record<string, unknown>) => {
       try {
-        await db.projects.put({ ...data, id, updatedAt: Date.now() });
+        await db.projects.put({ ...data, id, updatedAt: Date.now() } as any);
         setSaveStatus('saved');
       } catch (err) {
         console.error("Failed to save project", err);
@@ -580,7 +580,7 @@ export function usePatchState(projectId?: string) {
     URL.revokeObjectURL(url);
   };
 
-  const loadImportData = (data: any) => {
+  const loadImportData = (data: Partial<{ title: string, notes: string, settings: Partial<SettingsConfig>, inputs: Partial<Channel>[], outputs: Partial<Channel>[], subSnakes: Partial<SubSnake>[], stageboxes: Stagebox[] }>) => {
     if (data.title) setTitle(data.title);
     if (data.notes !== undefined) setNotes(data.notes);
     
@@ -591,8 +591,8 @@ export function usePatchState(projectId?: string) {
 
     if (data.settings) {
       const importedSettings = { ...defaultSettings, ...data.settings };
-      delete importedSettings.animationsEnabled;
-      delete importedSettings.confirmSubsnakeOverwrite;
+      delete (importedSettings as any).animationsEnabled;
+      delete (importedSettings as any).confirmSubsnakeOverwrite;
       setSettings(importedSettings);
       
       const inputCount = (importedSettings.grid?.input?.rows || 3) * (importedSettings.grid?.input?.cols || 8);
@@ -602,7 +602,7 @@ export function usePatchState(projectId?: string) {
       const newOutputs = createEmptyOutputs(outputCount);
       
       if (data.inputs && Array.isArray(data.inputs)) {
-        data.inputs.forEach((importedCh: any) => {
+        data.inputs.forEach((importedCh) => {
           const idx = newInputs.findIndex(ch => ch.id === importedCh.id || ch.number === importedCh.number);
           if (idx !== -1) {
             newInputs[idx] = { ...newInputs[idx], ...importedCh, mic: importedCh.mic || '', stand: importedCh.stand || '', notes: importedCh.notes || '' };
@@ -610,7 +610,7 @@ export function usePatchState(projectId?: string) {
         });
       }
       if (data.outputs && Array.isArray(data.outputs)) {
-        data.outputs.forEach((importedCh: any) => {
+        data.outputs.forEach((importedCh) => {
           const idx = newOutputs.findIndex(ch => ch.id === importedCh.id || ch.number === importedCh.number);
           if (idx !== -1) {
             newOutputs[idx] = { ...newOutputs[idx], ...importedCh, mic: importedCh.mic || '', stand: importedCh.stand || '', notes: importedCh.notes || '' };
@@ -620,12 +620,12 @@ export function usePatchState(projectId?: string) {
       finalInputs = newInputs;
       finalOutputs = newOutputs;
     } else {
-      if (data.inputs && Array.isArray(data.inputs)) finalInputs = data.inputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
-      if (data.outputs && Array.isArray(data.outputs)) finalOutputs = data.outputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
+      if (data.inputs && Array.isArray(data.inputs)) finalInputs = data.inputs.map(ch => ({ ...(ch as Channel), mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
+      if (data.outputs && Array.isArray(data.outputs)) finalOutputs = data.outputs.map(ch => ({ ...(ch as Channel), mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
     }
 
     if (data.subSnakes && Array.isArray(data.subSnakes)) {
-      finalSubSnakes = data.subSnakes.map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) }));
+      finalSubSnakes = data.subSnakes.map((s) => ({ ...(s as SubSnake), name: (s.name || '').slice(0, 6) }));
     } else {
       finalSubSnakes = [];
     }
@@ -644,7 +644,7 @@ export function usePatchState(projectId?: string) {
     });
   };
 
-  const handleUpdateStageboxes = (newStageboxes: import('../types').Stagebox[]) => {
+  const handleUpdateStageboxes = (newStageboxes: Stagebox[]) => {
     const migrateChannels = (oldChannels: Channel[], isInput: boolean): Channel[] => {
       const oldChannelsMap: Record<string, Channel> = {};
       oldChannels.forEach(ch => {

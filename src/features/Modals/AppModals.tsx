@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnimatePresence } from 'motion/react';
-import { Channel } from '../../types';
+import { Channel, SubSnake, SettingsConfig, UserSettings, PrintOptions, Stagebox } from '../../types';
 import { PALETTES } from '../../utils/constants';
 
 import { EditModal } from '../../components/EditModal';
@@ -13,18 +13,17 @@ import { StageboxesModal } from '../../components/StageboxesModal';
 import { NewProjectConfirmModal } from '../../components/NewProjectConfirmModal';
 import { PrintModal } from '../../components/PrintModal';
 import { ShareModal } from '../../components/ShareModal';
-import { PrintOptions } from '../../types';
 
 interface AppModalsProps {
   editingChannel: Channel | null;
   setEditingChannel: (ch: Channel | null) => void;
   inputs: Channel[];
   outputs: Channel[];
-  subSnakes: any[];
-  settings: any;
-  setSettings: (val: any) => void;
-  userSettings: any;
-  setUserSettings: (val: any) => void;
+  subSnakes: SubSnake[];
+  settings: SettingsConfig;
+  setSettings: React.Dispatch<React.SetStateAction<SettingsConfig>>;
+  userSettings: UserSettings;
+  setUserSettings: React.Dispatch<React.SetStateAction<UserSettings>>;
   isMultiGroupOpen: boolean;
   setIsMultiGroupOpen: (val: boolean) => void;
   isMultiColorOpen: boolean;
@@ -51,13 +50,13 @@ interface AppModalsProps {
   handleMassAssignGroup: (group: string, colorMode: 'none' | 'uncolored' | 'all') => void;
   handleMassAssignColor: (color: string) => void;
   handleMassAssignSubSnake: (subSnakeId: string, startPort: number) => void;
-  addSubSnake: (name: string, color?: string, grid?: any) => any;
-  updateSubSnake: (id: string, name: string, color?: string, grid?: any) => void;
+  addSubSnake: (name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => SubSnake;
+  updateSubSnake: (id: string, name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
   deleteSubSnake: (id: string) => void;
   clearSubSnakeAssignments: (id: string) => void;
   handleCreateNewProject: () => void;
-  handleUpdateStageboxes: (newStageboxes: import('../../types').Stagebox[]) => void;
-  stageboxes: import('../../types').Stagebox[];
+  handleUpdateStageboxes: (newStageboxes: Stagebox[]) => void;
+  stageboxes: Stagebox[];
   onConfirmPrint: (options: PrintOptions) => void;
 }
 
