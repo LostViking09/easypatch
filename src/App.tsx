@@ -68,7 +68,11 @@ function Editor() {
     deleteSubSnake,
     clearSubSnakeAssignments,
     stageboxes,
-    handleUpdateStageboxes
+    handleUpdateStageboxes,
+    undo,
+    redo,
+    canUndo,
+    canRedo
   } = usePatchState(id);
 
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
@@ -131,6 +135,29 @@ function Editor() {
   React.useEffect(() => {
     MotionGlobalConfig.skipAnimations = userSettings.animationsEnabled === false;
   }, [userSettings.animationsEnabled]);
+
+  // Global keyboard shortcuts for Undo / Redo
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      if (isInput) return;
+
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   React.useEffect(() => {
     if (printTrigger) {
@@ -301,6 +328,10 @@ function Editor() {
           setIsPrintModalOpen={setIsPrintModalOpen}
           onOpenDashboard={() => setIsDashboardOpen(true)}
           saveStatus={saveStatus}
+          undo={undo}
+          redo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
         />
 
         {/* Blank state if no project ID is active */}

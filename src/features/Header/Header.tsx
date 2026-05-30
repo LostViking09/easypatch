@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Settings, FolderOpen, CheckSquare, Network, Palette, Printer, Share2, Layers } from 'lucide-react';
+import { Settings, FolderOpen, CheckSquare, Network, Palette, Printer, Share2, Layers, Undo, Redo } from 'lucide-react';
 
 interface HeaderProps {
   handleShare: () => void;
@@ -13,6 +13,10 @@ interface HeaderProps {
   setIsPrintModalOpen: (val: boolean) => void;
   onOpenDashboard: () => void;
   saveStatus?: 'idle' | 'saving' | 'saved' | 'error';
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export function Header({
@@ -25,7 +29,11 @@ export function Header({
   setIsSettingsOpen,
   setIsPrintModalOpen,
   onOpenDashboard,
-  saveStatus
+  saveStatus,
+  undo,
+  redo,
+  canUndo,
+  canRedo
 }: HeaderProps) {
   return (
     <header className="bg-slate-900 text-white p-4 shadow-md print:hidden flex flex-col xl:flex-row justify-between items-center gap-4">
@@ -80,6 +88,43 @@ export function Header({
         >
           <Share2 className="w-4 h-4 text-slate-400" />
           <span>Share Link</span>
+        </motion.button>
+
+        {/* Vertical Divider */}
+        <div className="w-px h-5 bg-slate-800 self-center mx-1.5 hidden sm:block"></div>
+
+        {/* Undo Button */}
+        <motion.button
+          whileHover={canUndo ? { scale: 1.02 } : {}}
+          whileTap={canUndo ? { scale: 0.98 } : {}}
+          onClick={undo}
+          disabled={!canUndo}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium border transition-colors ${
+            canUndo
+              ? 'bg-slate-800 border-slate-700/50 text-slate-200 hover:text-white hover:bg-slate-700'
+              : 'bg-slate-800/40 border-slate-800/20 text-slate-500 cursor-not-allowed'
+          }`}
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo className="w-4 h-4" />
+          <span>Undo</span>
+        </motion.button>
+
+        {/* Redo Button */}
+        <motion.button
+          whileHover={canRedo ? { scale: 1.02 } : {}}
+          whileTap={canRedo ? { scale: 0.98 } : {}}
+          onClick={redo}
+          disabled={!canRedo}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium border transition-colors ${
+            canRedo
+              ? 'bg-slate-800 border-slate-700/50 text-slate-200 hover:text-white hover:bg-slate-700'
+              : 'bg-slate-800/40 border-slate-800/20 text-slate-500 cursor-not-allowed'
+          }`}
+          title="Redo (Ctrl+Shift+Z or Ctrl+Y)"
+        >
+          <Redo className="w-4 h-4" />
+          <span>Redo</span>
         </motion.button>
 
         {/* Vertical Divider */}

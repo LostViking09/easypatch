@@ -3,6 +3,7 @@ import debounce from 'lodash.debounce';
 import { Channel, SettingsConfig, SubSnake, UserSettings } from '../types';
 import { defaultSettings, initialInputs, initialOutputs, PALETTES, defaultUserSettings, createEmptyInputs, createEmptyOutputs, initialStageboxes } from '../utils/constants';
 import { db } from '../services/db';
+import { useHistory } from './useHistory';
 
 export const recalculateHardwareMapping = (channels: Channel[], stageboxes: import('../types').Stagebox[], isInput: boolean): Channel[] => {
   let currentIndex = 0;
@@ -29,12 +30,57 @@ export const recalculateHardwareMapping = (channels: Channel[], stageboxes: impo
 export function usePatchState(projectId?: string) {
   const [title, setTitle] = useState('EasyPatch');
   const [notes, setNotes] = useState('');
-  const [inputs, setInputs] = useState<Channel[]>(initialInputs);
-  const [outputs, setOutputs] = useState<Channel[]>(initialOutputs);
+  
+  const {
+    state: patchData,
+    set: setPatchData,
+    reset: resetPatchData,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useHistory({
+    inputs: initialInputs,
+    outputs: initialOutputs,
+    subSnakes: [] as SubSnake[],
+    stageboxes: initialStageboxes as import('../types').Stagebox[],
+  });
+
+  const inputs = patchData.inputs;
+  const outputs = patchData.outputs;
+  const subSnakes = patchData.subSnakes;
+  const stageboxes = patchData.stageboxes;
+
+  const setInputs = useCallback((valOrFn: any) => {
+    setPatchData(prev => ({
+      ...prev,
+      inputs: typeof valOrFn === 'function' ? valOrFn(prev.inputs) : valOrFn
+    }));
+  }, [setPatchData]);
+
+  const setOutputs = useCallback((valOrFn: any) => {
+    setPatchData(prev => ({
+      ...prev,
+      outputs: typeof valOrFn === 'function' ? valOrFn(prev.outputs) : valOrFn
+    }));
+  }, [setPatchData]);
+
+  const setSubSnakes = useCallback((valOrFn: any) => {
+    setPatchData(prev => ({
+      ...prev,
+      subSnakes: typeof valOrFn === 'function' ? valOrFn(prev.subSnakes) : valOrFn
+    }));
+  }, [setPatchData]);
+
+  const setStageboxes = useCallback((valOrFn: any) => {
+    setPatchData(prev => ({
+      ...prev,
+      stageboxes: typeof valOrFn === 'function' ? valOrFn(prev.stageboxes) : valOrFn
+    }));
+  }, [setPatchData]);
+
   const [settings, setSettings] = useState<SettingsConfig>(defaultSettings);
   const [userSettings, setUserSettings] = useState<UserSettings>(defaultUserSettings);
-  const [subSnakes, setSubSnakes] = useState<SubSnake[]>([]);
-  const [stageboxes, setStageboxes] = useState<import('../types').Stagebox[]>(initialStageboxes);
   
   const [isLoaded, setIsLoaded] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -83,11 +129,13 @@ export function usePatchState(projectId?: string) {
         loadedInputs = recalculateHardwareMapping(loadedInputs, loadedStageboxes, true);
         loadedOutputs = recalculateHardwareMapping(loadedOutputs, loadedStageboxes, false);
 
-        setInputs(loadedInputs);
-        setOutputs(loadedOutputs);
-        
-        setSubSnakes((project.subSnakes || []).map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) })));
-        setStageboxes(loadedStageboxes);
+        const loadedSubSnakes = (project.subSnakes || []).map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) }));
+        resetPatchData({
+          inputs: loadedInputs,
+          outputs: loadedOutputs,
+          subSnakes: loadedSubSnakes,
+          stageboxes: loadedStageboxes
+        });
       }
       setIsLoaded(true);
       hasLoadedRef.current = true;
@@ -416,16 +464,22 @@ export function usePatchState(projectId?: string) {
         return ch;
       });
 
-      setInputs(finalInputs);
-      setOutputs(finalOutputs);
+      setPatchData(prev => ({
+        ...prev,
+        inputs: finalInputs,
+        outputs: finalOutputs
+      }));
     } else {
       if (isInput) {
         finalInputs = newList;
       } else {
         finalOutputs = newList;
       }
-      setInputs(finalInputs);
-      setOutputs(finalOutputs);
+      setPatchData(prev => ({
+        ...prev,
+        inputs: finalInputs,
+        outputs: finalOutputs
+      }));
     }
 
     return { finalInputs, finalOutputs };
@@ -460,10 +514,12 @@ export function usePatchState(projectId?: string) {
       group: '',
     }));
 
-    setInputs(newInputs);
-    setOutputs(newOutputs);
-    setSubSnakes([]);
-    setStageboxes(initialStageboxes);
+    resetPatchData({
+      inputs: newInputs,
+      outputs: newOutputs,
+      subSnakes: [],
+      stageboxes: initialStageboxes
+    });
     setSettings(prev => ({
       ...prev,
       grid: {
@@ -494,14 +550,20 @@ export function usePatchState(projectId?: string) {
   };
 
   const deleteSubSnake = (id: string) => {
-    setSubSnakes(prev => prev.filter(s => s.id !== id));
-    setInputs(prev => prev.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch));
-    setOutputs(prev => prev.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch));
+    setPatchData(prev => ({
+      ...prev,
+      subSnakes: prev.subSnakes.filter(s => s.id !== id),
+      inputs: prev.inputs.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch),
+      outputs: prev.outputs.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch)
+    }));
   };
 
   const clearSubSnakeAssignments = (id: string) => {
-    setInputs(prev => prev.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch));
-    setOutputs(prev => prev.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch));
+    setPatchData(prev => ({
+      ...prev,
+      inputs: prev.inputs.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch),
+      outputs: prev.outputs.map(ch => ch.subSnakeId === id ? { ...ch, subSnakeId: undefined, subSnakeChannel: undefined } : ch)
+    }));
   };
 
   const handleExport = () => {
@@ -522,6 +584,11 @@ export function usePatchState(projectId?: string) {
     if (data.title) setTitle(data.title);
     if (data.notes !== undefined) setNotes(data.notes);
     
+    let finalInputs = inputs;
+    let finalOutputs = outputs;
+    let finalSubSnakes = subSnakes;
+    let finalStageboxes = stageboxes;
+
     if (data.settings) {
       const importedSettings = { ...defaultSettings, ...data.settings };
       delete importedSettings.animationsEnabled;
@@ -550,24 +617,31 @@ export function usePatchState(projectId?: string) {
           }
         });
       }
-      setInputs(newInputs);
-      setOutputs(newOutputs);
+      finalInputs = newInputs;
+      finalOutputs = newOutputs;
     } else {
-      if (data.inputs && Array.isArray(data.inputs)) setInputs(data.inputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
-      if (data.outputs && Array.isArray(data.outputs)) setOutputs(data.outputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' })));
+      if (data.inputs && Array.isArray(data.inputs)) finalInputs = data.inputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
+      if (data.outputs && Array.isArray(data.outputs)) finalOutputs = data.outputs.map((ch: any) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
     }
 
     if (data.subSnakes && Array.isArray(data.subSnakes)) {
-      setSubSnakes(data.subSnakes.map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) })));
+      finalSubSnakes = data.subSnakes.map((s: any) => ({ ...s, name: (s.name || '').slice(0, 6) }));
     } else {
-      setSubSnakes([]);
+      finalSubSnakes = [];
     }
 
     if (data.stageboxes && Array.isArray(data.stageboxes)) {
-      setStageboxes(data.stageboxes);
+      finalStageboxes = data.stageboxes;
     } else {
-      setStageboxes(initialStageboxes);
+      finalStageboxes = initialStageboxes;
     }
+
+    resetPatchData({
+      inputs: finalInputs,
+      outputs: finalOutputs,
+      subSnakes: finalSubSnakes,
+      stageboxes: finalStageboxes
+    });
   };
 
   const handleUpdateStageboxes = (newStageboxes: import('../types').Stagebox[]) => {
@@ -631,9 +705,12 @@ export function usePatchState(projectId?: string) {
     sanitizedInputs = recalculateHardwareMapping(sanitizedInputs, newStageboxes, true);
     sanitizedOutputs = recalculateHardwareMapping(sanitizedOutputs, newStageboxes, false);
 
-    setStageboxes(newStageboxes);
-    setInputs(sanitizedInputs);
-    setOutputs(sanitizedOutputs);
+    setPatchData(prev => ({
+      ...prev,
+      stageboxes: newStageboxes,
+      inputs: sanitizedInputs,
+      outputs: sanitizedOutputs
+    }));
   };
 
   return {
@@ -655,6 +732,10 @@ export function usePatchState(projectId?: string) {
     addSubSnake,
     updateSubSnake,
     deleteSubSnake,
-    clearSubSnakeAssignments
+    clearSubSnakeAssignments,
+    undo,
+    redo,
+    canUndo,
+    canRedo
   };
 }
