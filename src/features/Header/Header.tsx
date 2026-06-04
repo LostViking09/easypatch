@@ -132,6 +132,7 @@ export function Header({
 
         {/* Multi-Select */}
         <motion.button
+          data-tour="multi-select-btn"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => {
@@ -153,6 +154,7 @@ export function Header({
 
         {/* Stageboxes */}
         <motion.button
+          data-tour="stageboxes-btn"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsStageboxesOpen(true)}
@@ -164,6 +166,7 @@ export function Header({
 
         {/* SubSnakes */}
         <motion.button
+          data-tour="subsnakes-btn"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsSubSnakesOpen(true)}
@@ -178,6 +181,7 @@ export function Header({
 
         {/* Settings */}
         <motion.button
+          data-tour="settings-btn"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsSettingsOpen(true)}
@@ -188,6 +192,7 @@ export function Header({
 
         {/* Print */}
         <motion.button
+          data-tour="print-btn"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsPrintModalOpen(true)}

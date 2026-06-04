@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, Printer, LayoutGrid, Table, SlidersHorizontal, Network } from 'lucide-react';
+import { X, Printer, LayoutGrid, Table, SlidersHorizontal, Network, HelpCircle } from 'lucide-react';
 import { Channel, SubSnake, PrintOptions, PrintSourceOptions, SettingsConfig } from '../types';
 import { ModalBase } from './ModalBase';
+import { ModalHelpBox } from './ModalHelpBox';
+import { useWalkthrough } from '../features/Walkthrough/WalkthroughContext';
+import { WALKTHROUGH_STEPS } from '../utils/walkthroughSteps';
 
 interface PrintModalProps {
   onClose: () => void;
@@ -24,6 +27,10 @@ export const PrintModal: React.FC<PrintModalProps> = ({
   setSettings
 }) => {
   const [options, setOptions] = useState<PrintOptions | null>(null);
+  const { isActive: isTourActive, currentStepIndex } = useWalkthrough();
+  const step = WALKTHROUGH_STEPS[currentStepIndex];
+  const isTourPaused = isTourActive && (!step || !step.actionEvent);
+  const [isHelpOpen, setIsHelpOpen] = useState(isTourPaused);
 
   useEffect(() => {
     const hasInputContent = inputs.length > 0;
@@ -112,18 +119,38 @@ export const PrintModal: React.FC<PrintModalProps> = ({
 
   return (
     <ModalBase onClose={onClose} onSubmit={() => onConfirm(options)} maxWidthClass="max-w-lg" zIndexClass="z-[100]">
-      <div className="flex items-center justify-between p-5 border-b border-slate-100">
+      <div data-tour="print-modal" className="flex flex-col h-full w-full min-h-0">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
         <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
           <Printer className="w-6 h-6 text-blue-500" />
           Print Options
         </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          <X className="w-6 h-6" />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsHelpOpen(!isHelpOpen)}
+            className={`transition-colors flex items-center gap-1.5 text-sm font-bold ${isHelpOpen ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'}`}
+          >
+            <HelpCircle className="w-5 h-5" />
+            <span className="hidden sm:inline">Help</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+
+      <div className="px-6 pt-4 pb-0 -mb-2">
+        <ModalHelpBox
+          isOpen={isHelpOpen}
+          onClose={() => setIsHelpOpen(false)}
+          title="Print & Export Guide"
+          content="Configure how your patch list is printed or exported as a PDF. You can choose to include grid or table views for Main Inputs, Outputs, and each individual SubSnake. Adjust color modes and page sizing below."
+        />
       </div>
 
       <div className="p-6 overflow-y-auto flex-1 min-h-0">
@@ -274,6 +301,7 @@ export const PrintModal: React.FC<PrintModalProps> = ({
         >
           <Printer className="w-4 h-4" /> Print
         </button>
+      </div>
       </div>
     </ModalBase>
   );

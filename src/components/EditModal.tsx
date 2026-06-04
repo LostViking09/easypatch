@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Pipette, ChevronDown, AlertCircle, Link2, Network, Trash2 } from 'lucide-react';
+import { X, Save, Pipette, ChevronDown, AlertCircle, Link2, Network, Trash2, HelpCircle } from 'lucide-react';
 import { Channel, SettingsConfig, SubSnake, UserSettings } from '../types';
 import { PALETTES } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModalBase } from './ModalBase';
+import { ModalHelpBox } from './ModalHelpBox';
+import { useWalkthrough } from '../features/Walkthrough/WalkthroughContext';
+import { WALKTHROUGH_STEPS } from '../utils/walkthroughSteps';
 import { ColorPicker } from './ColorPicker';
 import { GroupComboBox } from './EditModal/GroupComboBox';
 import { SubSnakeGridSelector } from './EditModal/SubSnakeGridSelector';
@@ -24,6 +27,10 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
   const [formData, setFormData] = useState<Channel>({ ...channel });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<'prev' | 'next' | null>(null);
+  const { isActive: isTourActive, currentStepIndex } = useWalkthrough();
+  const step = WALKTHROUGH_STEPS[currentStepIndex];
+  const isTourPaused = isTourActive && (!step || !step.actionEvent);
+  const [isHelpOpen, setIsHelpOpen] = useState(isTourPaused);
   const activePalette = PALETTES[settings.palette];
 
   const handleClear = () => {
@@ -146,20 +153,48 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
 
   return (
     <ModalBase onClose={onClose} onSubmit={handleSubmit} maxWidthClass="max-w-md">
-      <div className="bg-slate-800 text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
+      <div data-tour="edit-modal" className="flex flex-col h-full w-full min-h-0">
+        <div className="bg-slate-800 text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
         <h3 className="font-bold">
           {channel.type === 'in' ? 'In' : 'Out'}  #{channel.number}
         </h3>
-        <motion.button 
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={onClose} 
-          type="button"
-          aria-label="Close"
-          className="text-slate-300 hover:text-white transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </motion.button>
+        <div className="flex items-center gap-3">
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsHelpOpen(!isHelpOpen)}
+            className={`transition-colors flex items-center gap-1.5 text-sm font-bold ${isHelpOpen ? 'text-indigo-400' : 'text-slate-400 hover:text-indigo-300'}`}
+          >
+            <HelpCircle className="w-5 h-5" />
+            <span className="hidden sm:inline">Help</span>
+          </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onClose} 
+            type="button"
+            aria-label="Close"
+            className="text-slate-300 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </motion.button>
+        </div>
+      </div>
+
+      <div className="px-4 sm:px-6 pt-4 pb-0 -mb-2">
+        <ModalHelpBox
+          isOpen={isHelpOpen}
+          onClose={() => setIsHelpOpen(false)}
+          title="Channel Editor Guide"
+          content="Here you can edit channel properties like Name, Mic/DI, Notes, and assign it to a SubSnake or Stagebox. You can also assign a custom color or link adjacent channels."
+          shortcuts={[
+            { keys: ['Ctrl', '→'], description: 'Save & Next Channel' },
+            { keys: ['Ctrl', 'Shift', '←'], description: 'Save & Prev Channel' },
+            { keys: ['Esc'], description: 'Close without saving' },
+            { keys: ['Enter'], description: 'Save & Close' }
+          ]}
+        />
       </div>
 
       <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
@@ -417,6 +452,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
           </ModalBase>
         )}
       </AnimatePresence>
+      </div>
     </ModalBase>
   );
 };

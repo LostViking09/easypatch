@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Server, ArrowUp, ArrowDown, Edit2, AlertTriangle, Layers, Check } from 'lucide-react';
+import { X, Plus, Trash2, Server, ArrowUp, ArrowDown, Edit2, AlertTriangle, Layers, Check, HelpCircle } from 'lucide-react';
 import { Stagebox } from '../types';
 import { STAGEBOX_PRESETS } from '../utils/constants';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModalBase } from './ModalBase';
+import { ModalHelpBox } from './ModalHelpBox';
+import { useWalkthrough } from '../features/Walkthrough/WalkthroughContext';
+import { WALKTHROUGH_STEPS } from '../utils/walkthroughSteps';
 
 interface StageboxesModalProps {
   stageboxes: Stagebox[];
@@ -32,6 +35,10 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
   
   const [preset, setPreset] = useState('custom');
   const [boxToDelete, setBoxToDelete] = useState<Stagebox | null>(null);
+  const { isActive: isTourActive, currentStepIndex } = useWalkthrough();
+  const step = WALKTHROUGH_STEPS[currentStepIndex];
+  const isTourPaused = isTourActive && (!step || !step.actionEvent);
+  const [isHelpOpen, setIsHelpOpen] = useState(isTourPaused);
 
   // Sync editing mode fields when selected stagebox changes
   useEffect(() => {
@@ -192,21 +199,42 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
   return (
     <>
       <ModalBase onClose={onClose} maxWidthClass="max-w-4xl">
-        <div className="max-h-[90vh] flex flex-col w-full">
+        <div data-tour="stageboxes-modal" className="max-h-[90vh] flex flex-col w-full">
           <div className="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-2">
               <Layers className="w-5 h-5 text-indigo-400" />
               <h3 className="font-bold text-lg">Stagebox Setup</h3>
             </div>
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={onClose}
-              className="text-slate-300 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </motion.button>
+            <div className="flex items-center gap-4">
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsHelpOpen(!isHelpOpen)}
+                className={`transition-colors flex items-center gap-1.5 text-sm font-bold ${isHelpOpen ? 'text-indigo-400' : 'text-slate-400 hover:text-indigo-300'}`}
+              >
+                <HelpCircle className="w-5 h-5" />
+                <span className="hidden sm:inline">Help</span>
+              </motion.button>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                className="text-slate-300 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </motion.button>
+            </div>
+          </div>
+
+          <div className="px-6 pt-4 pb-0 -mb-2">
+            <ModalHelpBox
+              isOpen={isHelpOpen}
+              onClose={() => setIsHelpOpen(false)}
+              title="Stagebox Setup Guide"
+              content="Inside Stagebox Setup, you can add stageboxes, size them (e.g., 8x3 inputs), and re-order them. Stageboxes represent your physical hardware layout. Remember: removing a stagebox will permanently delete its associated inputs/outputs."
+            />
           </div>
 
           <div className="p-6 overflow-y-auto space-y-6 flex-1 min-h-0 flex flex-col md:flex-row gap-6">

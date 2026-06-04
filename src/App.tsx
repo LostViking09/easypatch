@@ -23,10 +23,15 @@ import { SubSnakeView } from './features/SubSnakeView/SubSnakeView';
 import { TableView } from './features/TableView/TableView';
 import { UrlImportConfirmModal } from './components/UrlImportConfirmModal';
 import { DashboardModal } from './features/Dashboard/DashboardModal';
+import { WalkthroughProvider, useWalkthrough } from './features/Walkthrough/WalkthroughContext';
+import { WalkthroughOverlay } from './features/Walkthrough/WalkthroughOverlay';
 import { db, Project } from './services/db';
 import { defaultSettings, createEmptyInputs, createEmptyOutputs } from './utils/constants';
+import demoPatchData from './utils/demoPatch.json';
+import { WALKTHROUGH_STEPS } from './utils/walkthroughSteps';
 import { FileText, FolderOpen } from 'lucide-react';
-export default function App() {
+
+function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Editor />} />
@@ -35,9 +40,19 @@ export default function App() {
   );
 }
 
+export default function App() {
+  return (
+    <WalkthroughProvider>
+      <AppRoutes />
+      <WalkthroughOverlay />
+    </WalkthroughProvider>
+  );
+}
+
 function Editor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { hasCompletedTour, startTour, skipTour, isActive, currentStepIndex, nextStep, setIsModalOpen } = useWalkthrough();
 
   const {
     title, setTitle,
@@ -109,6 +124,48 @@ function Editor() {
     handleMultiEditClear
   } = useMultiSelect(inputs, setInputs, outputs, setOutputs, isAnyModalOpen);
 
+  useEffect(() => {
+    setIsModalOpen(isAnyModalOpen);
+  }, [isAnyModalOpen, setIsModalOpen]);
+
+  // Auto-advance interactive walkthrough steps
+  useEffect(() => {
+    if (!isActive) return;
+    const step = WALKTHROUGH_STEPS[currentStepIndex];
+    if (!step) return;
+
+    if (step.actionEvent === 'open-edit-modal' && editingChannel) {
+      nextStep();
+    }
+    if (step.actionEvent === 'close-edit-modal' && !editingChannel) {
+      nextStep();
+    }
+    if (step.actionEvent === 'switch-table-view' && layoutMode === 'table') {
+      nextStep();
+    }
+  }, [
+    isActive, 
+    currentStepIndex, 
+    editingChannel, 
+    layoutMode, 
+    nextStep
+  ]);
+
+  // Force layout/view modes required by current walkthrough step on entry
+  useEffect(() => {
+    if (!isActive) return;
+    const step = WALKTHROUGH_STEPS[currentStepIndex];
+    if (!step) return;
+
+    if (step.requiredLayout && layoutMode !== step.requiredLayout) {
+      setLayoutMode(step.requiredLayout);
+    }
+    if (step.requiredView && currentView !== step.requiredView) {
+      setCurrentView(step.requiredView);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive, currentStepIndex]);
+
   React.useEffect(() => {
     MotionGlobalConfig.skipAnimations = userSettings.animationsEnabled === false;
   }, [userSettings.animationsEnabled]);
@@ -165,7 +222,7 @@ function Editor() {
     const newId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
     const newProject: Project = {
       id: newId,
-      title: 'New Patch List',
+      title: 'New Project',
       notes: '',
       settings: defaultSettings,
       inputs: createEmptyInputs(24),
@@ -177,11 +234,40 @@ function Editor() {
     try {
       await db.projects.add(newProject);
       setIsNewProjectConfirmOpen(false);
-      setToast({ message: 'New patch list created.', type: 'success' });
+      setToast({ message: 'New project created.', type: 'success' });
       navigate(`/project/${newId}`);
     } catch (err) {
       console.error('Failed to create new patch:', err);
-      setToast({ message: 'Failed to create new patch list.', type: 'error' });
+      setToast({ message: 'Failed to create new project.', type: 'error' });
+    }
+  };
+
+  const loadDemoAndStartTour = async () => {
+    const newId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
+    
+    // Fallback if demoPatch.json is empty or invalid
+    const fallbackInputs = createEmptyInputs(24);
+    
+    const newProject: Project = {
+      ...(demoPatchData as any),
+      id: newId,
+      title: demoPatchData.title || 'Demo Project',
+      inputs: demoPatchData.inputs && demoPatchData.inputs.length > 0 ? demoPatchData.inputs : fallbackInputs,
+      outputs: demoPatchData.outputs && demoPatchData.outputs.length > 0 ? demoPatchData.outputs : createEmptyOutputs(12),
+      settings: demoPatchData.settings || defaultSettings,
+      subSnakes: demoPatchData.subSnakes || [],
+      updatedAt: Date.now()
+    };
+
+    try {
+      await db.projects.add(newProject);
+      setToast({ message: 'Demo project loaded.', type: 'success' });
+      navigate(`/project/${newId}`);
+      setTimeout(() => {
+        startTour();
+      }, 500);
+    } catch (err) {
+      console.error('Failed to create demo:', err);
     }
   };
 
@@ -492,6 +578,9 @@ function Editor() {
               }
             }}
             activeProjectId={id}
+            hasCompletedTour={hasCompletedTour}
+            onStartDemo={loadDemoAndStartTour}
+            onSkipTour={skipTour}
           />
         )}
       </AnimatePresence>

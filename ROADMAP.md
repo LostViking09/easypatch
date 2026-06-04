@@ -6,7 +6,9 @@ This document serves as the central repository for planned features, refined ide
 
 ### BUGS
 
-- Printed page layout, headers etc. need some attention.
+- WTF is the settings stored
+- Too quick drag multiselect
+- Button hover and animation hitboxes =/= action hitboxes?!
 
 ---
 

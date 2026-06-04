@@ -85,6 +85,7 @@ export function PatchGridSection({
         <h2 className="text-sm font-bold tracking-wider uppercase">{type}</h2>
       </div>
       <div
+        data-tour="patch-grid"
         className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border')}`}
         style={{
           gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,

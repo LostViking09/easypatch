@@ -3,6 +3,9 @@ import { X, Plus, Trash2, Edit2, Check, Network, HelpCircle, Grid, AlertTriangle
 import { Channel, SubSnake, SettingsConfig } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModalBase } from './ModalBase';
+import { ModalHelpBox } from './ModalHelpBox';
+import { useWalkthrough } from '../features/Walkthrough/WalkthroughContext';
+import { WALKTHROUGH_STEPS } from '../utils/walkthroughSteps';
 import { CreateSubSnakeForm } from './SubSnakes/CreateSubSnakeForm';
 import { SubSnakeList } from './SubSnakes/SubSnakeList';
 import { DeleteSubSnakeConfirm, ClearSubSnakeConfirm } from './SubSnakes/DeleteSubSnakeConfirm';
@@ -33,6 +36,10 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [subSnakeToDelete, setSubSnakeToDelete] = useState<SubSnake | null>(null);
   const [subSnakeToClear, setSubSnakeToClear] = useState<SubSnake | null>(null);
+  const { isActive: isTourActive, currentStepIndex } = useWalkthrough();
+  const step = WALKTHROUGH_STEPS[currentStepIndex];
+  const isTourPaused = isTourActive && (!step || !step.actionEvent);
+  const [isHelpOpen, setIsHelpOpen] = useState(isTourPaused);
 
   const getMappedCount = (snakeId: string) => {
     return inputs.filter(c => c.subSnakeId === snakeId).length + outputs.filter(c => c.subSnakeId === snakeId).length;
@@ -41,22 +48,48 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
   return (
     <>
       <ModalBase onClose={onClose} maxWidthClass="max-w-4xl">
-        <div className="max-h-[90vh] flex flex-col w-full">
+        <div data-tour="subsnakes-modal" className="max-h-[90vh] flex flex-col w-full">
         {/* Header */}
         <div className="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Network className="w-5 h-5 text-indigo-400" />
             <h3 className="font-bold text-lg">Manage SubSnakes</h3>
           </div>
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </motion.button>
+          <div className="flex items-center gap-4">
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setIsHelpOpen(!isHelpOpen)}
+              className={`transition-colors flex items-center gap-1.5 text-sm font-bold ${isHelpOpen ? 'text-indigo-400' : 'text-slate-400 hover:text-indigo-300'}`}
+            >
+              <HelpCircle className="w-5 h-5" />
+              <span className="hidden sm:inline">Help</span>
+            </motion.button>
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onClose}
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </motion.button>
+          </div>
+        </div>
+
+        <div className="px-6 pt-4 pb-0 -mb-2">
+          <ModalHelpBox
+            isOpen={isHelpOpen}
+            onClose={() => setIsHelpOpen(false)}
+            title="SubSnake Manager Guide"
+            content={
+              <>
+                <p className="mb-2">Create subsnakes (like a Drum Drop or Stage Left box) here. You can then assign any channel to them using the edit modal or multi-select mode.</p>
+                <p><strong>Hint:</strong> To quickly assign multiple channels to a subsnake, use the <strong>Multi-Select</strong> option on the main screen.</p>
+              </>
+            }
+          />
         </div>
 
         {/* Content Area */}
@@ -79,13 +112,7 @@ export const SubSnakesModal: React.FC<SubSnakesModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50">
-          <div className="text-xs text-slate-500 flex items-center gap-2 font-medium">
-            <HelpCircle className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-            <span>
-              <strong>Hint:</strong> To quickly assign multiple channels to a subsnake, use the <strong>Multi-Select</strong> option, on the main screen.
-            </span>
-          </div>
+        <div className="p-4 border-t flex justify-end gap-4 bg-slate-50">
           <motion.button
             type="button"
             whileHover={{ scale: 1.02 }}

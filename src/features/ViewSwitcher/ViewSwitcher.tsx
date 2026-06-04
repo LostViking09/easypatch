@@ -23,7 +23,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   setLayoutMode
 }) => {
   return (
-    <div className="flex items-center gap-4 flex-wrap max-w-full print:hidden">
+    <div data-tour="view-switcher" className="flex items-center gap-4 flex-wrap max-w-full print:hidden">
       {/* Layout Mode Switcher */}
       <div className="flex items-center gap-1 bg-slate-105 p-1 rounded-xl border border-slate-200 self-start md:self-auto shadow-3xs">
         <button

@@ -336,7 +336,7 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
 export const TableView: React.FC<TableViewProps> = ({ inputs, outputs, subSnakes, stageboxes = [], settings, projectTitle = '', projectNotes = '', onUpdateChannel, onEditChannel }) => {
   if (stageboxes.length === 0) {
     return (
-      <div className="w-full max-w-7xl mx-auto bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none print:mt-4">
+      <div data-tour="table-view" className="w-full max-w-7xl mx-auto bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none print:mt-4">
         <PrintPageHeader projectTitle={projectTitle} projectNotes={projectNotes} />
         <ChannelTable title="Inputs" channels={inputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={false} />
         <ChannelTable title="Outputs" channels={outputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={false} />
@@ -345,7 +345,7 @@ export const TableView: React.FC<TableViewProps> = ({ inputs, outputs, subSnakes
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 print:space-y-6">
+    <div data-tour="table-view" className="w-full max-w-7xl mx-auto space-y-8 print:space-y-6">
       {stageboxes.map((box, idx) => {
         const boxInputs = inputs.filter(c => c.stageboxId === box.id);
         const boxOutputs = outputs.filter(c => c.stageboxId === box.id);
