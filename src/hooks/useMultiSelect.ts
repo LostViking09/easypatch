@@ -64,6 +64,39 @@ export function useMultiSelect(
 
   const handleCellMouseEnter = (ch: Channel, e: React.MouseEvent) => {
     if (!isSelectingRange.current) return;
+    
+    if (lastSelectedId.current && lastSelectedId.current !== ch.id) {
+      // Find the array (inputs or outputs) containing both channels
+      const isInput = inputs.some(c => c.id === ch.id);
+      const isLastInput = inputs.some(c => c.id === lastSelectedId.current);
+      
+      if (isInput === isLastInput) {
+        const list = isInput ? inputs : outputs;
+        const lastIndex = list.findIndex(c => c.id === lastSelectedId.current);
+        const currentIndex = list.findIndex(c => c.id === ch.id);
+        
+        if (lastIndex !== -1 && currentIndex !== -1) {
+          const start = Math.min(lastIndex, currentIndex);
+          const end = Math.max(lastIndex, currentIndex);
+          const mode = selectionMode.current;
+          
+          setSelectedIds(prev => {
+            let newSet = new Set(prev);
+            for (let i = start; i <= end; i++) {
+              if (mode === 'select') {
+                newSet.add(list[i].id);
+              } else {
+                newSet.delete(list[i].id);
+              }
+            }
+            return Array.from(newSet);
+          });
+          lastSelectedId.current = ch.id;
+          return;
+        }
+      }
+    }
+
     handleCellToggle(ch.id, selectionMode.current);
     lastSelectedId.current = ch.id;
   };

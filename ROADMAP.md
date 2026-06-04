@@ -7,8 +7,6 @@ This document serves as the central repository for planned features, refined ide
 ### BUGS
 
 - WTF is the settings stored
-- Too quick drag multiselect
-- Button hover and animation hitboxes =/= action hitboxes?!
 
 ---
 
