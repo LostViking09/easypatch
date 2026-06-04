@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Channel, SubSnake, SettingsConfig } from '../../types';
 import { hexToRgba } from '../../utils/colors';
 import { InlineEditCell } from '../../components/InlineEditCell';
+import { PrintPageHeader } from '../../components/PrintPageHeader';
 
 type EditableField = 'name' | 'mic' | 'stand' | 'notes' | 'group';
 const EDITABLE_FIELDS: EditableField[] = ['name', 'mic', 'stand', 'notes', 'group'];
@@ -105,16 +106,6 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
 
   return (
     <div className="mb-6 print:mb-6">
-      {/* Print Page Header */}
-      <div className="hidden print:flex items-center justify-between border-b border-slate-300 pb-1 mb-2 text-slate-555 text-xxs font-extrabold tracking-wider uppercase">
-        <span>{projectTitle || 'EasyPatch Sheet'}</span>
-        {projectNotes && (
-          <span className="normal-case font-semibold italic text-slate-400 text-tiny">
-            {projectNotes}
-          </span>
-        )}
-      </div>
-
       <h3 className="text-lg print:text-base font-bold text-slate-800 mb-3 print:text-slate-900 print:mb-1.5">{title}</h3>
 
       {/* MOBILE TWO-LINE RESPONSIVE LIST */}
@@ -346,6 +337,7 @@ export const TableView: React.FC<TableViewProps> = ({ inputs, outputs, subSnakes
   if (stageboxes.length === 0) {
     return (
       <div className="w-full max-w-7xl mx-auto bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none print:mt-4">
+        <PrintPageHeader projectTitle={projectTitle} projectNotes={projectNotes} />
         <ChannelTable title="Inputs" channels={inputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={false} />
         <ChannelTable title="Outputs" channels={outputs} subSnakes={subSnakes} settings={settings} projectTitle={projectTitle} projectNotes={projectNotes} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={false} />
       </div>
@@ -365,14 +357,15 @@ export const TableView: React.FC<TableViewProps> = ({ inputs, outputs, subSnakes
             key={box.id} 
             className={`bg-white p-0 lg:p-6 rounded-xl border-0 lg:border border-slate-200 shadow-none lg:shadow-sm print:p-0 print:border-none print:shadow-none print:mt-4 print-avoid-break ${idx > 0 ? 'print-subsnake-page-break' : ''}`}
           >
+            <PrintPageHeader projectTitle={projectTitle} projectNotes={projectNotes} />
             <h2 className="text-xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-200 print:text-black print:border-black uppercase tracking-wide">
               {box.name}
             </h2>
             {boxInputs.length > 0 && (
-              <ChannelTable title="Inputs" channels={boxInputs} subSnakes={subSnakes} settings={settings} projectTitle={idx === 0 ? projectTitle : undefined} projectNotes={idx === 0 ? projectNotes : undefined} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={true} />
+              <ChannelTable title="Inputs" channels={boxInputs} subSnakes={subSnakes} settings={settings} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={true} />
             )}
             {boxOutputs.length > 0 && (
-              <ChannelTable title="Outputs" channels={boxOutputs} subSnakes={subSnakes} settings={settings} projectTitle={undefined} projectNotes={undefined} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={true} />
+              <ChannelTable title="Outputs" channels={boxOutputs} subSnakes={subSnakes} settings={settings} onUpdateChannel={onUpdateChannel} onEditChannel={onEditChannel} hasStageboxes={true} />
             )}
           </div>
         );

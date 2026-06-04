@@ -7,13 +7,14 @@ import { SettingsConfig } from '../../types';
 
 interface CreateSubSnakeFormProps {
   settings: SettingsConfig;
-  onAddSubSnake: (name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
+  onAddSubSnake: (name: string, note?: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
 }
 
 const PRESETS = SUB_SNAKE_PRESETS;
 
 export const CreateSubSnakeForm: React.FC<CreateSubSnakeFormProps> = ({ settings, onAddSubSnake }) => {
   const [newSnakeName, setNewSnakeName] = useState('');
+  const [newSnakeNote, setNewSnakeNote] = useState('');
   const [newSnakePreset, setNewSnakePreset] = useState('dynamic');
   
   const defaultColor = PALETTES[settings.palette][0]?.value || '#017fba';
@@ -57,8 +58,9 @@ export const CreateSubSnakeForm: React.FC<CreateSubSnakeFormProps> = ({ settings
       };
     }
 
-    onAddSubSnake(newSnakeName.trim(), newSnakeColor, grid);
+    onAddSubSnake(newSnakeName.trim(), newSnakeNote.trim(), newSnakeColor, grid);
     setNewSnakeName('');
+    setNewSnakeNote('');
     setNewSnakePreset('dynamic');
     setNewSnakeColor(defaultColor);
     setIsInputEnabled(false);
@@ -73,15 +75,26 @@ export const CreateSubSnakeForm: React.FC<CreateSubSnakeFormProps> = ({ settings
       
       <form onSubmit={handleAdd} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-600 mb-1">SubSnake Name</label>
+          <label className="block text-xs font-semibold text-slate-600 mb-1">Short Name</label>
           <input
             type="text"
             value={newSnakeName}
             onChange={e => setNewSnakeName(e.target.value)}
-            maxLength={6}
+            maxLength={16}
             placeholder="e.g. Stage Left, Drums..."
             className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
             required
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 mb-1">Note</label>
+          <input
+            type="text"
+            value={newSnakeNote}
+            onChange={e => setNewSnakeNote(e.target.value)}
+            placeholder="e.g. Center stage drop box"
+            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
           />
         </div>
 

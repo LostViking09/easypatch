@@ -3,6 +3,7 @@ import { Channel, PrintOptions, SettingsConfig, Stagebox, SubSnake } from '../ty
 import { PatchGridSection } from '../features/PatchGrid/PatchGridSection';
 import { TableView } from '../features/TableView/TableView';
 import { SubSnakeView } from '../features/SubSnakeView/SubSnakeView';
+import { PrintPageHeader } from './PrintPageHeader';
 
 interface PrintRendererProps {
   printOptions: PrintOptions;
@@ -34,9 +35,27 @@ export const PrintRenderer: React.FC<PrintRendererProps> = ({
           if (boxInputs.length === 0) return null;
           return (
             <div key={`print-in-${box.id}`} className="print-subsnake-page-break print-avoid-break w-full mb-8">
+              <PrintPageHeader projectTitle={title} projectNotes={notes} />
               <div className="print-grid-container print-stacked flex-col gap-6 w-full">
-                <div className="flex flex-col gap-2 w-full">
-                  <div className="font-bold text-lg border-b border-gray-400 pb-1">{box.name} - Inputs</div>
+                <div className="flex flex-col gap-2 w-full mt-2">
+                  <div className="flex items-center justify-between border-b pb-2 border-slate-250">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-extrabold text-lg text-slate-850 tracking-tight">{box.name} - Inputs</h4>
+                      <span className="text-xs text-slate-555 font-semibold hidden sm:inline">
+                        ({box.grid.input.cols * box.grid.input.rows} in)
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5 print:hidden">
+                      <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {boxInputs.length} IN Mapped
+                      </span>
+                    </div>
+                  </div>
+                  {box.note && (
+                    <div className="text-sm italic text-slate-500 mb-2 print:mb-1 -mt-2 print:-mt-1">
+                      {box.note}
+                    </div>
+                  )}
                   <PatchGridSection
                     channels={boxInputs}
                     type="INPUT"
@@ -65,9 +84,27 @@ export const PrintRenderer: React.FC<PrintRendererProps> = ({
           if (boxOutputs.length === 0) return null;
           return (
             <div key={`print-out-${box.id}`} className="print-subsnake-page-break print-avoid-break w-full mb-8">
+              <PrintPageHeader projectTitle={title} projectNotes={notes} />
               <div className="print-grid-container print-stacked flex-col gap-6 w-full">
-                <div className="flex flex-col gap-2 w-full">
-                  <div className="font-bold text-lg border-b border-gray-400 pb-1">{box.name} - Outputs</div>
+                <div className="flex flex-col gap-2 w-full mt-2">
+                  <div className="flex items-center justify-between border-b pb-2 border-slate-250">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-extrabold text-lg text-slate-850 tracking-tight">{box.name} - Outputs</h4>
+                      <span className="text-xs text-slate-555 font-semibold hidden sm:inline">
+                        ({box.grid.output.cols * box.grid.output.rows} out)
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5 print:hidden">
+                      <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                        {boxOutputs.length} OUT Mapped
+                      </span>
+                    </div>
+                  </div>
+                  {box.note && (
+                    <div className="text-sm italic text-slate-500 mb-2 print:mb-1 -mt-2 print:-mt-1">
+                      {box.note}
+                    </div>
+                  )}
                   <PatchGridSection
                     channels={boxOutputs}
                     type="OUTPUT"

@@ -6,6 +6,8 @@ This document serves as the central repository for planned features, refined ide
 
 ### BUGS
 
+- Printed page layout, headers etc. need some attention.
+
 ---
 
 ### 1. Snippets

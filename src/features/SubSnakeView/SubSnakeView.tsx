@@ -4,6 +4,7 @@ import { Channel, SubSnake, SettingsConfig, Stagebox } from '../../types';
 import { ChannelCell } from '../../components/ChannelCell';
 import { hexToRgba } from '../../utils/colors';
 import { SubSnakeTable } from './SubSnakeTable';
+import { PrintPageHeader } from '../../components/PrintPageHeader';
 
 interface SubSnakeViewProps {
   subSnakes: SubSnake[];
@@ -233,17 +234,10 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
           return (
             <div
               key={snake.id}
-              className={`print-avoid-break ${breakClass} flex flex-col space-y-4`}
+              className={`${breakClass} flex flex-col space-y-4`}
             >
               {shouldShowPrintHeader && (
-                <div className="hidden print:flex items-center justify-between border-b border-slate-300 pb-1 mb-1 text-slate-500 text-xxs font-extrabold tracking-wider uppercase">
-                  <span>{projectTitle || 'EasyPatch Sheet'}</span>
-                  {projectNotes && (
-                    <span className="normal-case font-semibold italic text-slate-400 text-tiny">
-                      {projectNotes}
-                    </span>
-                  )}
-                </div>
+                <PrintPageHeader projectTitle={projectTitle} projectNotes={projectNotes} />
               )}
 
               {/* Compact Sleek Stagebox Header Line */}
@@ -270,6 +264,12 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
                   </span>
                 </div>
               </div>
+              
+              {snake.note && (
+                <div className="text-sm italic text-slate-500 mb-2 print:mb-1 -mt-2 print:-mt-1">
+                  {snake.note}
+                </div>
+              )}
 
               {/* View Layout Section */}
               <div className="w-full">
@@ -315,7 +315,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
                   // GRID VIEW
                   <div>
                     {isGridDefined ? (
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 print:flex print-grid-container print-stacked flex-col gap-8 items-start w-full">
                         {snake.grid!.input.rows * snake.grid!.input.cols > 0 && 
                           renderGridSection(
                             'INPUT CHANNELS', 
@@ -342,7 +342,7 @@ export const SubSnakeView: React.FC<SubSnakeViewProps> = ({
                             No channels currently assigned to this Auto-sized SubSnake Box.
                           </div>
                         ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="grid grid-cols-1 md:grid-cols-2 print:flex print-grid-container print-stacked flex-col gap-8 w-full">
                             {hasInputs && 
                               renderGridSection(
                                 'INPUT CHANNELS', 

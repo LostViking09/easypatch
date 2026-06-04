@@ -315,16 +315,28 @@ function Editor() {
 
                   return (
                     <div key={box.id} className="flex flex-col gap-3">
-                      <div className="flex items-center gap-3 border-b border-slate-200 pb-2 mb-1">
-                        <span className="font-bold text-slate-800 tracking-wide uppercase">{box.name}</span>
-                        <div className="flex gap-2">
-                          <span className="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-medium">
-                            {boxInputs.length} IN
-                          </span>
-                          <span className="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-medium">
-                            {boxOutputs.length} OUT
-                          </span>
+                      <div className="flex flex-col mb-1">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-extrabold text-lg text-slate-850 tracking-tight uppercase">{box.name}</h4>
+                            <span className="text-xs text-slate-555 font-semibold hidden sm:inline">
+                              ({box.grid.input.cols * box.grid.input.rows} in / {box.grid.output.cols * box.grid.output.rows} out)
+                            </span>
+                          </div>
+                          <div className="flex gap-1.5 print:hidden">
+                            <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              {boxInputs.length} IN Mapped
+                            </span>
+                            <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                              {boxOutputs.length} OUT Mapped
+                            </span>
+                          </div>
                         </div>
+                        {box.note && (
+                          <div className="text-sm italic text-slate-500 mt-1 mb-1">
+                            {box.note}
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 flex-1">
                         {boxInputs.length > 0 ? (

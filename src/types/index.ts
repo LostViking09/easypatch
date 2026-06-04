@@ -18,6 +18,7 @@ export type Channel = {
 export type SubSnake = {
   id: string;
   name: string;
+  note?: string;
   color: string;
   grid?: {
     input: { rows: number; cols: number };
@@ -28,6 +29,7 @@ export type SubSnake = {
 export type Stagebox = {
   id: string;
   name: string;
+  note?: string;
   order: number;
   grid: {
     input: { rows: number; cols: number };

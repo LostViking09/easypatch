@@ -20,6 +20,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
 }) => {
   const [editingBoxId, setEditingBoxId] = useState<string | null>(null);
   const [boxName, setBoxName] = useState('');
+  const [boxNote, setBoxNote] = useState('');
   
   const [inEnabled, setInEnabled] = useState(true);
   const [inputCols, setInputCols] = useState(8);
@@ -38,6 +39,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
       const box = stageboxes.find(b => b.id === editingBoxId);
       if (box) {
         setBoxName(box.name);
+        setBoxNote(box.note || '');
         const hasInputs = box.grid.input.rows > 0 && box.grid.input.cols > 0;
         setInEnabled(hasInputs);
         setInputCols(hasInputs ? box.grid.input.cols : 8);
@@ -50,6 +52,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
       }
     } else {
       setBoxName('');
+      setBoxNote('');
       setInEnabled(true);
       setInputCols(8);
       setInputRows(3);
@@ -120,6 +123,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
           return {
             ...box,
             name: boxName.trim(),
+            note: boxNote.trim(),
             grid: {
               input: { rows: currentInRows, cols: currentInCols },
               output: { rows: currentOutRows, cols: currentOutCols }
@@ -135,6 +139,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
       const newBox: Stagebox = {
         id: 'box-' + (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11)),
         name: boxName.trim(),
+        note: boxNote.trim(),
         order: stageboxes.length,
         grid: {
           input: { rows: currentInRows, cols: currentInCols },
@@ -143,6 +148,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
       };
       onUpdateStageboxes([...stageboxes, newBox]);
       setBoxName('');
+      setBoxNote('');
       setInEnabled(true);
       setInputCols(8);
       setInputRows(3);
@@ -231,14 +237,26 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-650 mb-1">Name</label>
+                  <label className="block text-xs font-bold text-slate-650 mb-1">Short Name</label>
                   <input
                     type="text"
                     value={boxName}
                     onChange={e => setBoxName(e.target.value)}
+                    maxLength={16}
                     placeholder="e.g. Main IO, Stage Left Box"
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm text-slate-800"
                     required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-650 mb-1">Note</label>
+                  <input
+                    type="text"
+                    value={boxNote}
+                    onChange={e => setBoxNote(e.target.value)}
+                    placeholder="e.g. Stage Right Drop Box"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm text-slate-800"
                   />
                 </div>
 

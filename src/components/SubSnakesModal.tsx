@@ -13,8 +13,8 @@ interface SubSnakesModalProps {
   outputs: Channel[];
   settings: SettingsConfig;
   onClose: () => void;
-  onAddSubSnake: (name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
-  onUpdateSubSnake: (id: string, name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
+  onAddSubSnake: (name: string, note?: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
+  onUpdateSubSnake: (id: string, name: string, note?: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
   onDeleteSubSnake: (id: string) => void;
   onClearSubSnakeAssignments: (id: string) => void;
 }

@@ -8,7 +8,7 @@ import { SubSnake, SettingsConfig } from '../../types';
 interface EditSubSnakeFormProps {
   snake: SubSnake;
   settings: SettingsConfig;
-  onSave: (id: string, name: string, color: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
+  onSave: (id: string, name: string, note?: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
   onCancel: () => void;
 }
 
@@ -17,6 +17,7 @@ const PRESETS = SUB_SNAKE_PRESETS;
 export const EditSubSnakeForm: React.FC<EditSubSnakeFormProps> = ({ snake, settings, onSave, onCancel }) => {
   const defaultColor = PALETTES[settings.palette][0]?.value || '#017fba';
   const [editingName, setEditingName] = useState(snake.name);
+  const [editingNote, setEditingNote] = useState(snake.note || '');
   const [editingColor, setEditingColor] = useState(snake.color || defaultColor);
   
   const [editPreset, setEditPreset] = useState('dynamic');
@@ -78,19 +79,30 @@ export const EditSubSnakeForm: React.FC<EditSubSnakeFormProps> = ({ snake, setti
       };
     }
 
-    onSave(snake.id, editingName.trim(), editingColor, grid);
+    onSave(snake.id, editingName.trim(), editingNote.trim(), editingColor, grid);
   };
 
   return (
     <form onSubmit={handleSave} className="space-y-3 w-full">
       <div>
-        <label className="block text-xxs font-bold text-slate-500 uppercase mb-1">Name</label>
+        <label className="block text-xxs font-bold text-slate-500 uppercase mb-1">Short Name</label>
         <input
           type="text"
           value={editingName}
           onChange={e => setEditingName(e.target.value)}
-          maxLength={6}
+          maxLength={16}
           className="w-full px-2 py-1 text-sm border rounded focus:outline-indigo-550 focus:ring-1 focus:ring-indigo-500 font-bold"
+        />
+      </div>
+
+      <div>
+        <label className="block text-xxs font-bold text-slate-500 uppercase mb-1">Note</label>
+        <input
+          type="text"
+          value={editingNote}
+          onChange={e => setEditingNote(e.target.value)}
+          placeholder="e.g. Center stage drop box"
+          className="w-full px-2 py-1 text-sm border rounded focus:outline-indigo-550 focus:ring-1 focus:ring-indigo-500"
         />
       </div>
 

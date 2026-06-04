@@ -110,7 +110,7 @@ export function usePatchState(projectId?: string) {
         loadedInputs = recalculateHardwareMapping(loadedInputs as Channel[], loadedStageboxes, true);
         loadedOutputs = recalculateHardwareMapping(loadedOutputs as Channel[], loadedStageboxes, false);
 
-        const loadedSubSnakes = (project.subSnakes || []).map((s: Partial<SubSnake>) => ({ ...s, name: (s.name || '').slice(0, 6) }));
+        const loadedSubSnakes = (project.subSnakes || []).map((s: Partial<SubSnake>) => ({ ...s, name: (s.name || '').slice(0, 16) }));
         resetPatchData({
           inputs: loadedInputs,
           outputs: loadedOutputs,
@@ -230,11 +230,12 @@ export function usePatchState(projectId?: string) {
   };
 
 
-  const addSubSnake = (name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => {
+  const addSubSnake = (name: string, note?: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => {
     const defaultColor = PALETTES[settings.palette][0]?.value || '#017fba';
     const newSnake: SubSnake = {
       id: 'subsnake-' + (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11)),
-      name: name.slice(0, 6),
+      name: name.slice(0, 16),
+      note: note,
       color: color || defaultColor,
       grid,
     };
@@ -242,9 +243,9 @@ export function usePatchState(projectId?: string) {
     return newSnake;
   };
 
-  const updateSubSnake = (id: string, name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => {
+  const updateSubSnake = (id: string, name: string, note?: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => {
     const defaultColor = PALETTES[settings.palette][0]?.value || '#017fba';
-    setSubSnakes(prev => prev.map(s => s.id === id ? { ...s, name: name.slice(0, 6), color: color || s.color || defaultColor, grid } : s));
+    setSubSnakes(prev => prev.map(s => s.id === id ? { ...s, name: name.slice(0, 16), note: note, color: color || s.color || defaultColor, grid } : s));
   };
 
   const deleteSubSnake = (id: string) => {
@@ -323,7 +324,7 @@ export function usePatchState(projectId?: string) {
     }
 
     if (data.subSnakes && Array.isArray(data.subSnakes)) {
-      finalSubSnakes = data.subSnakes.map((s) => ({ ...(s as SubSnake), name: (s.name || '').slice(0, 6) }));
+      finalSubSnakes = data.subSnakes.map((s) => ({ ...(s as SubSnake), name: (s.name || '').slice(0, 16) }));
     } else {
       finalSubSnakes = [];
     }

@@ -11,7 +11,7 @@ interface SubSnakeListProps {
   outputs: Channel[];
   editingId: string | null;
   setEditingId: (id: string | null) => void;
-  onUpdateSubSnake: (id: string, name: string, color: string, grid?: any) => void;
+  onUpdateSubSnake: (id: string, name: string, note?: string, color?: string, grid?: any) => void;
   onDeleteRequest: (snake: SubSnake) => void;
   onClearRequest: (snake: SubSnake) => void;
 }
@@ -70,8 +70,8 @@ export const SubSnakeList: React.FC<SubSnakeListProps> = ({
                       <EditSubSnakeForm
                         snake={snake}
                         settings={settings}
-                        onSave={(id, name, color, grid) => {
-                          onUpdateSubSnake(id, name, color, grid);
+                        onSave={(id, name, note, color, grid) => {
+                          onUpdateSubSnake(id, name, note, color, grid);
                           setEditingId(null);
                         }}
                         onCancel={() => setEditingId(null)}
