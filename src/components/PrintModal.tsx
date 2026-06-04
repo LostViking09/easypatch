@@ -137,7 +137,7 @@ export const PrintModal: React.FC<PrintModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors p-2 -m-2"
           >
             <X className="w-6 h-6" />
           </button>

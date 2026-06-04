@@ -175,7 +175,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
             onClick={onClose} 
             type="button"
             aria-label="Close"
-            className="text-slate-300 hover:text-white transition-colors"
+            className="text-slate-300 hover:text-white transition-colors p-2 -m-2"
           >
             <X className="w-5 h-5" />
           </motion.button>
@@ -406,7 +406,7 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
                   setPendingNavigation(null);
                 }}
                 aria-label="Close Confirm"
-                className="text-amber-205 hover:text-white transition-colors"
+                className="text-amber-205 hover:text-white transition-colors p-2 -m-2"
               >
                 <X className="w-5 h-5" />
               </button>

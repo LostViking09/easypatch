@@ -21,7 +21,7 @@ export const NewProjectConfirmModal: React.FC<NewProjectConfirmModalProps> = ({ 
           whileTap={{ scale: 0.9 }}
           onClick={onClose} 
           type="button"
-          className="text-red-200 hover:text-white transition-colors"
+          className="text-red-200 hover:text-white transition-colors p-2 -m-2"
         >
           <X className="w-5 h-5" />
         </motion.button>

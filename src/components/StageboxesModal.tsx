@@ -221,7 +221,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={onClose}
-                className="text-slate-300 hover:text-white transition-colors"
+                className="text-slate-300 hover:text-white transition-colors p-2 -m-2"
               >
                 <X className="w-5 h-5" />
               </motion.button>
@@ -554,7 +554,7 @@ export const StageboxesModal: React.FC<StageboxesModalProps> = ({
               <h3 className="font-bold flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-100" /> Remove Stagebox?
               </h3>
-              <button onClick={() => setBoxToDelete(null)} className="text-red-205 hover:text-white">
+              <button onClick={() => setBoxToDelete(null)} className="text-red-205 hover:text-white p-2 -m-2">
                 <X className="w-5 h-5" />
               </button>
             </div>

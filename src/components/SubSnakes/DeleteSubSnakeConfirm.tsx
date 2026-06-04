@@ -29,7 +29,7 @@ export const DeleteSubSnakeConfirm: React.FC<DeleteSubSnakeConfirmProps> = ({ su
             <button
               type="button"
               onClick={onClose}
-              className="text-red-205 hover:text-white transition-colors cursor-pointer"
+              className="text-red-205 hover:text-white transition-colors cursor-pointer p-2 -m-2"
             >
               <X className="w-5 h-5" />
             </button>
@@ -95,7 +95,7 @@ export const ClearSubSnakeConfirm: React.FC<ClearSubSnakeConfirmProps> = ({ subS
             <button
               type="button"
               onClick={onClose}
-              className="text-amber-205 hover:text-white transition-colors cursor-pointer"
+              className="text-amber-205 hover:text-white transition-colors cursor-pointer p-2 -m-2"
             >
               <X className="w-5 h-5" />
             </button>

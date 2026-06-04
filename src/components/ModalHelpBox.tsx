@@ -34,7 +34,7 @@ export const ModalHelpBox: React.FC<ModalHelpBoxProps> = ({
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm relative">
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 text-blue-400 hover:text-blue-700 transition-colors"
+              className="absolute top-3 right-3 text-blue-400 hover:text-blue-700 transition-colors p-2 -m-2"
               aria-label="Close Help"
             >
               <X className="w-4 h-4" />
