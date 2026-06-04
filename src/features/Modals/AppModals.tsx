@@ -50,8 +50,8 @@ interface AppModalsProps {
   handleMassAssignGroup: (group: string, colorMode: 'none' | 'uncolored' | 'all') => void;
   handleMassAssignColor: (color: string) => void;
   handleMassAssignSubSnake: (subSnakeId: string, startPort: number) => void;
-  addSubSnake: (name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => SubSnake;
-  updateSubSnake: (id: string, name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
+  addSubSnake: (name: string, note?: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => SubSnake;
+  updateSubSnake: (id: string, name: string, note?: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => void;
   deleteSubSnake: (id: string) => void;
   clearSubSnakeAssignments: (id: string) => void;
   handleCreateNewProject: () => void;

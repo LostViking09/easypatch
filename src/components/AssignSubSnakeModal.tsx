@@ -16,7 +16,7 @@ interface AssignSubSnakeModalProps {
   settings: SettingsConfig;
   onClose: () => void;
   onSave: (subSnakeId: string, startPort: number) => void;
-  onAddSubSnake: (name: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => SubSnake;
+  onAddSubSnake: (name: string, note?: string, color?: string, grid?: { input: { rows: number; cols: number }; output: { rows: number; cols: number } }) => SubSnake;
 }
 
 export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
@@ -82,7 +82,7 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
       };
     }
 
-    const newSnake = onAddSubSnake(newSnakeName.trim(), newSnakeColor, grid);
+    const newSnake = onAddSubSnake(newSnakeName.trim(), undefined, newSnakeColor, grid);
     setSelectedSubSnakeId(newSnake.id);
     setIsCreatingNew(false);
     setNewSnakeName('');
@@ -158,8 +158,38 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
 
   const conflicts = getConflicts();
 
+  const getOverflowInfo = () => {
+    if (!activeSubSnake || !activeSubSnake.grid) {
+      return { hasOverflow: false, overflowCount: 0, overflowingInputs: [], overflowingOutputs: [], maxInputPort: 0, maxOutputPort: 0 };
+    }
+
+    const maxInputPort = activeSubSnake.grid.input.rows * activeSubSnake.grid.input.cols;
+    const maxOutputPort = activeSubSnake.grid.output.rows * activeSubSnake.grid.output.cols;
+
+    const overflowingInputs = selectedInputs.length > 0 && maxInputPort > 0
+      ? selectedInputs.slice(Math.max(0, maxInputPort - startPort + 1))
+      : [];
+
+    const overflowingOutputs = selectedOutputs.length > 0 && maxOutputPort > 0
+      ? selectedOutputs.slice(Math.max(0, maxOutputPort - startPort + 1))
+      : [];
+
+    const overflowCount = overflowingInputs.length + overflowingOutputs.length;
+
+    return {
+      hasOverflow: overflowCount > 0,
+      overflowCount,
+      overflowingInputs,
+      overflowingOutputs,
+      maxInputPort,
+      maxOutputPort
+    };
+  };
+
+  const overflowInfo = getOverflowInfo();
+
   const handleSaveClick = () => {
-    if (!selectedSubSnakeId) return;
+    if (!selectedSubSnakeId || overflowInfo.hasOverflow) return;
     onSave(selectedSubSnakeId, startPort);
     onClose();
   };
@@ -274,7 +304,7 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
   };
 
   return (
-    <ModalBase onClose={onClose} onSubmit={isCreatingNew ? undefined : handleSaveClick} maxWidthClass="max-w-2xl">
+    <ModalBase onClose={onClose} onSubmit={isCreatingNew || overflowInfo.hasOverflow ? undefined : handleSaveClick} maxWidthClass="max-w-2xl">
       {/* Header */}
       <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -465,6 +495,47 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
             {renderVisualGrid('in')}
             {renderVisualGrid('out')}
 
+            {/* Overflow Warnings */}
+            <AnimatePresence>
+              {overflowInfo.hasOverflow && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -10 }}
+                  className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 space-y-2 text-xs leading-relaxed overflow-hidden shadow-3xs"
+                >
+                  <div className="font-bold flex items-center gap-1.5 text-rose-900">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    <span>SubSnake Port Overflow ({overflowInfo.overflowCount} channel{overflowInfo.overflowCount > 1 ? 's' : ''} out of bounds)</span>
+                  </div>
+                  <p className="font-medium">
+                    The chosen start port ({startPort}) and channel count would assign channels to ports beyond the SubSnake's capacity:
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1 font-medium">
+                    {overflowInfo.overflowingInputs.length > 0 && (
+                      <li>
+                        Inputs: Max port is {overflowInfo.maxInputPort}. The following {overflowInfo.overflowingInputs.length} channel(s) cannot be mapped:{' '}
+                        <span className="font-bold font-mono">
+                          {overflowInfo.overflowingInputs.map(ch => `IN ${ch.number} ("${ch.name || 'Unused'}")`).join(', ')}
+                        </span>
+                      </li>
+                    )}
+                    {overflowInfo.overflowingOutputs.length > 0 && (
+                      <li>
+                        Outputs: Max port is {overflowInfo.maxOutputPort}. The following {overflowInfo.overflowingOutputs.length} channel(s) cannot be mapped:{' '}
+                        <span className="font-bold font-mono">
+                          {overflowInfo.overflowingOutputs.map(ch => `OUT ${ch.number} ("${ch.name || 'Unused'}")`).join(', ')}
+                        </span>
+                      </li>
+                    )}
+                  </ul>
+                  <p className="text-xxs text-rose-700 italic font-semibold mt-1">
+                    Please choose a lower start port or select fewer channels to resolve this overflow.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Conflict Warnings */}
             <AnimatePresence>
               {conflicts.length > 0 && (
@@ -512,11 +583,13 @@ export const AssignSubSnakeModal: React.FC<AssignSubSnakeModalProps> = ({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleSaveClick}
-          disabled={!selectedSubSnakeId || isCreatingNew}
+          disabled={!selectedSubSnakeId || isCreatingNew || overflowInfo.hasOverflow}
           className={`flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-md transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-            conflicts.length > 0
-              ? 'bg-amber-500 hover:bg-amber-600 border border-amber-600'
-              : 'bg-indigo-600 hover:bg-indigo-500'
+            overflowInfo.hasOverflow
+              ? 'bg-rose-600 hover:bg-rose-500 border border-rose-700'
+              : conflicts.length > 0
+                ? 'bg-amber-500 hover:bg-amber-600 border border-amber-600'
+                : 'bg-indigo-600 hover:bg-indigo-500'
           }`}
         >
           <Check className="w-4 h-4" /> Save Assignment
