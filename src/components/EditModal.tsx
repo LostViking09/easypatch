@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Pipette, ChevronDown, AlertCircle, Link2, Network } from 'lucide-react';
+import { X, Save, Pipette, ChevronDown, AlertCircle, Link2, Network, Trash2 } from 'lucide-react';
 import { Channel, SettingsConfig, SubSnake, UserSettings } from '../types';
 import { PALETTES } from '../utils/constants';
 import { hexToRgba } from '../utils/colors';
@@ -25,6 +25,23 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<'prev' | 'next' | null>(null);
   const activePalette = PALETTES[settings.palette];
+
+  const handleClear = () => {
+    setFormData(prev => ({
+      ...prev,
+      name: '',
+      mic: '',
+      stand: '',
+      notes: '',
+      group: undefined,
+      stereoLink: undefined,
+      subSnakeId: undefined,
+      subSnakeChannel: undefined,
+      stageboxId: undefined,
+      stageboxPort: undefined,
+      color: '#ffffff'
+    }));
+  };
 
   const sameTypeChannels = allChannels.filter(c => c.type === channel.type);
   const hasPrev = channel.number > 1;
@@ -287,28 +304,39 @@ export const EditModal: React.FC<EditModalProps> = ({ channel, allChannels, subS
         </div>
       </div>
 
-      <div className="p-4 border-t bg-gray-50 flex justify-end gap-3 flex-shrink-0">
+      <div className="p-4 border-t bg-gray-50 flex justify-between items-center flex-shrink-0">
         <motion.button
           type="button"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-gray-750 hover:bg-gray-100 rounded-md transition-colors"
+          onClick={handleClear}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-55 hover:text-rose-750 rounded-md transition-colors cursor-pointer"
         >
-          Cancel
+          <Trash2 className="w-4 h-4" /> Clear Channel
         </motion.button>
-        <motion.button
-          type="submit"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-bold shadow-sm rounded-md transition-all duration-150 ${
-            isOverwriting
-              ? 'bg-amber-500 hover:bg-amber-600 text-slate-900'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
-          }`}
-        >
-          <Save className="w-4 h-4" /> Save
-        </motion.button>
+        <div className="flex gap-3">
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-750 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+          >
+            Cancel
+          </motion.button>
+          <motion.button
+            type="submit"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-bold shadow-sm rounded-md transition-all duration-150 cursor-pointer ${
+              isOverwriting
+                ? 'bg-amber-500 hover:bg-amber-600 text-slate-900'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+          >
+            <Save className="w-4 h-4" /> Save
+          </motion.button>
+        </div>
       </div>
 
       <AnimatePresence>
