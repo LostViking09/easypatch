@@ -4,6 +4,7 @@ import { ModalBase } from '../../components/ModalBase';
 import { Plus, Search, Trash2, Copy, Download, Upload, Clock, FileText, ChevronRight, X, Sparkles, AlertTriangle, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { defaultSettings, createEmptyInputs, createEmptyOutputs } from '../../utils/constants';
+import { StorageExplanationModal } from '../../components/StorageExplanationModal';
 
 interface DashboardModalProps {
   onClose: () => void;
@@ -27,6 +28,7 @@ export const DashboardModal: React.FC<DashboardModalProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [deletingProject, setDeletingProject] = useState<{ id: string; title: string } | null>(null);
+  const [isExplanationOpen, setIsExplanationOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load projects from IndexedDB
@@ -378,7 +380,14 @@ export const DashboardModal: React.FC<DashboardModalProps> = ({
           <div className="flex items-start gap-2.5 p-3.5 bg-blue-50/60 border border-blue-100/80 rounded-xl text-blue-800 text-xs shrink-0 animate-in fade-in duration-300">
             <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
             <div className="leading-relaxed">
-              <span className="font-bold">Storage Notice:</span> Patches are saved locally inside your browser's database. Clearing your browser cache or data will delete them. Be sure to <span className="font-semibold text-blue-900">Export</span> patches you need later for permanent safekeeping!
+              <span className="font-bold">Storage Notice:</span> Projects are saved in your browser's database. Clearing browser data will delete them. <span className="font-medium">Be sure to export important patches to back them up!</span>{' '}
+              <button
+                type="button"
+                onClick={() => setIsExplanationOpen(true)}
+                className="text-blue-600 hover:text-blue-800 underline font-semibold cursor-pointer ml-1 inline-block"
+              >
+                Why?
+              </button>
             </div>
           </div>
 
@@ -396,6 +405,13 @@ export const DashboardModal: React.FC<DashboardModalProps> = ({
           )}
         </div>
       </ModalBase>
+
+      {/* Storage Explanation Modal */}
+      <AnimatePresence>
+        {isExplanationOpen && (
+          <StorageExplanationModal onClose={() => setIsExplanationOpen(false)} />
+        )}
+      </AnimatePresence>
 
       {/* Delete Confirmation Modal (In-App Modal) */}
       <AnimatePresence>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Share2, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModalBase } from './ModalBase';
+import { StorageExplanationModal } from './StorageExplanationModal';
 
 interface ShareModalProps {
   shareUrl: string;
@@ -11,6 +12,7 @@ interface ShareModalProps {
 export const ShareModal: React.FC<ShareModalProps> = ({ shareUrl, onClose }) => {
   const [isCopied, setIsCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
+  const [isExplanationOpen, setIsExplanationOpen] = useState(false);
 
   useEffect(() => {
     // Check if the browser supports native Web Share API
@@ -125,6 +127,20 @@ export const ShareModal: React.FC<ShareModalProps> = ({ shareUrl, onClose }) => 
           </div>
         </div>
 
+        {/* Share Notice */}
+        <div className="flex items-start gap-2.5 p-3.5 bg-blue-50/60 border border-blue-100/80 rounded-xl text-blue-800 text-xs w-full">
+          <div className="leading-relaxed">
+            <span className="font-bold">Notice:</span> You must generate and send a new link every time you make a change to this project.{' '}
+            <button
+              type="button"
+              onClick={() => setIsExplanationOpen(true)}
+              className="text-blue-600 hover:text-blue-800 underline font-semibold cursor-pointer ml-1 inline-block"
+            >
+              Why?
+            </button>
+          </div>
+        </div>
+
         {/* Conditionally Rendered Native Share Button */}
         {canShare && (
           <div className="w-full pt-2 border-t border-slate-100">
@@ -152,6 +168,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({ shareUrl, onClose }) => 
           Close
         </motion.button>
       </div>
+
+      {/* Storage Explanation Modal */}
+      <AnimatePresence>
+        {isExplanationOpen && (
+          <StorageExplanationModal onClose={() => setIsExplanationOpen(false)} />
+        )}
+      </AnimatePresence>
     </ModalBase>
   );
 };
