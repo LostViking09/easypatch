@@ -6,8 +6,6 @@ This document serves as the central repository for planned features, refined ide
 
 ### BUGS
 
-- WTF is the settings stored
-
 ---
 
 ### 1. Snippets

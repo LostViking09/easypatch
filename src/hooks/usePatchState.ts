@@ -74,7 +74,7 @@ export function usePatchState(projectId?: string) {
 
   // Load user settings from localStorage (cross-project preferences)
   useEffect(() => {
-    const savedUserSettings = localStorage.getItem('ar2412-user-settings');
+    const savedUserSettings = localStorage.getItem('easypatch-user-settings');
     if (savedUserSettings) {
       try { setUserSettings({ ...defaultUserSettings, ...JSON.parse(savedUserSettings) }); } catch (e) { console.error(e); }
     }
@@ -82,7 +82,7 @@ export function usePatchState(projectId?: string) {
 
   // Save user settings to localStorage
   useEffect(() => {
-    localStorage.setItem('ar2412-user-settings', JSON.stringify(userSettings));
+    localStorage.setItem('easypatch-user-settings', JSON.stringify(userSettings));
   }, [userSettings]);
 
   // Load project from IndexedDB
