@@ -47,7 +47,7 @@ export const PrintRenderer: React.FC<PrintRendererProps> = ({
                     </div>
                     <div className="flex gap-1.5 print:hidden">
                       <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        {boxInputs.length} IN Mapped
+                        {boxInputs.filter(c => c.name.trim() !== '').length} IN Mapped
                       </span>
                     </div>
                   </div>
@@ -96,7 +96,7 @@ export const PrintRenderer: React.FC<PrintRendererProps> = ({
                     </div>
                     <div className="flex gap-1.5 print:hidden">
                       <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                        {boxOutputs.length} OUT Mapped
+                        {boxOutputs.filter(c => c.name.trim() !== '').length} OUT Mapped
                       </span>
                     </div>
                   </div>
