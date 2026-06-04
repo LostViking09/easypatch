@@ -403,6 +403,18 @@ export const DashboardModal: React.FC<DashboardModalProps> = ({
               </button>
             </div>
           )}
+
+          <div className="text-center pt-2.5 border-t border-slate-200/60 flex justify-between items-center text-[11px] text-slate-400 shrink-0">
+            <span>Created by LostViking</span>
+            <a
+              href="https://buymeacoffee.com/lostviking09"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-500 hover:underline transition-colors font-medium flex items-center gap-1"
+            >
+              Buy me a coffee ☕
+            </a>
+          </div>
         </div>
       </ModalBase>
 

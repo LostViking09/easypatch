@@ -59,6 +59,15 @@ export const StorageExplanationModal: React.FC<StorageExplanationModalProps> = (
           <p className="text-xs text-slate-600 leading-relaxed">
             Adding cloud database sync and user accounts requires user management, authentication, 
             and paid hosting. Keeping the app database-free lets us keep the tool completely free and account-free.
+            {' '}
+            <a
+              href="https://buymeacoffee.com/lostviking09"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 hover:underline font-semibold"
+            >
+              If you'd like to support the project's hosting, you can buy me a coffee! ☕
+            </a>
           </p>
         </div>
       </div>

@@ -371,13 +371,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSetti
         </div>
       </div>
 
-      <div className="p-4 border-t flex justify-end">
+      <div className="p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50">
+        <a
+          href="https://buymeacoffee.com/lostviking09"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-slate-400 hover:text-blue-500 transition-colors inline-flex items-center gap-1 font-medium"
+        >
+          <span>EasyPatch v1.0 • Support development ☕</span>
+        </a>
         <motion.button
           type="submit"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onClose}
-          className="px-6 py-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-700 rounded-md transition-colors"
+          className="w-full sm:w-auto px-6 py-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-700 rounded-md transition-colors"
         >
           Done
         </motion.button>
