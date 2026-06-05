@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Settings, FolderOpen, CheckSquare, Network, Palette, Printer, Share2, Layers, Undo, Redo } from 'lucide-react';
+import { LayoutGrid, FolderOpen, CheckSquare, Network, Palette, Printer, Share2, Layers, Undo, Redo } from 'lucide-react';
 
 interface HeaderProps {
   handleShare: () => void;
@@ -39,7 +39,7 @@ export function Header({
     <header className="bg-slate-900 text-white p-4 shadow-md print:hidden flex flex-col xl:flex-row justify-between items-center gap-4">
       <div className="flex items-center gap-3.5 flex-wrap">
         <div className="flex items-center gap-3">
-          <Settings className="w-6 h-6 text-blue-400" />
+          <LayoutGrid className="w-6 h-6 text-blue-400" />
           <h1 className="text-xl font-bold tracking-wide cursor-pointer hover:text-blue-300 transition-colors" onClick={onOpenDashboard}>EasyPatch</h1>
         </div>
 
