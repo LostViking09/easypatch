@@ -17,6 +17,7 @@ import { PrintRenderer } from './components/PrintRenderer';
 import { Header } from './features/Header/Header';
 import { ProjectHeader } from './features/ProjectHeader/ProjectHeader';
 import { PatchGridSection } from './features/PatchGrid/PatchGridSection';
+import { StageboxGridRow } from './features/PatchGrid/StageboxGridRow';
 import { MultiEditBar } from './features/MultiEditBar/MultiEditBar';
 import { AppModals } from './features/Modals/AppModals';
 import { SubSnakeView } from './features/SubSnakeView/SubSnakeView';
@@ -397,72 +398,21 @@ function Editor() {
                   const boxInputs = inputs.filter(c => c.stageboxId === box.id);
                   const boxOutputs = outputs.filter(c => c.stageboxId === box.id);
 
-                  if (boxInputs.length === 0 && boxOutputs.length === 0) return null;
-
                   return (
-                    <div key={box.id} className="flex flex-col gap-3">
-                      <div className="flex flex-col mb-1">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-extrabold text-lg text-slate-850 tracking-tight uppercase">{box.name}</h4>
-                            <span className="text-xs text-slate-555 font-semibold hidden sm:inline">
-                              ({box.grid.input.cols * box.grid.input.rows} in / {box.grid.output.cols * box.grid.output.rows} out)
-                            </span>
-                          </div>
-                          <div className="flex gap-1.5 print:hidden">
-                            <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              {boxInputs.filter(c => c.name.trim() !== '').length} IN Mapped
-                            </span>
-                            <span className="text-xxs font-extrabold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                              {boxOutputs.filter(c => c.name.trim() !== '').length} OUT Mapped
-                            </span>
-                          </div>
-                        </div>
-                        {box.note && (
-                          <div className="text-sm italic text-slate-500 mt-1 mb-1">
-                            {box.note}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 flex-1">
-                        {boxInputs.length > 0 ? (
-                          <PatchGridSection
-                            channels={boxInputs}
-                            type="INPUT"
-                            cols={box.grid.input.cols}
-                            flexClass={boxOutputs.length > 0 ? 'flex-[2]' : 'flex-grow flex-1'}
-                            settings={settings}
-                            subSnakes={subSnakes}
-                            selectedIds={selectedIds}
-                            isMultiEdit={isMultiEdit}
-                            onCellClick={handleCellClick}
-                            onCellDrop={handleCellDrop}
-                            onCellMouseDown={handleCellMouseDown}
-                            onCellMouseEnter={handleCellMouseEnter}
-                          />
-                        ) : (
-                          <div className="hidden lg:block flex-[2]" />
-                        )}
-                        {boxOutputs.length > 0 ? (
-                          <PatchGridSection
-                            channels={boxOutputs}
-                            type="OUTPUT"
-                            cols={box.grid.output.cols}
-                            flexClass={boxInputs.length > 0 ? 'flex-[1]' : 'flex-grow flex-1'}
-                            settings={settings}
-                            subSnakes={subSnakes}
-                            selectedIds={selectedIds}
-                            isMultiEdit={isMultiEdit}
-                            onCellClick={handleCellClick}
-                            onCellDrop={handleCellDrop}
-                            onCellMouseDown={handleCellMouseDown}
-                            onCellMouseEnter={handleCellMouseEnter}
-                          />
-                        ) : (
-                          <div className="hidden lg:block flex-[1]" />
-                        )}
-                      </div>
-                    </div>
+                    <StageboxGridRow
+                      key={box.id}
+                      box={box}
+                      boxInputs={boxInputs}
+                      boxOutputs={boxOutputs}
+                      settings={settings}
+                      subSnakes={subSnakes}
+                      selectedIds={selectedIds}
+                      isMultiEdit={isMultiEdit}
+                      onCellClick={handleCellClick}
+                      onCellDrop={handleCellDrop}
+                      onCellMouseDown={handleCellMouseDown}
+                      onCellMouseEnter={handleCellMouseEnter}
+                    />
                   );
                 })}
               </div>
