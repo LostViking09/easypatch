@@ -37,6 +37,11 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
   const [editingCell, setEditingCell] = useState<{ id: string, field: EditableField, rowIndex: number, colIndex: number } | null>(null);
 
   if (channels.length === 0) return null;
+  const isOutput = title === 'Outputs';
+  const fields: EditableField[] = isOutput 
+    ? ['name', 'notes', 'group']
+    : ['name', 'mic', 'stand', 'notes', 'group'];
+
   const ioLabel = hasStageboxes ? 'Port' : (title === 'Inputs' ? 'Input' : 'Output');
 
   const stripeOpacity = settings.tableStripeOpacity ?? 0.05;
@@ -53,14 +58,14 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
     
     if (direction === 'next') {
       nextCol++;
-      if (nextCol >= EDITABLE_FIELDS.length) {
+      if (nextCol >= fields.length) {
         nextCol = 0;
         nextRow++;
       }
     } else if (direction === 'prev') {
       nextCol--;
       if (nextCol < 0) {
-        nextCol = EDITABLE_FIELDS.length - 1;
+        nextCol = fields.length - 1;
         nextRow--;
       }
     } else if (direction === 'up') {
@@ -71,7 +76,7 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
 
     if (nextRow >= 0 && nextRow < channels.length) {
       const nextChannel = channels[nextRow];
-      const nextField = EDITABLE_FIELDS[nextCol];
+      const nextField = fields[nextCol];
       setTimeout(() => {
         setEditingCell({ id: nextChannel.id, field: nextField, rowIndex: nextRow, colIndex: nextCol });
       }, 0);
@@ -188,10 +193,10 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
 
               {/* Line 2 */}
               <div className="flex flex-wrap items-center text-xs sm:text-sm text-slate-600 gap-x-2 pl-9">
-                {ch.mic && <span className="font-bold text-slate-700">{ch.mic}</span>}
-                {ch.stand && <span className="text-slate-500 opacity-80">[{ch.stand}]</span>}
+                {!isOutput && ch.mic && <span className="font-bold text-slate-700">{ch.mic}</span>}
+                {!isOutput && ch.stand && <span className="text-slate-500 opacity-80">[{ch.stand}]</span>}
                 {ch.notes && <span className="italic text-slate-500 opacity-80 truncate max-w-[200px]" title={ch.notes}>{ch.notes}</span>}
-                {!ch.mic && !ch.stand && !ch.notes && (
+                {((isOutput && !ch.notes) || (!isOutput && !ch.mic && !ch.stand && !ch.notes)) && (
                   <span className="text-slate-400 italic">No details</span>
                 )}
               </div>
@@ -210,10 +215,10 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
             <tr>
               <th className={`px-4 py-2.5 print:px-3 print:py-1.5 ${hasStageboxes ? 'w-20' : 'w-16'}`}>{ioLabel}</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-32">SubSnake</th>
-              <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/4">Name</th>
-              <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/6">Mic/DI</th>
-              <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/6">Stand</th>
-              <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/4">Notes</th>
+              <th className={`px-4 py-2.5 print:px-3 print:py-1.5 ${isOutput ? 'w-1/3' : 'w-1/4'}`}>Name</th>
+              {!isOutput && <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/6">Mic/DI</th>}
+              {!isOutput && <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-1/6">Stand</th>}
+              <th className={`px-4 py-2.5 print:px-3 print:py-1.5 ${isOutput ? 'w-1/2' : 'w-1/4'}`}>Notes</th>
               <th className="px-4 py-2.5 print:px-3 print:py-1.5 w-24">Group</th>
             </tr>
           </thead>
@@ -294,7 +299,7 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
                       <span className="text-slate-400">-</span>
                     )}
                   </td>
-                  {renderEditableCell(ch, 'name', index, 0, (
+                  {renderEditableCell(ch, 'name', index, fields.indexOf('name'), (
                     <div className="flex items-center gap-2">
                       <div 
                         className={`w-3.5 h-3.5 print:w-2.5 print:h-2.5 rounded-sm border border-slate-300 shrink-0 table-color-block hover:brightness-95 cursor-pointer transition-all ${ch.name.trim() === '' ? 'opacity-0' : ''}`}
@@ -307,19 +312,19 @@ const ChannelTable: React.FC<ChannelTableProps> = ({ title, channels, subSnakes,
                       <span className="truncate">{ch.name || <span className="text-slate-400 font-normal opacity-50 group-hover:opacity-100 transition-opacity">-</span>}</span>
                     </div>
                   ), "font-bold text-slate-800")}
-                  {renderEditableCell(ch, 'mic', index, 1, 
+                  {!isOutput && renderEditableCell(ch, 'mic', index, fields.indexOf('mic'), 
                     ch.mic || <span className="text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity">-</span>,
                     ""
                   )}
-                  {renderEditableCell(ch, 'stand', index, 2, 
+                  {!isOutput && renderEditableCell(ch, 'stand', index, fields.indexOf('stand'), 
                     ch.stand || <span className="text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity">-</span>,
                     ""
                   )}
-                  {renderEditableCell(ch, 'notes', index, 3, 
+                  {renderEditableCell(ch, 'notes', index, fields.indexOf('notes'), 
                     <span className="max-w-xs truncate block italic" title={ch.notes}>{ch.notes || <span className="text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity not-italic">-</span>}</span>,
                     ""
                   )}
-                  {renderEditableCell(ch, 'group', index, 4, 
+                  {renderEditableCell(ch, 'group', index, fields.indexOf('group'), 
                     ch.group || <span className="text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity">-</span>,
                     ""
                   )}
