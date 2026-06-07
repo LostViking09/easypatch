@@ -16,7 +16,7 @@ export function usePrint({ setIsPrintModalOpen }: UsePrintProps) {
         window.print();
         setPrintTrigger(false);
         setIsPrinting(false);
-      }, 200);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, [printTrigger]);

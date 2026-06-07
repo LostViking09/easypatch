@@ -86,11 +86,10 @@ export function PatchGridSection({
       </div>
       <div
         data-tour="patch-grid"
-        className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border border-slate-300 overflow-auto ${pClass('print:bg-white print:border-gray-400 print:border')}`}
+        className={`grid gap-0 flex-1 bg-slate-100 rounded-b-lg border border-slate-300 overflow-hidden ${pClass('print:bg-white print:border-gray-400 print:border')}`}
         style={{
-          containerType: 'inline-size',
           gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-          gridAutoRows: `minmax(calc(100cqi / ${cols} / 2), 1fr)`,
+          gridAutoRows: '1fr',
           ['--grid-cols' as any]: cols
         }}
       >

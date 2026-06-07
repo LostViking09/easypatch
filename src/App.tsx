@@ -193,8 +193,8 @@ function Editor() {
   }, [isActive, currentStepIndex]);
 
   React.useEffect(() => {
-    MotionGlobalConfig.skipAnimations = userSettings.animationsEnabled === false;
-  }, [userSettings.animationsEnabled]);
+    MotionGlobalConfig.skipAnimations = isPrinting || userSettings.animationsEnabled === false;
+  }, [userSettings.animationsEnabled, isPrinting]);
 
   // Global keyboard shortcuts for Undo / Redo
   React.useEffect(() => {
