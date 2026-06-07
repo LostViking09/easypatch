@@ -108,7 +108,7 @@ function Editor() {
     setSharedPatchData,
     handleShare
   } = useShare({
-    id, title, notes, settings, inputs, outputs, subSnakes, setToast, setIsShareModalOpen
+    id, title, notes, settings, inputs, outputs, subSnakes, stageboxes, setToast, setIsShareModalOpen
   });
 
   const [currentView, setCurrentView] = useState<string>('main');
@@ -282,6 +282,23 @@ function Editor() {
       inputs: data.inputs || createEmptyInputs(24),
       outputs: data.outputs || createEmptyOutputs(12),
       subSnakes: data.subSnakes || [],
+      stageboxes: data.stageboxes || [
+        {
+          id: 'local-io',
+          name: 'Main IO',
+          order: 0,
+          grid: {
+            input: {
+              rows: Math.max(1, Math.ceil((data.inputs ? data.inputs.length : 24) / (data.settings?.grid?.input?.cols || 8))),
+              cols: data.settings?.grid?.input?.cols || 8
+            },
+            output: {
+              rows: Math.max(1, Math.ceil((data.outputs ? data.outputs.length : 12) / (data.settings?.grid?.output?.cols || 4))),
+              cols: data.settings?.grid?.output?.cols || 4
+            }
+          }
+        }
+      ],
       updatedAt: Date.now()
     };
 

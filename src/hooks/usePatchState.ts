@@ -105,7 +105,28 @@ export function usePatchState(projectId?: string) {
         
         let loadedInputs = (project.inputs || initialInputs).map((ch: Partial<Channel>) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
         let loadedOutputs = (project.outputs || initialOutputs).map((ch: Partial<Channel>) => ({ ...ch, mic: ch.mic || '', stand: ch.stand || '', notes: ch.notes || '' }));
-        const loadedStageboxes = project.stageboxes || initialStageboxes;
+        const inCols = project.settings?.grid?.input?.cols || 8;
+        const outCols = project.settings?.grid?.output?.cols || 4;
+        const inCount = loadedInputs.length;
+        const outCount = loadedOutputs.length;
+
+        const loadedStageboxes = project.stageboxes || [
+          {
+            id: 'local-io',
+            name: 'Main IO',
+            order: 0,
+            grid: {
+              input: {
+                rows: Math.max(1, Math.ceil(inCount / inCols)),
+                cols: inCols
+              },
+              output: {
+                rows: Math.max(1, Math.ceil(outCount / outCols)),
+                cols: outCols
+              }
+            }
+          }
+        ];
 
         loadedInputs = recalculateHardwareMapping(loadedInputs as Channel[], loadedStageboxes, true);
         loadedOutputs = recalculateHardwareMapping(loadedOutputs as Channel[], loadedStageboxes, false);

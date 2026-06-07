@@ -24,6 +24,7 @@ interface UseShareProps {
   inputs: Channel[];
   outputs: Channel[];
   subSnakes: SubSnake[];
+  stageboxes: import('../types').Stagebox[];
   setToast: (toast: any) => void;
   setIsShareModalOpen: (val: boolean) => void;
 }
@@ -36,6 +37,7 @@ export function useShare({
   inputs,
   outputs,
   subSnakes,
+  stageboxes,
   setToast,
   setIsShareModalOpen
 }: UseShareProps) {
@@ -67,7 +69,7 @@ export function useShare({
   const handleShare = async () => {
     if (!id) return;
     try {
-      const data = { title, notes, settings, inputs, outputs, subSnakes };
+      const data = { title, notes, settings, inputs, outputs, subSnakes, stageboxes };
       const base64 = await compressData(data);
       const cleanPath = getCleanPathname();
       const url = `${window.location.origin}${cleanPath}#import=${base64}`;
