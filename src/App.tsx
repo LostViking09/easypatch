@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MotionGlobalConfig, AnimatePresence } from 'motion/react';
-import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams, useNavigate, Link } from 'react-router-dom';
 import { Channel } from './types';
 import { PrintStyles } from './components/PrintStyles';
 import { ToastRenderer } from './components/ToastRenderer';
@@ -32,11 +32,36 @@ import demoPatchData from './utils/demoPatch.json';
 import { WALKTHROUGH_STEPS } from './utils/walkthroughSteps';
 import { FileText, FolderOpen } from 'lucide-react';
 
+function NotFound() {
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center space-y-4 animate-in fade-in duration-300">
+        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto">
+          <FileText className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">Page Not Found</h2>
+        <p className="text-slate-500 text-sm">
+          The link you followed may be broken, or the page may have been removed.
+        </p>
+        <div className="pt-2">
+          <Link
+            to="/"
+            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
+          >
+            <FolderOpen className="w-4 h-4" /> Go to Homepage
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Editor />} />
       <Route path="/project/:id" element={<Editor />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
