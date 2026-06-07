@@ -53,6 +53,8 @@ export function useShare({
           const data = await decompressData(base64Data);
           if (data && (data.inputs || data.outputs || data.settings)) {
             setSharedPatchData(data);
+          } else {
+            throw new Error('Invalid patch data format');
           }
         } catch (e) {
           console.error('Failed to import shared patch:', e);

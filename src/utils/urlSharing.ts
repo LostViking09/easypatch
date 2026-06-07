@@ -7,12 +7,10 @@ export async function compressData(data: any): Promise<string> {
   const textEncoder = new TextEncoder();
   const binaryData = textEncoder.encode(jsonStr);
 
-  const cs = new CompressionStream('deflate-raw');
-  const writer = cs.writable.getWriter();
-  writer.write(binaryData);
-  writer.close();
-
-  const compressedArrayBuffer = await new Response(cs.readable).arrayBuffer();
+  const blob = new Blob([binaryData]);
+  const compressedStream = blob.stream().pipeThrough(new CompressionStream('deflate-raw'));
+  const compressedArrayBuffer = await new Response(compressedStream).arrayBuffer();
+  
   const compressedBytes = new Uint8Array(compressedArrayBuffer);
   
   // Convert to Base64
@@ -43,14 +41,10 @@ export async function decompressData(base64url: string): Promise<any> {
     compressedBytes[i] = binaryStr.charCodeAt(i);
   }
 
-  const ds = new DecompressionStream('deflate-raw');
-  const writer = ds.writable.getWriter();
-  writer.write(compressedBytes);
-  writer.close();
-
-  const decompressedArrayBuffer = await new Response(ds.readable).arrayBuffer();
-  const textDecoder = new TextDecoder();
-  const jsonStr = textDecoder.decode(decompressedArrayBuffer);
+  const blob = new Blob([compressedBytes]);
+  const decompressedStream = blob.stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  const decompressedText = await new Response(decompressedStream).text();
   
-  return JSON.parse(jsonStr);
+  return JSON.parse(decompressedText);
 }
+
