@@ -13,6 +13,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({ shareUrl, onClose }) => 
   const [isCopied, setIsCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
+  const [isPrintLink, setIsPrintLink] = useState(false);
+
+  const displayUrl = isPrintLink 
+    ? shareUrl.replace('#import=', '?print=true#import=')
+    : shareUrl;
 
   useEffect(() => {
     // Check if the browser supports native Web Share API
@@ -25,7 +30,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ shareUrl, onClose }) => 
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(displayUrl);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
@@ -38,7 +43,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ shareUrl, onClose }) => 
       await navigator.share({
         title: 'EasyPatch - Shared Patch Setup',
         text: 'Check out this patch setup from EasyPatch!',
-        url: shareUrl,
+        url: displayUrl,
       });
     } catch (err) {
       // Ignore if user cancelled the share sheet
@@ -79,7 +84,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ shareUrl, onClose }) => 
             <input 
               type="text" 
               readOnly 
-              value={shareUrl}
+              value={displayUrl}
               onFocus={(e) => {
                 e.target.select();
                 setTimeout(() => {
@@ -125,6 +130,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({ shareUrl, onClose }) => 
               </AnimatePresence>
             </motion.button>
           </div>
+          
+          <label className="flex items-center gap-2 mt-3 cursor-pointer text-sm text-slate-600">
+            <input 
+              type="checkbox" 
+              checked={isPrintLink}
+              onChange={(e) => setIsPrintLink(e.target.checked)}
+              className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+            />
+            <span>Create a link that immediately triggers printing (PDF)</span>
+          </label>
         </div>
 
         {/* Share Notice */}

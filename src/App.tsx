@@ -288,12 +288,55 @@ function Editor() {
     try {
       await db.projects.add(newProject);
       setToast({ message: 'Patch list imported successfully.', type: 'success' });
-      navigate(`/project/${newId}`);
+      
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('print') || params.has('pdf')) {
+        navigate(`/project/${newId}?print=true`);
+      } else {
+        navigate(`/project/${newId}`);
+      }
     } catch (err) {
       console.error('Failed to import patch:', err);
       setToast({ message: 'Failed to import patch list file.', type: 'error' });
     }
   };
+
+  React.useEffect(() => {
+    if (sharedPatchData) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('print') || params.has('pdf')) {
+        handleImportPatchData(sharedPatchData);
+        setSharedPatchData(null);
+      }
+    }
+  }, [sharedPatchData]);
+
+  React.useEffect(() => {
+    if (id && isLoaded) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('print') || params.has('pdf')) {
+        const hasInputContent = inputs.length > 0;
+        const hasOutputContent = outputs.length > 0;
+        const initialSubSnakes: Record<string, any> = {};
+        subSnakes.forEach(snake => {
+          const hasContent = inputs.some(c => c.subSnakeId === snake.id) || outputs.some(c => c.subSnakeId === snake.id);
+          initialSubSnakes[snake.id] = { printGrid: hasContent, printTable: hasContent };
+        });
+        
+        handleConfirmPrint({
+          mainInput: { printGrid: hasInputContent, printTable: hasInputContent },
+          mainOutput: { printGrid: hasOutputContent, printTable: hasOutputContent },
+          subSnakes: initialSubSnakes
+        });
+
+        params.delete('print');
+        params.delete('pdf');
+        const newSearch = params.toString();
+        window.history.replaceState(null, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isLoaded]);
 
   const {
     handleMassAssignGroup,
