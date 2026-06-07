@@ -266,7 +266,7 @@ export function usePatchState(projectId?: string) {
   };
 
   const handleExport = () => {
-    const data = { title, notes, settings, inputs, outputs, subSnakes };
+    const data = { title, notes, settings, inputs, outputs, subSnakes, stageboxes };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -294,8 +294,20 @@ export function usePatchState(projectId?: string) {
       delete (importedSettings as any).confirmSubsnakeOverwrite;
       setSettings(importedSettings);
       
-      const inputCount = (importedSettings.grid?.input?.rows || 3) * (importedSettings.grid?.input?.cols || 8);
-      const outputCount = (importedSettings.grid?.output?.rows || 3) * (importedSettings.grid?.output?.cols || 4);
+      const inCols = importedSettings.grid?.input?.cols || 8;
+      const outCols = importedSettings.grid?.output?.cols || 4;
+      const actualInRows = (!data.stageboxes && data.inputs) ? Math.max(1, Math.ceil(data.inputs.length / inCols)) : (importedSettings.grid?.input?.rows || 3);
+      const actualOutRows = (!data.stageboxes && data.outputs) ? Math.max(1, Math.ceil(data.outputs.length / outCols)) : (importedSettings.grid?.output?.rows || 3);
+
+      if (!data.stageboxes) {
+        importedSettings.grid = {
+          input: { rows: actualInRows, cols: inCols },
+          output: { rows: actualOutRows, cols: outCols }
+        };
+      }
+
+      const inputCount = actualInRows * inCols;
+      const outputCount = actualOutRows * outCols;
       
       const newInputs = createEmptyInputs(inputCount);
       const newOutputs = createEmptyOutputs(outputCount);
@@ -332,7 +344,28 @@ export function usePatchState(projectId?: string) {
     if (data.stageboxes && Array.isArray(data.stageboxes)) {
       finalStageboxes = data.stageboxes;
     } else {
-      finalStageboxes = initialStageboxes;
+      const inCols = data.settings?.grid?.input?.cols || 8;
+      const outCols = data.settings?.grid?.output?.cols || 4;
+      const inCount = data.inputs ? data.inputs.length : 24;
+      const outCount = data.outputs ? data.outputs.length : 12;
+
+      finalStageboxes = [
+        {
+          id: 'local-io',
+          name: 'Main IO',
+          order: 0,
+          grid: {
+            input: {
+              rows: Math.max(1, Math.ceil(inCount / inCols)),
+              cols: inCols
+            },
+            output: {
+              rows: Math.max(1, Math.ceil(outCount / outCols)),
+              cols: outCols
+            }
+          }
+        }
+      ];
     }
 
     resetPatchData({
