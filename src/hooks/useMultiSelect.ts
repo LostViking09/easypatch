@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Channel } from '../types';
+import { sanitizeStereoLinks } from '../utils/channelOperations';
 
 export function useMultiSelect(
   inputs: Channel[],
@@ -102,12 +103,24 @@ export function useMultiSelect(
   };
 
   const handleMultiEditClear = () => {
-    const clearList = (list: Channel[]) => list.map(ch => {
-      if (selectedIds.includes(ch.id)) {
-        return { ...ch, name: '', mic: '', stand: '', notes: '', group: '', color: '#ffffff' };
-      }
-      return ch;
-    });
+    const clearList = (list: Channel[]) => {
+      const cleared = list.map(ch => {
+        if (selectedIds.includes(ch.id)) {
+          return {
+            ...ch,
+            name: '',
+            mic: '',
+            stand: '',
+            notes: '',
+            group: '',
+            color: '#ffffff',
+            stereoLink: undefined
+          };
+        }
+        return ch;
+      });
+      return sanitizeStereoLinks(cleared);
+    };
     setInputs(clearList(inputs));
     setOutputs(clearList(outputs));
     setSelectedIds([]);
