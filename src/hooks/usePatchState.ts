@@ -65,6 +65,8 @@ export function usePatchState(projectId?: string) {
   
   const [isLoaded, setIsLoaded] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [isUnsavedPreview, setIsUnsavedPreview] = useState(false);
+  const [sourceId, setSourceId] = useState<string | undefined>(undefined);
 
   const hasLoadedRef = useRef(false);
 
@@ -167,7 +169,7 @@ export function usePatchState(projectId?: string) {
   );
 
   useEffect(() => {
-    if (!hasLoadedRef.current || !projectId) return;
+    if (!hasLoadedRef.current || !projectId || isUnsavedPreview) return;
 
     setSaveStatus('saving');
     debouncedSave(projectId, {
@@ -287,7 +289,7 @@ export function usePatchState(projectId?: string) {
   };
 
   const handleExport = () => {
-    const data = { title, notes, settings, inputs, outputs, subSnakes, stageboxes };
+    const data = { sourceId: projectId, title, notes, settings, inputs, outputs, subSnakes, stageboxes };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -300,7 +302,11 @@ export function usePatchState(projectId?: string) {
     URL.revokeObjectURL(url);
   };
 
-  const loadImportData = (data: Partial<{ title: string, notes: string, settings: Partial<SettingsConfig>, inputs: Partial<Channel>[], outputs: Partial<Channel>[], subSnakes: Partial<SubSnake>[], stageboxes: Stagebox[] }>) => {
+  const loadImportData = (data: Partial<{ title: string, notes: string, settings: Partial<SettingsConfig>, inputs: Partial<Channel>[], outputs: Partial<Channel>[], subSnakes: Partial<SubSnake>[], stageboxes: Stagebox[], sourceId: string }>, isPreview: boolean = false) => {
+    if (isPreview) {
+      setIsUnsavedPreview(true);
+      setSourceId(data.sourceId);
+    }
     if (data.title) setTitle(data.title);
     if (data.notes !== undefined) setNotes(data.notes);
     
@@ -426,7 +432,7 @@ export function usePatchState(projectId?: string) {
     userSettings, setUserSettings,
     subSnakes, setSubSnakes,
     stageboxes, setStageboxes,
-    isLoaded, saveStatus,
+    isLoaded, saveStatus, isUnsavedPreview, setIsUnsavedPreview, sourceId, setSourceId,
     handleDrop,
     saveEdit,
     handleCreateNewProject,

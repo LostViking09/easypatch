@@ -17,6 +17,8 @@ interface HeaderProps {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  isUnsavedPreview?: boolean;
+  onSavePreview?: () => void;
 }
 
 export function Header({
@@ -33,7 +35,9 @@ export function Header({
   undo,
   redo,
   canUndo,
-  canRedo
+  canRedo,
+  isUnsavedPreview,
+  onSavePreview
 }: HeaderProps) {
   return (
     <header className="bg-slate-900 text-white p-4 shadow-md print:hidden flex flex-col xl:flex-row justify-between items-center gap-4">
@@ -43,31 +47,49 @@ export function Header({
           <h1 className="text-xl font-bold tracking-wide cursor-pointer hover:text-blue-300 transition-colors" onClick={onOpenDashboard}>EasyPatch</h1>
         </div>
 
-        {saveStatus && saveStatus !== 'idle' && (
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs bg-slate-800/80 border border-slate-700/50 transition-all duration-300">
-            {saveStatus === 'saving' && (
-              <>
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                <span className="text-slate-400">Saving...</span>
-              </>
-            )}
-            {saveStatus === 'saved' && (
-              <>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span className="text-slate-400">Saved</span>
-              </>
-            )}
-            {saveStatus === 'error' && (
-              <>
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                <span className="text-rose-400 font-semibold">Save failed</span>
-              </>
-            )}
+        {isUnsavedPreview ? (
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs bg-amber-500/20 border border-amber-500/50 text-amber-200 font-medium">
+            Preview Mode - Unsaved
           </div>
+        ) : (
+          saveStatus && saveStatus !== 'idle' && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs bg-slate-800/80 border border-slate-700/50 transition-all duration-300">
+              {saveStatus === 'saving' && (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                  <span className="text-slate-400">Saving...</span>
+                </>
+              )}
+              {saveStatus === 'saved' && (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span className="text-slate-400">Saved</span>
+                </>
+              )}
+              {saveStatus === 'error' && (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                  <span className="text-rose-400 font-semibold">Save failed</span>
+                </>
+              )}
+            </div>
+          )
         )}
       </div>
 
       <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Save Preview Button */}
+        {isUnsavedPreview && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onSavePreview}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors mr-2 border border-emerald-500"
+          >
+            <CheckSquare className="w-4 h-4" />
+            <span>Save to My Projects</span>
+          </motion.button>
+        )}
         {/* Projects Button */}
         <motion.button
           whileHover={{ scale: 1.02 }}

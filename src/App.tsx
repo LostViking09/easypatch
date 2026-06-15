@@ -24,6 +24,7 @@ import { SubSnakeView } from './features/SubSnakeView/SubSnakeView';
 import { TableView } from './features/TableView/TableView';
 import { UrlImportConfirmModal } from './components/UrlImportConfirmModal';
 import { DashboardModal } from './features/Dashboard/DashboardModal';
+import { DuplicateResolveModal } from './features/Modals/DuplicateResolveModal';
 import { WalkthroughProvider, useWalkthrough } from './features/Walkthrough/WalkthroughContext';
 import { WalkthroughOverlay } from './features/Walkthrough/WalkthroughOverlay';
 import { db, Project } from './services/db';
@@ -101,7 +102,11 @@ function Editor() {
     undo,
     redo,
     canUndo,
-    canRedo
+    canRedo,
+    loadImportData,
+    sourceId,
+    isUnsavedPreview,
+    setIsUnsavedPreview
   } = usePatchState(id);
 
   const { toast, setToast } = useToast();
@@ -119,7 +124,7 @@ function Editor() {
     isShareModalOpen, setIsShareModalOpen,
     isDashboardOpen, setIsDashboardOpen,
     isAnyModalOpen
-  } = useModalState(id);
+  } = useModalState(id, isUnsavedPreview);
 
   const {
     printOptions,
@@ -138,6 +143,14 @@ function Editor() {
 
   const [currentView, setCurrentView] = useState<string>('main');
   const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
+
+  const [resolveModalState, setResolveModalState] = useState<{
+    isOpen: boolean;
+    isExactMatch: boolean;
+    existingId: string | null;
+    sourceId: string;
+    newProjectData: any;
+  }>({ isOpen: false, isExactMatch: false, existingId: null, sourceId: '', newProjectData: null });
 
   const {
     isMultiEdit,
@@ -297,59 +310,122 @@ function Editor() {
     }
   };
 
-  const handleImportPatchData = async (data: any) => {
+  const handleImportPatchData = (data: any) => {
+    loadImportData(data, true);
+    setToast({ message: 'Previewing imported patch. Don\'t forget to save it!', type: 'success' });
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('print') || params.has('pdf')) {
+      navigate(`/?print=true`);
+    } else {
+      navigate(`/`);
+    }
+  };
+
+  const handleSavePreview = async () => {
+    const { calculateProjectHash } = await import('./utils/hashUtils');
+    const currentHash = await calculateProjectHash({ inputs, outputs, settings, subSnakes, stageboxes });
+    
+    if (sourceId) {
+      const existingProjects = await db.projects.where('id').equals(sourceId).toArray();
+      let existing = existingProjects[0];
+      if (!existing) {
+        const bySourceId = await db.projects.filter(p => p.sourceId === sourceId).toArray();
+        existing = bySourceId[0];
+      }
+
+      if (existing) {
+        const existingHash = await calculateProjectHash({
+          inputs: existing.inputs,
+          outputs: existing.outputs,
+          settings: existing.settings,
+          subSnakes: existing.subSnakes,
+          stageboxes: existing.stageboxes
+        });
+
+        if (existingHash === currentHash) {
+          setResolveModalState({
+            isOpen: true,
+            isExactMatch: true,
+            existingId: existing.id,
+            sourceId: sourceId,
+            newProjectData: null
+          });
+          return;
+        } else {
+          setResolveModalState({
+            isOpen: true,
+            isExactMatch: false,
+            existingId: existing.id,
+            sourceId: sourceId,
+            newProjectData: null
+          });
+          return;
+        }
+      }
+    }
+
+    handleSaveAsNewCopy();
+  };
+
+  const handleSaveAsNewCopy = async () => {
     const newId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11);
     const newProject: Project = {
       id: newId,
-      title: data.title || 'Imported Patch',
-      notes: data.notes || '',
-      settings: data.settings || defaultSettings,
-      inputs: data.inputs || createEmptyInputs(24),
-      outputs: data.outputs || createEmptyOutputs(12),
-      subSnakes: data.subSnakes || [],
-      stageboxes: data.stageboxes || [
-        {
-          id: 'local-io',
-          name: 'Main IO',
-          order: 0,
-          grid: {
-            input: {
-              rows: Math.max(1, Math.ceil((data.inputs ? data.inputs.length : 24) / (data.settings?.grid?.input?.cols || 8))),
-              cols: data.settings?.grid?.input?.cols || 8
-            },
-            output: {
-              rows: Math.max(1, Math.ceil((data.outputs ? data.outputs.length : 12) / (data.settings?.grid?.output?.cols || 4))),
-              cols: data.settings?.grid?.output?.cols || 4
-            }
-          }
-        }
-      ],
+      sourceId: sourceId || newId,
+      title,
+      notes,
+      settings,
+      inputs,
+      outputs,
+      subSnakes,
+      stageboxes,
       updatedAt: Date.now()
     };
-
     try {
       await db.projects.add(newProject);
-      setToast({ message: 'Patch list imported successfully.', type: 'success' });
-      
-      const params = new URLSearchParams(window.location.search);
-      if (params.has('print') || params.has('pdf')) {
-        navigate(`/project/${newId}?print=true`);
-      } else {
-        navigate(`/project/${newId}`);
-      }
+      setIsUnsavedPreview(false);
+      setToast({ message: 'Project saved to your library.', type: 'success' });
+      setResolveModalState(prev => ({ ...prev, isOpen: false }));
+      navigate(`/project/${newId}`);
     } catch (err) {
-      console.error('Failed to import patch:', err);
-      setToast({ message: 'Failed to import patch list file.', type: 'error' });
+      console.error(err);
+      setToast({ message: 'Failed to save project.', type: 'error' });
     }
+  };
+
+  const handleOverwrite = async () => {
+    if (!resolveModalState.existingId) return;
+    try {
+      await db.projects.update(resolveModalState.existingId, {
+        title,
+        notes,
+        settings,
+        inputs,
+        outputs,
+        subSnakes,
+        stageboxes,
+        updatedAt: Date.now()
+      });
+      setIsUnsavedPreview(false);
+      setToast({ message: 'Project overwritten.', type: 'success' });
+      setResolveModalState(prev => ({ ...prev, isOpen: false }));
+      navigate(`/project/${resolveModalState.existingId}`);
+    } catch (err) {
+      console.error(err);
+      setToast({ message: 'Failed to overwrite project.', type: 'error' });
+    }
+  };
+
+  const handleOpenExisting = () => {
+    if (!resolveModalState.existingId) return;
+    setResolveModalState(prev => ({ ...prev, isOpen: false }));
+    navigate(`/project/${resolveModalState.existingId}`);
   };
 
   React.useEffect(() => {
     if (sharedPatchData) {
-      const params = new URLSearchParams(window.location.search);
-      if (params.has('print') || params.has('pdf')) {
-        handleImportPatchData(sharedPatchData);
-        setSharedPatchData(null);
-      }
+      handleImportPatchData(sharedPatchData);
+      setSharedPatchData(null);
     }
   }, [sharedPatchData]);
 
@@ -426,10 +502,12 @@ function Editor() {
           redo={redo}
           canUndo={canUndo}
           canRedo={canRedo}
+          isUnsavedPreview={isUnsavedPreview}
+          onSavePreview={handleSavePreview}
         />
 
         {/* Blank state if no project ID is active */}
-        {!id ? (
+        {!id && !isUnsavedPreview ? (
           <main className="flex-1 flex items-center justify-center p-6 bg-slate-50">
             <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center space-y-4 animate-in fade-in duration-300">
               <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mx-auto">
@@ -623,15 +701,14 @@ function Editor() {
       {/* Toast Notification */}
       <ToastRenderer toast={toast} setToast={setToast} />
 
-      {sharedPatchData && (
-        <UrlImportConfirmModal
-          title={sharedPatchData.title}
-          notes={sharedPatchData.notes}
-          onConfirm={() => {
-            handleImportPatchData(sharedPatchData);
-            setSharedPatchData(null);
-          }}
-          onCancel={() => setSharedPatchData(null)}
+      {resolveModalState.isOpen && (
+        <DuplicateResolveModal
+          isOpen={resolveModalState.isOpen}
+          isExactMatch={resolveModalState.isExactMatch}
+          onClose={() => setResolveModalState(prev => ({ ...prev, isOpen: false }))}
+          onOverwrite={handleOverwrite}
+          onSaveAsCopy={handleSaveAsNewCopy}
+          onOpenExisting={handleOpenExisting}
         />
       )}
     </div>

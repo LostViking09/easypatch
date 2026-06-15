@@ -3,6 +3,7 @@ import { Channel, SettingsConfig, SubSnake } from '../types';
 
 export interface Project {
   id: string;
+  sourceId?: string;
   title: string;
   notes: string;
   settings: SettingsConfig;

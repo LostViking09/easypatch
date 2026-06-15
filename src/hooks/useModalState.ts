@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Channel } from '../types';
 
-export function useModalState(projectId?: string) {
+export function useModalState(projectId?: string, isUnsavedPreview: boolean = false) {
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNewProjectConfirmOpen, setIsNewProjectConfirmOpen] = useState(false);
@@ -14,16 +14,16 @@ export function useModalState(projectId?: string) {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   
-  const [isDashboardOpen, setIsDashboardOpen] = useState(!projectId);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(!projectId && !isUnsavedPreview);
 
   // If active project changes or dashboard opens, keep state in sync
   useEffect(() => {
-    if (!projectId) {
+    if (!projectId && !isUnsavedPreview) {
       setIsDashboardOpen(true);
     } else {
       setIsDashboardOpen(false);
     }
-  }, [projectId]);
+  }, [projectId, isUnsavedPreview]);
 
   const isAnyModalOpen =
     !!editingChannel ||

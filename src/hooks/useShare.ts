@@ -71,7 +71,7 @@ export function useShare({
   const handleShare = async () => {
     if (!id) return;
     try {
-      const data = { title, notes, settings, inputs, outputs, subSnakes, stageboxes };
+      const data = { sourceId: id, title, notes, settings, inputs, outputs, subSnakes, stageboxes };
       const base64 = await compressData(data);
       const cleanPath = getCleanPathname();
       const url = `${window.location.origin}${cleanPath}#import=${base64}`;
