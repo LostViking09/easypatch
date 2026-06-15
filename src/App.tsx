@@ -636,7 +636,7 @@ function Editor() {
         />
       )}
 
-      {id && (
+      {(id || isUnsavedPreview) && (
         <MultiEditBar
           isMultiEdit={isMultiEdit}
           selectedIds={selectedIds}
@@ -649,7 +649,7 @@ function Editor() {
         />
       )}
 
-      {id && (
+      {(id || isUnsavedPreview) && (
         <AppModals
           editingChannel={editingChannel} setEditingChannel={setEditingChannel}
           inputs={inputs} outputs={outputs}
@@ -681,7 +681,7 @@ function Editor() {
         {isDashboardOpen && (
           <DashboardModal
             onClose={() => {
-              if (id) setIsDashboardOpen(false);
+              if (id || isUnsavedPreview) setIsDashboardOpen(false);
             }}
             onSelectProject={(selectedId) => {
               if (selectedId) {

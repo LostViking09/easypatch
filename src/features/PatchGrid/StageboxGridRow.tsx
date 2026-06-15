@@ -74,7 +74,7 @@ export const StageboxGridRow: React.FC<StageboxGridRowProps> = ({
         const cellHeight = outputsHeight / outRows;
 
         if (cellWidth > 0 && cellHeight > 0) {
-          if (cellHeight > cellWidth * 1.35) {
+          if (cellHeight > cellWidth * 1.6) {
             setIsStacked(true);
             setThresholdWidth(rowWidth);
           }

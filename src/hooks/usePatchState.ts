@@ -100,6 +100,8 @@ export function usePatchState(projectId?: string) {
 
     db.projects.get(projectId).then(project => {
       if (!isMounted) return;
+      setIsUnsavedPreview(false);
+      setSourceId('');
       if (project) {
         setTitle(project.title || 'EasyPatch');
         setNotes(project.notes || '');
